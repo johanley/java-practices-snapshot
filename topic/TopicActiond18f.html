@@ -1,0 +1,112 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=178 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="JSP,servlet,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Prevent self linking</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Prevent self linking</div>
+
+<br>It's often the case that a web page links to itself. This can be frustrating
+for the user, especially if the page takes a long time to load. 
+
+<p>Instead of self-linking, a page can suppress links to itself, and at the same time highlight the 
+link text in some way, to clearly indicate the current page. The user is able to painlessly answer the 
+common question "Where am I on this site?", at the same time as they are <em>prevented</em> from following 
+a link that is usually useless. Such a style clearly has more compassion for the user's experience.
+
+</p><p>There are two ways to avoid self-linking in a set of navigation links : 
+</p><ul>
+<li>copy and paste the set of navigation links across all pages, and manually alter 
+each possible occurrence of self-linking.
+</li><li>define the set of navigation links in one place, and create some means of dynamically <em>suppressing</em> 
+self-linking when generating each page. This is the preferred style, since it defines the menu in a single place.
+</li></ul>
+
+<p>For the dynamic style, there is no standard way to define how such links are suppressed. 
+An implementation might rely on a naming convention, for example, to identify
+self-linking items that should be altered in some manner.
+In addition, the dynamic style could be implemented either on the server (Java), or on the client (Javascript).
+
+</p><h4>Example</h4>
+
+<p>This example uses WEB4J's
+<a href="http://www.web4j.com/web4j/javadoc/hirondelle/web4j/ui/tag/HighlightCurrentPage.html"><code>HighlightCurrentPage</code></a> 
+custom tag to dynamically avoid self-linking. In this case, the implementation is on the server.
+
+</p><p>The following JSP snippet appears in a template, and displays a small navigation
+bar. At runtime, one link in the navigation bar is suppressed, and shows
+only plain text instead of the full link. In addition, it highlights 
+the text (using a CSS class) to render it more obvious as the current page. This is all implemented
+with <code>&lt;w:highlightCurrentPage&gt;</code>. The tag uses one of two policies to 
+identify links that are to be altered: 
+</p><ul>
+<li>matching the current URI to the end of the link's <code>HREF</code> target (this the default style)
+</li><li>matching the textual body of the link to a substring of the <code>TTitle</code> request parameter
+used by the WEB4J templating mechanism
+</li></ul>
+
+<pre>
+&lt;div class="menu-bar"&gt;
+ &lt;w:highlightCurrentPage styleClass='highlight'&gt;
+  &lt;c:url value="/main/home/HomePageAction.do" var="homeURL"/&gt; 
+  &lt;A href='${homeURL}'&gt;Home&lt;/a&gt;
+  &lt;c:url value="/main/rsvp/RsvpShow.do" var="showRsvpURL"/&gt; 
+  &lt;A href='${showRsvpURL}'&gt;Rsvp&lt;/a&gt;
+  &lt;c:url value="/main/visit/VisitAction.do?Operation=List" var="visitEditURL"/&gt; 
+  &lt;A HREF='${visitEditURL}'&gt;Visits&lt;/A&gt;
+  &lt;c:url value="/main/rating/RatingAction.do?Operation=List" var="ratingEditURL"/&gt; 
+  &lt;A HREF='${ratingEditURL}'&gt;Ratings&lt;/A&gt;
+  &lt;c:url value="/all/logoff/LogoffAction.do" var="logoffURL"/&gt; 
+  &lt;A href='${logoffURL}'&gt;Log Off&lt;/a&gt;
+ &lt;/w:highlightCurrentPage&gt;
+&lt;/div&gt;
+</pre>
+
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActiond8aa.html?Id=94">Web usability guidelines</a> <br>
+  <a href="TopicAction5f31.html?Id=188">A Web App Framework   WEB4J</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=178 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

@@ -1,0 +1,120 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=94 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="JSP,servlet,usability,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Web usability guidelines</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Web usability guidelines</div>
+
+<br>Here are some points taken from <i><a href="http://www.amazon.com/exec/obidos/ASIN/156205810X/ref=nosim/javapractices-20">Designing Web Usability</a></i>, by
+Jakob Nielsen.
+<p>General points:
+</p><ul>
+<li>
+follow widespread user expectations</li>
+<li>keeps things simple and fast</li>
+<li>keep download times as short as possible; enabling zip compression on your server is almost always a good idea</li>
+</ul>
+Rendering:
+<ul>
+<li>
+don't hard-code font size</li>
+
+<li>
+don't disable the browser's ability to change font size</li>
+
+<li>
+don't hard-code absolute pixel sizes</li>
+
+<li>
+rendering must be reasonable for a wide range of screen resolutions</li>
+
+<li>
+if using tables, use the COLGROUP and COL tags to define
+both the number of columns and their relative percentage widths - this
+allows a smart browser to start rendering a single table before it has
+received all of its content</li>
+
+<li>
+include width and height for images - allows faster rendering</li>
+
+<li>
+include ALT text for images</li>
+
+<li>
+break up blocks of text with lots of white space</li>
+</ul>
+Navigation:
+<ul>
+<li>
+use standard colours for links</li>
+
+
+<li>
+avoid horizontal scrolling</li>
+
+<li>
+don't use frames</li>
+
+<li>
+half the users will go directly to the search box, without examining the
+structure of the site in any way</li>
+
+<li>
+store the text entered by users into the search box, for later examination</li>
+
+<li>
+the attention of many users will initially go to the center of a page,
+not the top</li>
+
+<li>
+high quality page titles and metadata are important for bookmarks and search
+engines</li>
+</ul>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction11d9.html?Id=93">Minimize site response time</a> <br>
+  <a href="TopicActiond18f.html?Id=178">Prevent self linking</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=94 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+</html>

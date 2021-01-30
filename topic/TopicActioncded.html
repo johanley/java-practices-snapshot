@@ -1,0 +1,305 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=151 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="swing,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Verify input with regular expressions</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Verify input with regular expressions</div>
+
+<br><code><a href="https://docs.oracle.com/javase/10/docs/api/javax/swing/JTextField.html">JTextField</a></code> 
+objects are often used to allow user input and editing of data. 
+The <code><a href="https://docs.oracle.com/javase/10/docs/api/javax/swing/InputVerifier.html">InputVerifier</a></code>
+class is used to verify such input.
+
+<p><b>Example</b>
+</p><p><code><a href="../apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/portfolio/RegexInputVerifier.html">RegexInputVerifier</a></code> uses <a href="https://docs.oracle.com/javase/10/docs/api/java/util/regex/package-summary.html">regular
+expressions</a> to verify input. Verification is performed when focus moves
+from an associated <code>JTextField</code>; if an error is found, the system
+beeps and an error message is placed in the <code>JTextField</code>.
+</p><p>Items to note:
+</p><ul>
+<li><code>shouldYieldFocus</code> and <code>verify</code> are defined originally in <code>InputVerifier</code></li>
+<li>the constructor uses a <a href="TopicAction2161.html?Id=1">type-safe enumeration</a> (<code>UseToolTip</code>) as an
+argument, instead of a primitive <code>boolean</code> value. This forces constructor
+calls to <a href="TopicAction37c7.html?Id=186">have greater clarity</a>.</li>
+<li>there are several static convenience objects provided at the end of this class, which are
+useful for many common cases</li>
+</ul>
+<br><pre>
+<span class="comment">/**
+* Verifies user input into a {@link javax.swing.text.JTextComponent} versus a 
+* regular expression.
+* 
+*&lt;P&gt; Upon detection of invalid input, this class takes the following actions : 
+*&lt;ul&gt;
+* &lt;li&gt; emit a beep
+* &lt;li&gt; overwrite the &lt;tt&gt;JTextComponent&lt;/tt&gt; to display the following: 
+* INVALID: " (input data) "
+* &lt;li&gt; optionally, append the tooltip text to the content of the INVALID message; this
+* is useful only if the tooltip contains helpful information regarding input.
+* Warning : appending the tooltip text may cause the error 
+* text to be too long for the corresponding text field. 
+*&lt;/ul&gt;
+*
+*&lt;P&gt; The user of this class is encouraged to always place conditions on data entry 
+* in the tooltip for the corresponding field.
+*/</span>
+<span class="keyword">final</span> <span class="keyword">class</span> RegexInputVerifier <span class="keyword">extends</span> InputVerifier {
+  
+  <span class="comment">/**
+  * Constructor.
+  *  
+  * @param aPattern regular expression against which all user input will
+  * be verified; &lt;tt&gt;aPattern.pattern&lt;/tt&gt; satisfies
+  * {@link Util#textHasContent}.
+  * @param aUseToolTip indicates if the tooltip text should be appended to 
+  * error messages displayed to the user. 
+  */</span>
+  RegexInputVerifier(Pattern aPattern, UseToolTip aUseToolTip){
+    Args.checkForContent( aPattern.pattern() );
+    fMatcher = aPattern.matcher(Consts.EMPTY_STRING);
+    fUseToolTip = aUseToolTip.getValue();
+  }
+  
+  <span class="comment">/** Enumeration compels the caller to use a style which reads clearly. */</span>
+  <span class="keyword">enum</span> UseToolTip {
+    TRUE(<span class="keyword">true</span>),
+    FALSE(<span class="keyword">false</span>);
+    <span class="keyword">boolean</span> getValue(){
+      <span class="keyword">return</span> fToggle;
+    }
+    <span class="keyword">private</span> <span class="keyword">boolean</span> fToggle;
+    <span class="keyword">private</span> UseToolTip(<span class="keyword">boolean</span> aToggle){
+      fToggle = aToggle;
+    }
+  }
+
+  <span class="comment">/**
+  * Always returns &lt;tt&gt;true&lt;/tt&gt;, in this implementation, such that focus can 
+  * always transfer to another component whenever the validation fails.
+  *
+  * &lt;P&gt;If &lt;tt&gt;super.shouldYieldFocus&lt;/tt&gt; returns &lt;tt&gt;false&lt;/tt&gt;, then 
+  * notify the user of an error.
+  *
+  * @param aComponent is a &lt;tt&gt;JTextComponent&lt;/tt&gt;.
+  */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">boolean</span> shouldYieldFocus(JComponent aComponent){
+    <span class="keyword">boolean</span> isValid = <span class="keyword">super</span>.shouldYieldFocus(aComponent);
+    <span class="keyword">if</span> (isValid){
+      <span class="comment">//do nothing
+</span>    }
+    <span class="keyword">else</span> {
+      JTextComponent textComponent = (JTextComponent)aComponent;
+      notifyUserOfError(textComponent);
+    }
+    <span class="keyword">return</span> <span class="keyword">true</span>;
+  }
+  
+  <span class="comment">/**
+  * Return &lt;tt&gt;true&lt;/tt&gt; only if the untrimmed user input matches the 
+  * regular expression provided to the constructor.
+  *
+  * @param aComponent must be a &lt;tt&gt;JTextComponent&lt;/tt&gt;.
+  */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">boolean</span> verify(JComponent aComponent) {
+    <span class="keyword">boolean</span> result = <span class="keyword">false</span>;
+    JTextComponent textComponent = (JTextComponent)aComponent;
+    fMatcher.reset(textComponent.getText());
+    <span class="keyword">if</span> (fMatcher.matches()) {
+      result =  <span class="keyword">true</span>;
+    }
+    <span class="keyword">return</span> result;
+  }
+  
+  <span class="comment">/**
+  * The text which begins all error messages.
+  *
+  * The caller may examine their text fields for the presence of 
+  * &lt;tt&gt;ERROR_MESSAGE_START&lt;/tt&gt;, before processing input.
+  */</span>
+  <span class="keyword">static</span> <span class="keyword">final</span> String ERROR_MESSAGE_START = <span class="literal">"INVALID: "</span>;
+
+  <span class="comment">/**
+  * Matches user input against a regular expression.
+  */</span>
+  <span class="keyword">private</span> Matcher fMatcher;
+  
+  <span class="comment">/**
+  * Indicates if the JTextField's tooltip text is to be appended to 
+  * error messages, as a second way of reminding the user.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">boolean</span> fUseToolTip;
+
+  <span class="comment">/* 
+  * Various regular expression patterns used to 
+  * construct convenience objects of this class:
+  */</span>
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String TEXT_FIELD =  <span class="literal">"^(\\S)(.){1,75}(\\S)$"</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String NON_NEGATIVE_INTEGER_FIELD = <span class="literal">"(\\d){1,9}"</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String INTEGER_FIELD = <span class="literal">"(-)?"</span> + NON_NEGATIVE_INTEGER_FIELD;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String NON_NEGATIVE_FLOATING_POINT_FIELD = 
+    <span class="literal">"(\\d){1,10}\\.(\\d){1,10}"</span>
+  ;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String FLOATING_POINT_FIELD =  
+    <span class="literal">"(-)?"</span> + NON_NEGATIVE_FLOATING_POINT_FIELD
+  ;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String NON_NEGATIVE_MONEY_FIELD =  <span class="literal">"(\\d){1,15}(\\.(\\d){2})?"</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String MONEY_FIELD =  <span class="literal">"(-)?"</span> + NON_NEGATIVE_MONEY_FIELD;
+  
+  <span class="comment">/**  
+  * Convenience object for input of integers: ...-2,-1,0,1,2...
+  *
+  * &lt;P&gt;From 1 to 9 digits, possibly preceded by a minus sign.
+  * Corresponds approximately to the spec of &lt;tt&gt;Integer.parseInt&lt;/tt&gt;.
+  * The limit on the number of digits is related to size of &lt;tt&gt;Integer.MAX_VALUE&lt;/tt&gt;
+  * and &lt;tt&gt;Integer.MIN_VALUE&lt;/tt&gt;.
+  */</span>
+  <span class="keyword">static</span> <span class="keyword">final</span> RegexInputVerifier INTEGER = 
+    <span class="keyword">new</span> RegexInputVerifier(Pattern.compile(INTEGER_FIELD), UseToolTip.FALSE)
+  ;
+
+  <span class="comment">/**
+  * Convenience object for input of these integers: 0,1,2...
+  *
+  *&lt;P&gt; As in {@link #INTEGER}, but with no leading minus sign.
+  */</span>
+  <span class="keyword">static</span> <span class="keyword">final</span> RegexInputVerifier NON_NEGATIVE_INTEGER = 
+    <span class="keyword">new</span> RegexInputVerifier(Pattern.compile(NON_NEGATIVE_INTEGER_FIELD), UseToolTip.FALSE)
+  ;
+         
+  <span class="comment">/**
+  * Convenience object for input of short amounts of text.
+  *
+  * &lt;P&gt;Text contains from 1 to 75 non-whitespace characters.
+  */</span>
+  <span class="keyword">static</span> <span class="keyword">final</span> RegexInputVerifier TEXT = 
+    <span class="keyword">new</span> RegexInputVerifier(Pattern.compile(TEXT_FIELD), UseToolTip.FALSE)
+  ;
+    
+  <span class="comment">/**
+  * Convenience object for input of decimals numbers, eg -23.23321, 100.25.
+  *
+  * &lt;P&gt;Possible leading minus sign, 1 to 10 digits before the decimal, and 1 to 10 
+  * digits after the decimal.
+  */</span>
+  <span class="keyword">static</span> <span class="keyword">final</span> RegexInputVerifier FLOATING_POINT = 
+    <span class="keyword">new</span> RegexInputVerifier(Pattern.compile(FLOATING_POINT_FIELD), UseToolTip.FALSE)
+  ;
+
+  <span class="comment">/**
+  * Convenience object for input of non-negative decimals numbers, eg 23.23321, 100.25.
+  *
+  * &lt;P&gt;As in {@link #FLOATING_POINT}, but no leading minus sign.
+  */</span>
+  <span class="keyword">static</span> <span class="keyword">final</span> RegexInputVerifier NON_NEGATIVE_FLOATING_POINT = 
+    <span class="keyword">new</span> RegexInputVerifier(
+      Pattern.compile(NON_NEGATIVE_FLOATING_POINT_FIELD), UseToolTip.FALSE
+    )
+  ;
+
+  <span class="comment">/**
+  * Convenience object for input of money values, eg -23, 100.25.
+  *
+  * &lt;P&gt;Possible leading minus sign, from 1 to 15 leading digits, and optionally  
+  * a decimal place and two decimals.
+  */</span>
+  <span class="keyword">static</span> <span class="keyword">final</span> RegexInputVerifier MONEY = 
+    <span class="keyword">new</span> RegexInputVerifier(Pattern.compile(MONEY_FIELD), UseToolTip.FALSE)
+  ;
+  
+  <span class="comment">/**
+  * Convenience object for input of non-negative money values, eg 23, 100.25.
+  *
+  * &lt;P&gt;As in {@link #MONEY}, except no leading minus sign
+  */</span>
+  <span class="keyword">static</span> <span class="keyword">final</span> RegexInputVerifier NON_NEGATIVE_MONEY = 
+    <span class="keyword">new</span> RegexInputVerifier(Pattern.compile(NON_NEGATIVE_MONEY_FIELD), UseToolTip.FALSE)
+  ;
+
+  <span class="comment">/**
+  * If an error message is currently displayed in aComponent, then 
+  * do nothing; otherwise, display an error message to the user in a
+  * aComponent (see class description for format of message).
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">void</span> notifyUserOfError(JTextComponent aTextComponent){
+    <span class="keyword">if</span> ( isShowingErrorMessage(aTextComponent) ){
+      <span class="comment">//do nothing, since user has not yet re-input.
+</span>    }
+    <span class="keyword">else</span> {
+      UiUtil.beep();
+      showErrorMessage(aTextComponent);
+    }
+  }
+
+  <span class="keyword">private</span> <span class="keyword">boolean</span> isShowingErrorMessage(JTextComponent aTextComponent){
+    <span class="keyword">return</span> aTextComponent.getText().startsWith(ERROR_MESSAGE_START);
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">void</span> showErrorMessage(JTextComponent aTextComponent) {
+    StringBuilder message = <span class="keyword">new</span> StringBuilder(ERROR_MESSAGE_START);
+    message.append(<span class="literal">"\""</span>);
+    message.append(aTextComponent.getText());
+    message.append(<span class="literal">"\""</span>);
+    <span class="keyword">if</span> ( fUseToolTip ) {
+      message.append(aTextComponent.getToolTipText());
+    }
+    aTextComponent.setText(message.toString());
+  }
+ 
+  <span class="comment">//elided...
+</span>}
+ 
+</pre>
+
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction2161.html?Id=1">Type Safe Enumerations</a> <br>
+  <a href="TopicActioncc40.html?Id=87">Parse text</a> <br>
+  <a href="TopicAction3c83.html?Id=103">Pattern match lines of a file</a> <br>
+  <a href="TopicAction11fc.html?Id=167">Input dialogs</a> <br>
+  <a href="TopicAction37c7.html?Id=186">Use enums to restrict arguments</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=151 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+</html>

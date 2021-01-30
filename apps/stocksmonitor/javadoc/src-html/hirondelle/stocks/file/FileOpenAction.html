@@ -1,0 +1,114 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/file/FileOpenAction.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:37 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+FileOpenAction.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.stocks.file;<a name=line.1></a>
+<a name=line.2></a>
+<span class='keyword'>import</span> java.awt.event.*;<a name=line.3></a>
+<span class='keyword'>import</span> javax.swing.*;<a name=line.4></a>
+<span class='keyword'>import</span> hirondelle.stocks.portfolio.Portfolio;<a name=line.5></a>
+<span class='keyword'>import</span> hirondelle.stocks.portfolio.PortfolioDAO;<a name=line.6></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Args;<a name=line.7></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.ui.UiUtil;<a name=line.8></a>
+<span class='keyword'>import</span> hirondelle.stocks.portfolio.CurrentPortfolio;<a name=line.9></a>
+<span class='keyword'>import</span> hirondelle.stocks.portfolio.EditSaver;<a name=line.10></a>
+<span class='keyword'>import</span> java.util.logging.Logger;<a name=line.11></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Util;<a name=line.12></a>
+<a name=line.13></a>
+<span class='comment'>/**<a name=line.14></a>
+* Present an alphabetical list of &lt;tt&gt;Portfolio&lt;/tt&gt; names, from which the user may <a name=line.15></a>
+* choose one, which is then presented to the user as the &lt;tt&gt;CurrentPortfolio&lt;/tt&gt;.<a name=line.16></a>
+*<a name=line.17></a>
+* &lt;P&gt;If the &lt;tt&gt;CurrentPortfolio&lt;/tt&gt; being replaced has unsaved edits, <a name=line.18></a>
+* then the appropriate &lt;tt&gt;Save&lt;/tt&gt; or &lt;tt&gt;SaveAs&lt;/tt&gt; action is called <a name=line.19></a>
+* before this action executes.<a name=line.20></a>
+*<a name=line.21></a>
+*&lt;P&gt;This action is always enabled.<a name=line.22></a>
+*/</span><a name=line.23></a>
+<span class='keyword'>public</span> <span class='keyword'>final</span> <span class='keyword'>class</span> FileOpenAction <span class='keyword'>extends</span> AbstractAction {<a name=line.24></a>
+<a name=line.25></a>
+  <span class='comment'>/**<a name=line.26></a>
+  * Constructor.<a name=line.27></a>
+  *  <a name=line.28></a>
+  * @param aCurrentPortfolio is updated by this action.<a name=line.29></a>
+  * @param aFrame the parent window<a name=line.30></a>
+  * @param aEditSaver allows the user to save any unsaved edits of the old<a name=line.31></a>
+  * &lt;tt&gt;CurrentPortfolio&lt;/tt&gt; being replaced by this action.<a name=line.32></a>
+  */</span><a name=line.33></a>
+  <span class='keyword'>public</span> FileOpenAction(<a name=line.34></a>
+    CurrentPortfolio aCurrentPortfolio, JFrame aFrame, EditSaver aEditSaver<a name=line.35></a>
+  ) {<a name=line.36></a>
+    <span class='keyword'>super</span>(<span class='literal'>"Open"</span>, UiUtil.getImageIcon(<span class='literal'>"/toolbarButtonGraphics/general/Open"</span>)); <a name=line.37></a>
+    Args.checkForNull(aCurrentPortfolio);<a name=line.38></a>
+    Args.checkForNull(aFrame);<a name=line.39></a>
+    Args.checkForNull(aEditSaver);<a name=line.40></a>
+    fCurrentPortfolio = aCurrentPortfolio;<a name=line.41></a>
+    fFrame = aFrame;<a name=line.42></a>
+    fEditSaver = aEditSaver;<a name=line.43></a>
+    putValue(SHORT_DESCRIPTION, <span class='literal'>"Open an existing portfolio"</span>);<a name=line.44></a>
+    putValue(<a name=line.45></a>
+      ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK)<a name=line.46></a>
+    );<a name=line.47></a>
+    putValue(LONG_DESCRIPTION, <span class='literal'>"Open an existing portfolio with a given name"</span>);<a name=line.48></a>
+    putValue(MNEMONIC_KEY, <span class='keyword'>new</span> Integer(KeyEvent.VK_O) );    <a name=line.49></a>
+  }<a name=line.50></a>
+<a name=line.51></a>
+  <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> actionPerformed(ActionEvent event) {<a name=line.52></a>
+    fLogger.info(<span class='literal'>"Open an existing portfolio."</span>);<a name=line.53></a>
+    fPortfolioDAO = <span class='keyword'>new</span> PortfolioDAO();<a name=line.54></a>
+    fEditSaver.save(fCurrentPortfolio, event);<a name=line.55></a>
+    showDialog();<a name=line.56></a>
+  }  <a name=line.57></a>
+<a name=line.58></a>
+  <span class='comment'>// PRIVATE <a name=line.59></a>
+</span>  <span class='keyword'>private</span> CurrentPortfolio fCurrentPortfolio;<a name=line.60></a>
+  <span class='keyword'>private</span> PortfolioDAO fPortfolioDAO;<a name=line.61></a>
+  <span class='keyword'>private</span> JFrame fFrame;<a name=line.62></a>
+  <span class='keyword'>private</span> EditSaver fEditSaver;<a name=line.63></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> Logger fLogger = Util.getLogger(FileOpenAction.<span class='keyword'>class</span>);<a name=line.64></a>
+<a name=line.65></a>
+  <span class='comment'>/** Allow user to select the desired portfolio from a list.  */</span><a name=line.66></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> showDialog(){<a name=line.67></a>
+    String selectedName = askForSelectedPortfolio();<a name=line.68></a>
+    <span class='keyword'>if</span> ( selectedName != <span class='keyword'>null</span> ) {<a name=line.69></a>
+      openPortfolio(selectedName);<a name=line.70></a>
+    }<a name=line.71></a>
+  }<a name=line.72></a>
+  <a name=line.73></a>
+  <span class='comment'>/**<a name=line.74></a>
+  * Returns the user selection for an existing Portfolio name, as selected from an <a name=line.75></a>
+  * alphabetical list.<a name=line.76></a>
+  * <a name=line.77></a>
+  * If user hits Cancel button or closes the frame, then null is returned. If <a name=line.78></a>
+  * the user hits OK without making a selection, then the first item in the <a name=line.79></a>
+  * list is returned.<a name=line.80></a>
+  */</span><a name=line.81></a>
+  <span class='keyword'>private</span> String askForSelectedPortfolio(){<a name=line.82></a>
+    Object[] portfolioNames = fPortfolioDAO.fetchAllPortfolioNames().toArray();<a name=line.83></a>
+    String title = UiUtil.getDialogTitle(<span class='literal'>"Open Portfolio"</span>);<a name=line.84></a>
+    Object result = JOptionPane.showInputDialog(<a name=line.85></a>
+      fFrame, <span class='literal'>"Please select a Portfolio:"</span>, title, <a name=line.86></a>
+      JOptionPane.QUESTION_MESSAGE, <span class='keyword'>null</span>, portfolioNames, <span class='keyword'>null</span><a name=line.87></a>
+    );<a name=line.88></a>
+    <span class='keyword'>return</span> ( result == <span class='keyword'>null</span> ? <span class='keyword'>null</span> : result.toString() );<a name=line.89></a>
+  }<a name=line.90></a>
+<a name=line.91></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> openPortfolio(String aSelectedName ){<a name=line.92></a>
+    Portfolio selectedPortfolio = fPortfolioDAO.fetch(aSelectedName);<a name=line.93></a>
+    fCurrentPortfolio.setPortfolio(selectedPortfolio);<a name=line.94></a>
+    fCurrentPortfolio.setNeedsSave(<span class='keyword'>false</span>);<a name=line.95></a>
+    fCurrentPortfolio.notifyObservers();<a name=line.96></a>
+  }<a name=line.97></a>
+}<a name=line.98></a>
+ <a name=line.99></a>
+</PRE><a name=line.100></a>
+ </BODY><a name=line.101></a>
+<HTML><a name=line.102></a>

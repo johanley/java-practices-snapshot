@@ -1,0 +1,83 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=106 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="database,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Don't perform basic SQL tasks in code </title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Don't perform basic SQL tasks in code </div>
+
+<br>Relational databases are a mature technology, and they should be used to do as much simple work as possible.
+
+<p>For example, don't do the following in code, if they can be done in SQL instead:
+</p><ul>
+<li>
+ordering (ORDER BY)</li>
+
+<li>
+filtering based on criteria (WHERE)</li>
+
+<li>joining tables (WHERE, JOIN) -- see the <a href="TopicAction7d07.html?Id=239">code tables</a> topic for a possible exception to this rule
+
+</li><li>
+summarizing (GROUP BY, COUNT, AVG, STDDEV)</li>
+</ul>
+Any corresponding task implemented by your own code would very likely:
+<ul>
+<li>be <i>much</i> less robust and efficient</li>
+<li>take longer to implement</li>
+<li>require more maintenance effort</li>
+</ul>
+
+To retain the order of a <code>ResultSet</code> as specified in ORDER BY, <a href="TopicActionc6f5.html?Id=65">choose
+a collection</a> which has a defined iteration order, such as an <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/ArrayList.html">ArrayList</a></code>
+or a <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/LinkedHashMap.html">LinkedHashMap</a></code>.
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction3eed.html?Id=10">Implementing compareTo</a> <br>
+  <a href="TopicActionc6f5.html?Id=65">Choosing the right Collection</a> <br>
+  <a href="TopicAction0d22.html?Id=76">Reduce database code duplication</a> <br>
+  <a href="TopicAction7d07.html?Id=239">Implement code tables</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=106 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+</html>

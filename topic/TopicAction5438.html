@@ -1,0 +1,345 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=241 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:49 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Use Version Control tools</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Use Version Control tools</div>
+
+<br>Using <a href="http://en.wikipedia.org/wiki/Revision_control">Version Control</a> 
+is strongly recommended for all non-trivial projects. 
+For projects with multiple developers, Version Control is almost always a necessity.
+The advantages of Version Control are compelling:
+
+<ul>
+ <li>it allows groups of people to work simultaneously on a project with minimal friction.
+ </li><li>it allows <i>time travel</i>, in the sense of letting you create a snapshot of the code as it 
+  appeared at some specific time in the past.
+ </li><li>it lets you create <i>parallel universes</i>, by letting you define <i>branches</i> for your project. 
+  The most common case of this is having a bug-fix branch along side a main trunk.
+ </li><li>it acts as the definitive version of the source.
+ </li><li>it allows for automated daily backups.
+</li></ul>
+
+<p>There are many Version Control systems available. 
+Presented below are reminders for typical use for two such tools,
+<a href="http://en.wikipedia.org/wiki/Concurrent_Versions_System">CVS</a> (Concurrent Version System) and 
+<a href="http://en.wikipedia.org/wiki/Apache_Subversion">Subversion</a>. 
+Another widely used tool is <a href="https://en.wikipedia.org/wiki/Git">Git</a>. 
+
+</p><p>More complete information is available from:
+</p><ul>
+ <li><a href="http://www.amazon.com/exec/obidos/ASIN/0977616657/ref=nosim/javapractices-20"><i>Pragmatic Version Control Using Subversion</i></a> by Mike Mason
+ </li><li><a href="http://www.amazon.com/exec/obidos/ASIN/0974514004/ref=nosim/javapractices-20"><i>Pragmatic Version Control Using CVS</i></a> by Thomas and Hunt
+</li></ul>
+
+
+<h2>Subversion</h2>
+
+<h3>Getting Started With Subversion</h3>
+<ul>
+ <li><a href="http://www.visualsvn.com/downloads/">download</a>
+ </li><li>edit the file named <code>%APPDATA%\\Subversion\\config</code> (no file extension)
+ You will likely want to edit <code>global-ignores</code>, <code>editor-cmd</code>, and set <code>enable-auto-props=yes</code>.
+ There are also settings for pointing to your diff tool. 
+ </li><li>consider defining an environment variable SVNROOT to point to your subversion repository
+</li></ul>
+
+<h3>Common Commands</h3>
+<i>svn checkout %SVNROOT%/blah/trunk</i><br>
+Checks out the trunk of a project named <i>blah</i>.
+
+<p><i>svn commit -m "Some message" blah.txt</i><br> 
+Commits a change made to a file in the current directory.
+
+</p><p><i>svn help &lt;command&gt;</i><br> 
+Get help on a command.
+
+
+</p><p><i>svn status -uv</i><br>
+Shows status. Recursive by default. Talks to server for any updates that you haven't seen yet.
+
+</p><p><i>svn log -v</i><br>
+View change sets. 
+
+
+</p><h3>Occasional Commands</h3>
+<i>svnadmin create C:\\my-repos</i><br>
+Create a local repository.
+
+<p><i>svn import -m "Importing" . %SVNROOT%/blah/trunk </i><br>
+Import project named <i>blah</i> into a repository. Imports the local directory and all of its subdirectories. 
+
+</p><p><i>svn info</i><br>
+Shows high level information; shows which branch you are on.
+
+</p><p><i>svn ls %SVNROOT%</i><br>
+Lists the projects in the repository. 
+Allows you to navigate the repository's tree structure, by the usual drill-down. 
+'-R' is recursive, and shows each file, not just directories. 
+ 
+
+</p><h3>Branching</h3>
+<i>svn mkdir -m "Making first release branch" %SVNROOT%/blah/branch</i><br>
+Create a directory for the <i>blah</i> project to hold all future branches. 
+
+<p><i>svn copy -m "Making Release branch" %SVNROOT%/blah/trunk %SVNROOT%/blah/branch/RB-1.0</i><br>
+Create release branch 1.0. Looks like a directory copy operation.
+
+</p><p><i>svn co %SVNROOT%/blah/branch/RB-1.0 blah1.0</i><br>
+Check out release branch 1.0 to directory named blah1.0. 
+The working directory is usually beside <i>blah</i>, which contains the main trunk of development. 
+
+</p><p><i>svn merge -r11:12 %SVNROOT%/blah/branch/RB-1.0</i><br>
+Merging a fix on a release branch into the trunk. 
+Picks up edits between revision 11 and revision 12. Needs a commit afterwards. 
+
+</p><h2>CVS</h2>
+
+<h3>CVS Terminology</h3>
+<ul>
+ <li><i>repository</i> - where CVS stores the source code for projects.
+ </li><li><i>CVSROOT</i> - an environment variable which points to the repository.
+ </li><li><i>workspace</i> or <i>working directory</i> - where the developer does their work. 
+  A private copy of the code, on the developer's host.
+ </li><li><i>checkout</i> - the initial fetch of a project's source tree from the repository.
+ </li><li><i>update</i> - a re-fetch of a file or set of files <i>after</i> the initial checkout.
+ </li><li><i>commit</i> - after verifying edits are correct, the developer will use a <code>commit</code> to post their edits from their workspace back to the repository.
+ </li><li><i>revision</i> - version of a file, denoted by a string of numbers, as in 1.2 (on the trunk) or 1.1.2.3 (on a branch).
+ </li><li><i>trunk</i> or <i>mainline</i> - the main branch of development. Releases are often branched off the trunk.
+ </li><li><i>dead files</i> - files that are removed from the project aren't really removed. Instead, they are moved into the 'dead' state.
+ </li><li><i>regular tag</i> - label for a particular set of revisions in the project. 
+  Allows you to define specific snapshots of the project, which can be used later to recreate that snapshot. 
+  Tags always start with a letter, so you can always distinguish them from revisions (which are numeric, as in 1.2 or 1.1.2.3). 
+ </li><li><i>branch tag</i> - label for a project branch. Always starts with a letter. Branches allow parallel development.
+ </li><li><i>HEAD</i> - a reserved tag name, refers to the most recent revision in the repository.
+ </li><li><i>BASE</i> - a reserved tag name, refers to the revision checked out into the workspace. If a developer has modified a file, then the BASE is no longer the same as the workspace copy.
+ </li><li><i>sticky</i> - many CVS commands are sticky. 
+ This means that the command is implicitly applied using the most recent tag that was specified (either regular tag or branch tag).
+ Thus, you can specify a tag once, and then subsequent commands will assume that tag also applies as the default. 
+ The idea is to let you work without repeatedly specifying the tag over and over again.
+</li></ul>
+
+<h3>CVS Edit Codes</h3>
+<ul>
+ <li>? - an item in the local workspace has not yet been added to the repository
+ </li><li>U - updated (either changed or added new)
+ </li><li>P - updated via a 'patch' (more or less the same as U)
+ </li><li>M - item in the local workspace has been modified after retrieval from the repository
+ </li><li>C - conflicting edits found between two revisions. 
+  Such conflicts need manual intervention, since they cannot be automatically merged together.
+ </li><li>A - added to CVS, but not yet committed.
+ </li><li>R - removed from CVS, but not yet committed.
+</li></ul>
+
+<h3>Getting Started With CVS</h3>
+<ul> 
+ <li>to use CVS from the command line, add CVS to your PATH environment variable.
+ </li><li>by default, most commands apply recursively to all subdirectories.
+ </li><li>CVS usually outputs dates and times using Universal Time, but you can often alter the output time zone, using the '-z' option.
+ </li><li>CVS lets you define a simple local repository on your host's file system (see below). When getting 
+  started with CVS, it's highly recommended that you create such a 'sandbox' repository, as a safe place to experiment with CVS.
+</li></ul>
+
+<p><i>cvs --help-commands</i><br>
+Lists all CVS commands.
+
+</p><p><i>cvs -H update</i><br>
+Displays help for the update command.
+ 
+</p><p><i>cvs -d C:\\sandbox init</i><br>
+Creates a local 'sandbox' repository, on the local file system. 
+<i>Such a sandbox is very helpful for experimenting with CVS.</i>
+This is a nice feature, since you don't have to set up a server in order to create the repository. 
+For more formal development, however, your 'real' source code will be stored in a server on another host, not on the local file system.
+
+</p><p><i>tmp&gt;set CVSROOT=C:\\sandbox</i><br>
+<i>tmp&gt;cvs import -m "Play around with CVS" myproject myproject initial</i><br>
+Create a new project named 'myproject', built from the current contents of your tmp directory (and subdirectories), and place the new project into your sandbox repository.
+
+
+</p><p><i>work&gt;cvs -d C:\\sandbox checkout myproject</i><br>
+Retrieves from the sandbox repository a copy of all files in myproject, and places them into work/myproject. Retrieves the latest version of each file (the HEAD).
+
+
+</p><h3>Common Commands</h3>
+<i>cvs status Blah.java</i><br>
+Lists general information about the file, whether it has been edited, it's revision, and what branch it's on.
+
+
+<p><i>cvs status -q Blah.java</i><br>
+More concise status listing.
+
+
+</p><p><i>cvs -q update -P -d</i><br>
+Updates your workspace with the latest repository files. 
+Performs a merge. Most merges will succeed, but some will fail, and will result in a conflict.
+Conflicts must be handled manually.
+
+</p><p>This is a 'sticky' operation (see above). 
+If your workspace is on the trunk, then you are updated with new trunk files. 
+If your workspace is on a branch, then you are updated with files from that branch.
+
+</p><p><i>cvs -nq update -P -d</i><br>
+Compares your workspace with the repository <i>without</i> actually doing the update.
+Does not write to your workspace.
+The '-n' option means "don't really do this, just show me the current differences between my workspace and the HEAD of the repository."
+
+
+</p><p><i>cvs -q update -P -d -A</i><br>
+Updates your workspace, and ensures you're updated with the trunk, not a branch.
+
+</p><p><i>cvs -q udpate -P -d -r REL_1_0</i><br>
+Updates your workspace with a specific release branch.
+
+</p><p><i>cvs commit -m "Some appropriate description"</i><br>
+Commits all edits to all files in and under the current directory.
+
+
+</p><p><i>cvs history -c -u myuserid -D yesterday -z AST</i><br>
+Displays what a specific user id committed yesterday, and displays the result in a specific time zone (AST) instead of Universal Time.
+
+
+</p><h3>Occasional Commands</h3>
+<i>work&gt;cvs checkout myproject</i><br>
+Fetches an entire project from the repository, and places it in the local directory named work/myproject.
+
+<p><i>cvs add Blah.java</i><br>
+<i>cvs commit -m "My new file." Blah.java</i><br>
+Adds a new file to the repository. 
+Note that you need to commit the file before the addition is complete.
+
+</p><p><i>cvs add -kb jstl.jar</i><br>
+<i>cvs commit -m "Required library." jstl.jar</i><br>
+Adds a new binary file to the repository.
+Again, you need to commit the file before the addition is complete.
+
+
+</p><p><i>work&gt;del Blah.java</i><br>
+<i>work&gt;cvs remove Blah.java</i><br>
+<i>work&gt;cvs commit "No longer needed." Blah.java</i><br>
+Deletes a file. This has 3 steps.
+
+
+</p><p><i>cvs history -c -D "2010/01/01" -z AST Blah.java</i><br>
+Displays a history of commits on a given file, after a given date, with date-time output in a specific time zone (AST). 
+
+</p><p><i>cvs log -d today Blah.java</i><br>
+Shows messages for all commits done today for a given file.
+
+</p><p><i>cvs -q log -wmyuserid -d"2010/04/13 13:00:00" -S</i><br>
+Shows messages for all commits done by a certain user, after a given date-time
+
+</p><p><i>cvs log -rREL_1_0 -wmyuserid Blah.java</i><br>
+Shows the commit messages for a given user id, performed on a specific branch.
+
+</p><p><i>work&gt;rename SolarSys.java SolarSystem.java</i><br>
+<i>work&gt;cvs remove SolarSys.java</i><br>
+<i>work&gt;cvs add SolarSystem.java</i><br>
+<i>work&gt;cvs commit -m "Better name." SolarSystem.java</i><br>
+Renames a file. This has 4 steps.
+
+</p><p><i>cvs rtag -b RB_1_0 myproject</i><br>
+Creates a release branch named 'RB_1_0' for a project named 'myproject'.
+<i>This command is applied to the repository, not to the workspace.</i>
+A release branch can be created before the release, if desired.
+Then, each release candidate is built using the head of the release branch.
+When the release is final, then you apply a regular tag to the release branch, to mark the exact point of release.
+
+</p><p><i>cvs tag REL_1_0</i><br>
+Tags the repository files in your BASE -- the <i>unmodified</i> revisions checked out to your local workspace.
+
+</p><p><i>cvs diff --side-by-side Blah.java</i><br>
+Shows the differences between your workspace and the BASE.
+
+
+</p><h3>CVS Quirks</h3>
+<ul>
+ <li>after you have initially checked out a project to a given local workspace, CVS will remember both the location of the repository, <i>and</i> your login credentials (as long as you don't log out). 
+  Thus, there's no need to repeatedly state the location of the repository when issuing CVS commands.
+ </li><li>if you try to commit a file which actually has no differences with the repository file, CVS will not create a new revision.
+</li></ul>
+
+
+
+<h3>Merging From Branch To Trunk</h3>
+There are two ways to merge from a branch into the trunk. 
+
+<p><i>cvs -q update -j 1.1.2.2 -j 1.1.2.3 Blah.java</i><br>
+This is usually the preferred method. 
+Note the presence of 2 '-j' options. 
+This means that <i>only the edits that took the file from 1.1.2.2 to 1.1.2.3 are to be merged into the trunk</i>.
+This is very helpful, because it can avoid the repetition of possible conflicts that may have already occurred during previous merges.
+
+
+
+</p><p><i>cvs -q update -j 1.1.2.3 Blah.java</i><br>
+This is usually not the preferred style (see above). 
+This merge has a single '-j' option. 
+The implementation of this merge will need to go back to the common ancestor of the trunk and the branch. 
+The problem with this style is how conflicts are treated. 
+If such a merge has a conflict, it can certainly be resolved, just like any other conflict. 
+However, the <i>conflict will resurface again later</i> should you need to perform another merge between the branch and the trunk.
+
+
+</p><h3>Separate Workspaces For Each Branch</h3>
+Although there are many variations, it's typical to be working on 2 code streams (sometimes more) :
+<ul>
+ <li>the trunk : main development for the next release
+ </li><li>a branch : bug fixes for the most recent release, already in production
+</li></ul>
+ 
+<p>
+When working on more than a single branch, it's helpful to be able to switch rapidly between them.
+It's certainly possible to use a single local workspace to do so, using a <code>'cvs update'</code> command which specifies the appropriate branch.
+
+</p><p>However, many find it simpler and more convenient to just use a separate workspace for each branch.
+Since the <code>update</code> command is "sticky", and remembers the branch from which a workspace originally came from, there's usually no asymmetry between working on the branch and working on the trunk. 
+
+
+<br>
+</p>
+<p></p>
+
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=241 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:49 GMT -->
+</html>

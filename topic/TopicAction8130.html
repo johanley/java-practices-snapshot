@@ -1,0 +1,197 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=181 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="forward,JSP,redirect,servlet,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Forward versus redirect</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Forward versus redirect</div>
+
+<br>A <code>Controller</code> (in this context, an implementation of 
+<code><a href="http://docs.oracle.com/javaee/7/api/javax/servlet/http/HttpServlet.html">HttpServlet</a></code>) 
+may perform either a forward or a redirect
+operation at the end of processing a request. It's important to understand the 
+difference between these two cases, in particular with respect to browser reloads 
+of web pages.
+
+<p>Forward
+</p><ul>
+<li>a forward is performed internally by the servlet</li>
+
+<li>
+the browser is completely unaware that it has taken place, so its original
+URL remains intact</li>
+
+<li>
+any browser reload of the resulting page will simple repeat the original request, with the original
+URL</li>
+</ul>
+Redirect
+<ul>
+<li>
+a redirect is a two step process, where the web application instructs the
+browser to fetch a second URL, which differs from the original</li>
+
+<li>
+a browser reload of the second URL will not repeat the <i>original</i>
+request, but will rather fetch the <i>second</i> URL</li>
+
+<li>
+redirect is marginally slower than a forward, since it requires two browser requests, not one</li>
+
+<li>
+objects placed in the <i>original</i> request scope are not available to
+the second request</li>
+</ul>
+
+In general, a forward should be used if the operation can be safely repeated upon 
+a browser reload of the resulting web page; otherwise, redirect must be used. 
+<span class="highlight">Typically, if the operation
+performs an edit on the datastore, then a redirect, not a forward, is required.</span> 
+This is simply to avoid the possibility of inadvertently duplicating an edit to the database.
+
+<p>More explicitly (in terms of common <a href="http://en.wikipedia.org/wiki/SQL">SQL</a> operations) :
+</p><ul>
+<li>for <code>SELECT</code> operations, use a forward
+</li><li>for <code>INSERT</code>, <code>UPDATE</code>, or <code>DELETE</code> operations, use a redirect
+</li></ul>
+
+In HTML, a <code>&lt;FORM&gt;</code> tag can either <a href="http://www.w3.org/TR/html4/interact/forms.html#submit-format"><code>GET</code> or <code>POST</code></a> its data.
+In this context, a <code>GET</code> corresponds to a <code>SELECT</code>-then-forward, and a <code>POST</code>
+corresponds to an edit-then-redirect.
+
+<p>It's strongly recommended that forms for the input of search criteria should use <code>GET</code>, 
+while forms for editing database records should use <code>POST</code>-then-<a href="TopicActionb2b0.html?Id=283">303-Redirect</a>.
+(Note that the 303 HTTP status code is intended for this very case.)
+
+</p><p>The most <a href="http://www.theserverside.com/news/1365146/Redirect-After-Post">common symptom</a> of not using forward/redirect properly is a warning message in a browser, 
+asking the user if they really wish to <code>POST</code> their form data a second time.
+
+</p><p><b>Example</b>
+
+</p><p>This example is after the style of the <a href="http://www.web4j.com/">WEB4J</a> Controller class. 
+The important methods of the Servlet API are:
+</p><ul>
+<li><code>ServletRequest.<a href="https://docs.oracle.com/javaee/7/api/javax/servlet/ServletRequest.html#getRequestDispatcher-java.lang.String-">getRequestDispatcher(String)</a></code>
+</li><li><code>RequestDispatcher.<a href="http://docs.oracle.com/javaee/7/api/javax/servlet/RequestDispatcher.html#forward-javax.servlet.ServletRequest-javax.servlet.ServletResponse-">forward(request, response)</a></code>
+</li><li><code>HttpServletResponse.<a href="http://docs.oracle.com/javaee/7/api/javax/servlet/http/HttpServletResponse.html#sendRedirect-java.lang.String-">sendRedirect(String)</a></code>
+</li></ul>
+<br><pre>
+<span class="keyword">import</span> java.io.IOException;
+<span class="keyword">import</span> javax.servlet.*;
+<span class="keyword">import</span> javax.servlet.http.*;
+<span class="keyword">import</span> hirondelle.web4j.action.Action;
+<span class="keyword">import</span> hirondelle.web4j.action.ResponsePage;
+<span class="keyword">import</span> hirondelle.web4j.request.RequestParser;
+<span class="keyword">import</span> hirondelle.web4j.model.BadRequestException;
+
+<span class="keyword">public</span> <span class="keyword">class</span> RedirectForward <span class="keyword">extends</span> HttpServlet {
+  
+  <span class="comment">//..many items elided
+</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">void</span> doGet(
+      HttpServletRequest aRequest, HttpServletResponse aResponse
+   ) <span class="keyword">throws</span> ServletException, IOException {
+    processRequest(aRequest, aResponse);
+  }
+
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">void</span> doPost(
+      HttpServletRequest aRequest, HttpServletResponse aResponse
+   ) <span class="keyword">throws</span> ServletException, IOException {
+    processRequest(aRequest, aResponse);
+  }
+
+  <span class="comment">/**
+  * Handle all HTTP &lt;tt&gt;GET&lt;/tt&gt; and &lt;tt&gt;POST&lt;/tt&gt; requests.
+  */</span>
+  <span class="keyword">protected</span> <span class="keyword">void</span> processRequest(
+    HttpServletRequest aRequest, HttpServletResponse aResponse
+  ) <span class="keyword">throws</span> ServletException, IOException {
+    RequestParser requestParser = RequestParser.getInstance(aRequest, aResponse);
+    <span class="keyword">try</span> {
+      Action action = requestParser.getWebAction();
+      ResponsePage responsePage = action.execute();
+      <span class="keyword">if</span> ( responsePage.getIsRedirect() ) {
+        redirect(responsePage, aResponse);
+      }
+      <span class="keyword">else</span> {
+        forward(responsePage, aRequest, aResponse);
+      }
+    }
+    <span class="keyword">catch</span> (BadRequestException ex){
+      <span class="comment">//..elided
+</span>      <span class="comment">//use Response.sendError()
+</span>    }
+    <span class="keyword">catch</span> (Throwable ex) {
+      <span class="comment">//..elided
+</span>      <span class="comment">//use Response.sendError()
+</span>    }
+  }
+  
+  <span class="comment">// PRIVATE //
+</span>  
+  <span class="keyword">private</span> <span class="keyword">void</span> redirect(
+    ResponsePage aDestinationPage, HttpServletResponse aResponse
+  ) <span class="keyword">throws</span> IOException {
+    String urlWithSessionID = aResponse.encodeRedirectURL(aDestinationPage.toString());
+    aResponse.sendRedirect( urlWithSessionID );
+  }
+
+  <span class="keyword">private</span> <span class="keyword">void</span> forward(
+    ResponsePage aResponsePage, HttpServletRequest aRequest, HttpServletResponse aResponse
+  ) <span class="keyword">throws</span> ServletException, IOException {
+    RequestDispatcher dispatcher = aRequest.getRequestDispatcher(aResponsePage.toString());
+    dispatcher.forward(aRequest, aResponse);
+  }
+} 
+</pre>
+
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActionae2d.html?Id=139">Command objects</a> <br>
+  <a href="TopicAction5f31.html?Id=188">A Web App Framework   WEB4J</a> <br>
+  <a href="TopicAction00cb.html?Id=219">Consider Controllers for redirects</a> <br>
+  <a href="TopicActionb2b0.html?Id=283">Apply correct redirect code</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=181 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

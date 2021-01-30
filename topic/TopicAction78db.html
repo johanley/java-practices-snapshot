@@ -1,0 +1,542 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=28 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="hashCode,equals,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Implementing hashCode</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Implementing hashCode</div>
+
+<br>Implementing <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Object.html#hashCode()">hashCode</a></code>:
+<ul>
+<li>if a class overrides <a href="TopicAction1deb.html?Id=17"><code>equals</code></a>, it must override <code>hashCode</code></li>
+<li>when they are both overridden, <code>equals</code> and <code>hashCode</code> must use the same set of fields</li>
+<li>if two objects are equal, then their <code>hashCode</code> values must be equal as well</li>
+<li>if the object is <a href="TopicActiond838.html?Id=29">immutable</a>, then <code>hashCode</code> is a candidate for caching and 
+<a href="TopicAction88f9.html?Id=34">lazy initialization</a></li>
+</ul>
+It's a popular misconception that <code>hashCode</code> provides a unique
+identifier for an object. It does not.
+
+<p><b>Example 1</b>
+</p><p>The simplest case for implementing <code>hashCode</code> (and <code>equals</code>) is to not use primitive fields or array fields.
+This is usually not an onerous restriction, because:
+</p><ul>
+ <li>in general, Collections are <a href="TopicAction55c9.html?Id=39">preferred over arrays</a>
+ </li><li>since only objects can be null, objects are <a href="TopicActiondfce.html?Id=199">preferred over primitives</a> for modeling optional data 
+</li></ul> 
+<br><pre>
+<span class="keyword">import</span> java.time.LocalDate;
+<span class="keyword">import</span> java.util.List;
+<span class="keyword">import</span> java.util.Objects;
+<span class="keyword">import</span> java.util.Set;
+
+<span class="comment">/**
+ With respect to implementing equals and hashCode, the simplest case is to 
+ simply never use primitive fields or array fields.
+ 
+ If a significant field is an array, then equals and hashCode need to process each 
+ element of the array. For this reason, it's simpler to use a Collection 
+ instead of an array.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> ApartmentComplex {
+
+  <span class="comment">/** Possible features of an apartment building. */</span>
+  <span class="keyword">enum</span> Feature {
+    AIR_COND, CENTRAL_VAC, INDOOR_PARKING
+  }
+  
+  <span class="comment">/**
+   Constructor.
+    
+   @param name possibly empty
+   @param isDecrepit never null
+   @param options never null, possibly empty
+   @param maintenanceChecks never null, possibly empty
+   @param features never null, possibly empty; callers typically use EnumSet.of(). 
+   @param numApartments nullable
+   @param numTenants nullable
+  */</span>
+  <span class="keyword">public</span> ApartmentComplex(
+    String name,
+    Boolean isDecrepit,
+    Set&lt;String&gt; options,
+    List&lt;LocalDate&gt; maintenanceChecks,
+    Set&lt;Feature&gt; features,
+    Integer numApartments,
+    Long numTenants
+  ){
+    <span class="keyword">this</span>.name = Objects.requireNonNull(name);
+    <span class="keyword">this</span>.isDecrepit = Objects.requireNonNull(isDecrepit);
+    <span class="keyword">this</span>.options = Objects.requireNonNull(options);
+    <span class="keyword">this</span>.maintenanceChecks = Objects.requireNonNull(maintenanceChecks);
+    <span class="keyword">this</span>.features = Objects.requireNonNull(features);
+    <span class="keyword">this</span>.numApartments = numApartments;
+    <span class="keyword">this</span>.numTenants = numTenants;
+  }
+
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">boolean</span> equals(Object aThat) {
+    <span class="comment">//a standard implementation pattern
+</span>    <span class="comment">//only the type 'ApartmentComplex' changes
+</span>    <span class="keyword">if</span> (<span class="keyword">this</span> == aThat) <span class="keyword">return</span> <span class="keyword">true</span>;
+    <span class="keyword">if</span> (!(aThat <span class="keyword">instanceof</span> ApartmentComplex)) <span class="keyword">return</span> <span class="keyword">false</span>;
+    ApartmentComplex that = (ApartmentComplex)aThat;
+    <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="literal">0</span>; i &lt; <span class="keyword">this</span>.getSigFields().length; ++i){
+      <span class="keyword">if</span> (!Objects.equals(<span class="keyword">this</span>.getSigFields()[i], that.getSigFields()[i])){
+        <span class="keyword">return</span> <span class="keyword">false</span>;
+      }
+    }
+    <span class="keyword">return</span> <span class="keyword">true</span>;
+  }
+
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">int</span> hashCode() {
+    <span class="comment">//simple one-line implementation
+</span>    <span class="keyword">return</span> Objects.hash(getSigFields());
+  }
+  
+  <span class="comment">/** For debugging only. */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> String toString(){
+    <span class="keyword">return</span> <span class="literal">"'"</span> + name + <span class="literal">"'"</span>;
+  }
+
+  <span class="comment">//..elided..
+</span>
+  <span class="comment">// PRIVATE
+</span>
+  <span class="comment">//no primitives, and no arrays!
+</span>  <span class="keyword">private</span> String name; 
+  <span class="keyword">private</span> Boolean isDecrepit; 
+  <span class="keyword">private</span> Set&lt;String&gt; options; 
+  <span class="keyword">private</span> List&lt;LocalDate&gt; maintenanceChecks; 
+  <span class="keyword">private</span> Set&lt;Feature&gt; features;
+  <span class="keyword">private</span> Integer numApartments; 
+  <span class="keyword">private</span> Long numTenants;
+
+  <span class="comment">/** 
+   Must be called by BOTH equals and hashCode.
+   'sig' as in 'significant'.
+   
+   It helps a bit to put the most significant items first, such that 
+   the equals method can return as soon as possible, by finding 
+   unequal items rapidly. 
+  */</span>
+  <span class="keyword">private</span> Object[] getSigFields(){
+    Object[] result = {
+      name, isDecrepit, options, maintenanceChecks, 
+      features, numApartments, numTenants
+    };
+    <span class="keyword">return</span> result;
+  }
+} 
+</pre>
+
+
+<p><b>Example 2</b>
+</p><p>The following utility class allows simple construction of an effective
+<code>hashCode</code>
+method. It's based on the recommendations of <i><a href="http://www.amazon.com/exec/obidos/ASIN/0134685997/ref=nosim/javapractices-20">Effective
+Java</a></i>, by Joshua Bloch. 
+<br></p><pre>
+<span class="keyword">import</span> java.lang.reflect.Array;
+
+<span class="comment">/**
+* Collected methods which allow easy implementation of &lt;tt&gt;hashCode&lt;/tt&gt;.
+*
+* Example use case:
+* &lt;pre&gt;
+*  public int hashCode(){
+*    int result = HashCodeUtil.SEED;
+*    //collect the contributions of various fields
+*    result = HashCodeUtil.hash(result, fPrimitive);
+*    result = HashCodeUtil.hash(result, fObject);
+*    result = HashCodeUtil.hash(result, fArray);
+*    return result;
+*  }
+* &lt;/pre&gt;
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> HashCodeUtil {
+
+  <span class="comment">/**
+  * An initial value for a &lt;tt&gt;hashCode&lt;/tt&gt;, to which is added contributions
+  * from fields. Using a non-zero value decreases collisons of &lt;tt&gt;hashCode&lt;/tt&gt;
+  * values.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> SEED = <span class="literal">23</span>;
+
+  <span class="comment">/** booleans.  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> hash(<span class="keyword">int</span> aSeed, <span class="keyword">boolean</span> aBoolean) {
+    log(<span class="literal">"boolean..."</span>);
+    <span class="keyword">return</span> firstTerm( aSeed ) + (aBoolean ? <span class="literal">1</span> : <span class="literal">0</span>);
+  }
+
+  <span class="comment">/*** chars.  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> hash(<span class="keyword">int</span> aSeed, <span class="keyword">char</span> aChar) {
+    log(<span class="literal">"char..."</span>);
+    <span class="keyword">return</span> firstTerm(aSeed) + (<span class="keyword">int</span>)aChar;
+  }
+
+  <span class="comment">/** ints.  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> hash(<span class="keyword">int</span> aSeed , <span class="keyword">int</span> aInt) {
+    <span class="comment">/*
+    * Implementation Note
+    * Note that byte and short are handled by this method, through
+    * implicit conversion.
+    */</span>
+    log(<span class="literal">"int..."</span>);
+    <span class="keyword">return</span> firstTerm(aSeed) + aInt;
+  }
+
+  <span class="comment">/** longs.  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> hash(<span class="keyword">int</span> aSeed , <span class="keyword">long</span> aLong) {
+    log(<span class="literal">"long..."</span>);
+    <span class="keyword">return</span> firstTerm(aSeed)  + (<span class="keyword">int</span>)(aLong ^ (aLong &gt;&gt;&gt; <span class="literal">32</span>));
+  }
+
+  <span class="comment">/** floats.  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> hash(<span class="keyword">int</span> aSeed , <span class="keyword">float</span> aFloat) {
+    <span class="keyword">return</span> hash(aSeed, Float.floatToIntBits(aFloat));
+  }
+
+  <span class="comment">/** doubles. */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> hash(<span class="keyword">int</span> aSeed , <span class="keyword">double</span> aDouble) {
+    <span class="keyword">return</span> hash( aSeed, Double.doubleToLongBits(aDouble) );
+  }
+
+  <span class="comment">/**
+  * &lt;tt&gt;aObject&lt;/tt&gt; is a possibly-null object field, and possibly an array.
+  *
+  * If &lt;tt&gt;aObject&lt;/tt&gt; is an array, then each element may be a primitive
+  * or a possibly-null object.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> hash(<span class="keyword">int</span> aSeed , Object aObject) {
+    <span class="keyword">int</span> result = aSeed;
+    <span class="keyword">if</span> (aObject == <span class="keyword">null</span>){
+      result = hash(result, <span class="literal">0</span>);
+    }
+    <span class="keyword">else</span> <span class="keyword">if</span> (!isArray(aObject)){
+      result = hash(result, aObject.hashCode());
+    }
+    <span class="keyword">else</span> {
+      <span class="keyword">int</span> length = Array.getLength(aObject);
+      <span class="keyword">for</span> (<span class="keyword">int</span> idx = <span class="literal">0</span>; idx &lt; length; ++idx) {
+        Object item = Array.get(aObject, idx);
+        <span class="comment">//if an item in the array references the array itself, prevent infinite looping
+</span>        <span class="keyword">if</span>(! (item == aObject))  
+          <span class="comment">//recursive call!
+</span>          result = hash(result, item);
+        }
+    }
+    <span class="keyword">return</span> result;
+  }  
+  
+  <span class="comment">// PRIVATE 
+</span>  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> fODD_PRIME_NUMBER = <span class="literal">37</span>;
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> firstTerm(<span class="keyword">int</span> aSeed){
+    <span class="keyword">return</span> fODD_PRIME_NUMBER * aSeed;
+  }
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">boolean</span> isArray(Object aObject){
+    <span class="keyword">return</span> aObject.getClass().isArray();
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(String aMessage){
+    System.out.println(aMessage);
+  }
+} 
+</pre>
+
+<br>Here's an example of its use. When the logging statements are uncommented
+in <code>HashCodeUtil</code>, the reuse of the <code>boolean</code>, <code>char</code>,
+<code>int</code> and <code>long</code> versions of <code>hash</code> is demonstrated:
+<br>&nbsp;
+<p></p><p><code>boolean...</code>
+<br><code>char...</code>
+<br><code>int...</code>
+<br><code>long...</code>
+<br><code>long...</code>
+<br><code>int...</code>
+<br><code>int...</code>
+<br><code>int...</code>
+<br><code>int...</code>
+<br><code>int...</code>
+<br><code>hashCode value: -608077094</code>
+<br></p><pre>
+<span class="keyword">import</span> java.util.*;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> ApartmentBuilding {
+
+  <span class="keyword">public</span> ApartmentBuilding(
+    <span class="keyword">boolean</span> aIsDecrepit,
+    <span class="keyword">char</span> aRating,
+    <span class="keyword">int</span> aNumApartments,
+    <span class="keyword">long</span> aNumTenants,
+    <span class="keyword">double</span> aPowerUsage,
+    <span class="keyword">float</span> aWaterUsage,
+    <span class="keyword">byte</span> aNumFloors,
+    String aName,
+    List&lt;String&gt; aOptions,
+    Date[] aMaintenanceChecks
+  ){
+    fIsDecrepit = aIsDecrepit;
+    fRating = aRating;
+    fNumApartments = aNumApartments;
+    fNumTenants = aNumTenants;
+    fPowerUsage = aPowerUsage;
+    fWaterUsage = aWaterUsage;
+    fNumFloors = aNumFloors;
+    fName = aName;
+    fOptions = aOptions;
+    fMaintenanceChecks = aMaintenanceChecks;
+  }
+
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">boolean</span> equals(Object that) {
+    <span class="keyword">if</span> (<span class="keyword">this</span> == that) <span class="keyword">return</span> <span class="keyword">true</span>;
+    <span class="keyword">if</span> (!(that <span class="keyword">instanceof</span> ApartmentBuilding)) <span class="keyword">return</span> <span class="keyword">false</span>;
+    ApartmentBuilding thatBuilding = (ApartmentBuilding)that;
+    <span class="keyword">return</span> hasEqualState(thatBuilding);
+  }
+
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">int</span> hashCode() {
+    <span class="comment">//this style of lazy initialization is 
+</span>    <span class="comment">//suitable only if the object is immutable
+</span>    <span class="keyword">if</span> (fHashCode == <span class="literal">0</span>) {
+      <span class="keyword">int</span> result = HashCodeUtil.SEED;
+      result = HashCodeUtil.hash(result, fIsDecrepit);
+      result = HashCodeUtil.hash(result, fRating);
+      result = HashCodeUtil.hash(result, fNumApartments);
+      result = HashCodeUtil.hash(result, fNumTenants);
+      result = HashCodeUtil.hash(result, fPowerUsage);
+      result = HashCodeUtil.hash(result, fWaterUsage);
+      result = HashCodeUtil.hash(result, fNumFloors);
+      result = HashCodeUtil.hash(result, fName);
+      result = HashCodeUtil.hash(result, fOptions);
+      result = HashCodeUtil.hash(result, fMaintenanceChecks);
+      fHashCode = result;
+    }
+    <span class="keyword">return</span> fHashCode;
+  }
+
+  <span class="comment">//..elided..
+</span>
+  <span class="comment">// PRIVATE
+</span>
+  <span class="comment">/**
+  * The following fields are chosen to exercise most of the different
+  * cases.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">boolean</span> fIsDecrepit;
+  <span class="keyword">private</span> <span class="keyword">char</span> fRating;
+  <span class="keyword">private</span> <span class="keyword">int</span> fNumApartments;
+  <span class="keyword">private</span> <span class="keyword">long</span> fNumTenants;
+  <span class="keyword">private</span> <span class="keyword">double</span> fPowerUsage;
+  <span class="keyword">private</span> <span class="keyword">float</span> fWaterUsage;
+  <span class="keyword">private</span> <span class="keyword">byte</span> fNumFloors;
+  <span class="keyword">private</span> String fName; <span class="comment">//possibly null, say
+</span>  <span class="keyword">private</span> List&lt;String&gt; fOptions; <span class="comment">//never null
+</span>  <span class="keyword">private</span> Date[] fMaintenanceChecks; <span class="comment">//never null
+</span>  <span class="keyword">private</span> <span class="keyword">int</span> fHashCode;
+
+  <span class="comment">/**
+  * Here, for two ApartmentBuildings to be equal, all fields must be equal.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">boolean</span> hasEqualState(ApartmentBuilding that) {
+    <span class="comment">//note the different treatment for possibly-null fields
+</span>    <span class="keyword">return</span>
+      ( <span class="keyword">this</span>.fName==<span class="keyword">null</span> ? that.fName==<span class="keyword">null</span> : <span class="keyword">this</span>.fName.equals(that.fName) ) &amp;&amp;
+      ( <span class="keyword">this</span>.fIsDecrepit == that.fIsDecrepit )&amp;&amp;
+      ( <span class="keyword">this</span>.fRating == that.fRating )&amp;&amp;
+      ( <span class="keyword">this</span>.fNumApartments == that.fNumApartments ) &amp;&amp;
+      ( <span class="keyword">this</span>.fNumTenants == that.fNumTenants ) &amp;&amp;
+      ( <span class="keyword">this</span>.fPowerUsage == that.fPowerUsage ) &amp;&amp;
+      ( <span class="keyword">this</span>.fWaterUsage ==  that.fWaterUsage ) &amp;&amp;
+      ( <span class="keyword">this</span>.fNumFloors == that.fNumFloors ) &amp;&amp;
+      ( <span class="keyword">this</span>.fOptions.equals(that.fOptions) )&amp;&amp;
+      ( Arrays.equals(<span class="keyword">this</span>.fMaintenanceChecks, that.fMaintenanceChecks) )
+    ;
+  }
+
+  <span class="comment">/** Exercise hashcode.  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main (String [] aArguments) {
+    List&lt;String&gt; options = <span class="keyword">new</span> ArrayList&lt;&gt;();
+    options.add(<span class="literal">"pool"</span>);
+    Date[] maintenanceDates = <span class="keyword">new</span> Date[<span class="literal">1</span>];
+    maintenanceDates[<span class="literal">0</span>] = <span class="keyword">new</span> Date();
+    <span class="keyword">byte</span> numFloors = <span class="literal">8</span>;
+
+    ApartmentBuilding building = <span class="keyword">new</span> ApartmentBuilding (
+      <span class="keyword">false</span>, <span class="literal">'B'</span>, <span class="literal">12</span>, <span class="literal">396L</span>,
+      <span class="literal">5.2</span>,  <span class="literal">6.3f</span>, numFloors,  <span class="literal">"Palisades"</span>,
+      options, maintenanceDates
+    );
+
+    System.out.println(<span class="literal">"hashCode value: "</span> + building.hashCode());
+  }
+} 
+</pre>
+
+<p></p>
+
+<p><b>Example 3</b>
+</p><p>The WEB4J tool defines a utility class for implementing <code>hashCode</code>. Here is an example of a 
+Model Object implemented with that utility. 
+
+</p><p>Items to note:
+</p><ul>
+<li>the <code>hashCode</code> value is calculated only once, and only if it is needed. This is only possible since this is 
+an <a href="TopicActiond838.html?Id=29">immutable object</a>.
+</li><li>calling the <code>getSignificantFields()</code> method ensures <code>hashCode</code> and <code>equals</code> 
+remain 'in sync'  
+</li></ul>
+<br><pre>
+<span class="keyword">package</span> hirondelle.fish.main.discussion; 
+
+<span class="keyword">import</span> java.util.*;
+<span class="keyword">import</span> hirondelle.web4j.model.ModelCtorException;
+<span class="keyword">import</span> hirondelle.web4j.model.ModelUtil;
+<span class="keyword">import</span> hirondelle.web4j.model.Check;
+<span class="keyword">import</span> hirondelle.web4j.security.SafeText;
+<span class="keyword">import</span> <span class="keyword">static</span> hirondelle.web4j.util.Consts.FAILS;
+
+<span class="comment">/** 
+ Comment posted by a possibly-anonymous user.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Comment { 
+
+  <span class="comment">/**
+   Constructor. 
+     
+   @param aUserName identifies the logged in user posting the comment. 
+   @param aBody the comment, must have content.
+   @param aDate date and time when the message was posted.
+  */</span>
+  <span class="keyword">public</span> Comment (
+    SafeText aUserName, SafeText aBody, Date aDate
+  ) <span class="keyword">throws</span> ModelCtorException {
+    fUserName = aUserName;
+    fBody = aBody;
+    fDate = aDate.getTime();
+    validateState();
+  }
+
+  <span class="comment">/** Return the logged in user name passed to the constructor. */</span>
+  <span class="keyword">public</span> SafeText getUserName() {
+    <span class="keyword">return</span> fUserName;
+  }
+
+  <span class="comment">/** Return the body of the message passed to the constructor.  */</span>
+  <span class="keyword">public</span> SafeText getBody() {
+    <span class="keyword">return</span> fBody;
+  }
+
+  <span class="comment">/**
+   Return a &lt;a href="http://www.javapractices.com/Topic15.cjp"&gt;defensive copy&lt;/a&gt; 
+   of the date passed to the constructor.
+   
+   &lt;P&gt;The caller may change the state of the returned value, without affecting 
+   the internals of this &lt;tt&gt;Comment&lt;/tt&gt;. Such copying is needed since 
+   a {@link Date} is a mutable object.
+  */</span>
+  <span class="keyword">public</span> Date getDate() {
+    <span class="comment">// the returned object is independent of fDate
+</span>    <span class="keyword">return</span> <span class="keyword">new</span> Date(fDate);
+  }
+
+  <span class="comment">/** Intended for debugging only. */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> String toString() {
+    <span class="keyword">return</span> ModelUtil.toStringFor(<span class="keyword">this</span>);
+  }
+
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">boolean</span> equals( Object aThat ) {
+    Boolean result = ModelUtil.quickEquals(<span class="keyword">this</span>, aThat);
+    <span class="keyword">if</span> ( result == <span class="keyword">null</span> ){
+      Comment that = (Comment) aThat;
+      result = ModelUtil.equalsFor(
+        <span class="keyword">this</span>.getSignificantFields(), that.getSignificantFields()
+      );
+    }
+    <span class="keyword">return</span> result;    
+  }
+
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">int</span> hashCode() {
+    <span class="keyword">if</span> ( fHashCode == <span class="literal">0</span> ) {
+      fHashCode = ModelUtil.hashCodeFor(getSignificantFields());
+    }
+    <span class="keyword">return</span> fHashCode;
+  }
+
+  <span class="comment">// PRIVATE // 
+</span>  <span class="keyword">private</span> <span class="keyword">final</span> SafeText fUserName;
+  <span class="keyword">private</span> <span class="keyword">final</span> SafeText fBody;
+  <span class="comment">/** Long is used here instead of Date in order to ensure immutability.*/</span>
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">long</span> fDate;
+  <span class="keyword">private</span> <span class="keyword">int</span> fHashCode;
+  
+  <span class="keyword">private</span> Object[] getSignificantFields(){
+    <span class="keyword">return</span> <span class="keyword">new</span> Object[] {fUserName, fBody, <span class="keyword">new</span> Date(fDate)};
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">void</span> validateState() <span class="keyword">throws</span> ModelCtorException {
+    ModelCtorException ex = <span class="keyword">new</span> ModelCtorException();
+    <span class="keyword">if</span>( FAILS ==  Check.required(fUserName) ) {
+      ex.add(<span class="literal">"User name must have content."</span>);
+    }
+    <span class="keyword">if</span> ( FAILS == Check.required(fBody) ) {
+      ex.add(<span class="literal">"Comment body must have content."</span>);
+    }
+    <span class="keyword">if</span> ( ! ex.isEmpty() ) <span class="keyword">throw</span> ex;
+  }
+}
+ 
+</pre>
+
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction1deb.html?Id=17">Implementing equals</a> <br>
+  <a href="TopicActiond838.html?Id=29">Immutable objects</a> <br>
+  <a href="TopicAction88f9.html?Id=34">Lazy initialization</a> <br>
+  <a href="TopicAction55c9.html?Id=39">Prefer Collections over older classes</a> <br>
+  <a href="TopicActiondfce.html?Id=199">Consider wrapper classes for optional data</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=28 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+</html>

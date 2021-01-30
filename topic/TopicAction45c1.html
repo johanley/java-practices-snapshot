@@ -1,0 +1,133 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=101 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="assertion,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Assertions in general</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Assertions in general</div>
+
+<br><a href="http://docs.oracle.com/javase/1.5.0/docs/guide/language/assert.html">Assertions</a>
+in general:
+<ul>
+<li>
+when an assertion is fired, <a href="TopicAction3af3.html?Id=130">pass the offending piece
+of data</a> to <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/AssertionError.html">AssertionError</a></code></li>
+
+<li>
+the checks performed inside an assertion are usually simple boolean conditions
+- side effects are usually to be avoided</li>
+
+<li>
+since assertions can be disabled, the behaviour of a program must not depend
+upon assertions being executed</li>
+
+<li>
+if desired, the <a href="TopicActionc981.html?Id=64">conditional compilation</a> idiom
+can still be used</li>
+
+<li>
+you can almost always ignore the methods in <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/ClassLoader.html">ClassLoader</a></code> regarding
+assertions - they are intended for interpreters such as <code>java</code>,
+and are not used in a typical program</li>
+</ul>
+Reminders regarding use :
+<ul>
+
+<li>
+at runtime, assertions are disabled by default</li>
+
+<li>
+the <code>-enableassertions</code>&nbsp; and <code>-disableassertions</code> 
+<a href="http://docs.oracle.com/javase/8/docs/technotes/tools/windows/java.html#standard" title="Standard options for java interpreter">runtime parameters</a> 
+(or their synonyms <code>-ea</code> and <code>-da</code>) control assertions
+to any degree of&nbsp; granularity</li>
+
+<li>
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/AssertionError.html">AssertionError</a></code> behaves as any other <code>Error</code>, and is not
+affected by enabling or disabling of assertions.</li>
+
+<li>
+to compile code containing assertions, older JDKs need to add <code>-source 1.4</code> as a command
+line argument to <code>javac</code></li>
+
+</ul>
+Examples of typical styles, which affect non-system classes:
+<br>&nbsp;
+<table border="1" width="100%" cellspacing="0" cellpadding="3">
+<tbody><tr>
+<th>Runtime command line</th>
+
+<th>Classes with assertions enabled</th>
+</tr>
+
+<tr>
+<td>java -ea&nbsp; Main</td>
+
+<td>all classes</td>
+</tr>
+
+<tr>
+<td>java -ea:com.Blah&nbsp;&nbsp; Main</td>
+
+<td>one particular class named <code>Blah</code></td>
+</tr>
+
+<tr>
+<td>java -ea:com.data... Main</td>
+
+<td>all classes in the com.data package, and all of its sub packages</td>
+</tr>
+
+<tr>
+<td>java -ea -da:com.Blah Main</td>
+
+<td>all but one class named <code>Blah</code></td>
+</tr>
+</tbody></table>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActionc981.html?Id=64">Conditional compile</a> <br>
+  <a href="TopicAction3af3.html?Id=130">Pass all pertinent data to exceptions</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=101 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+</html>

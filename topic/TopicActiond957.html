@@ -1,0 +1,137 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=180 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="email,JSP,servlet,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Validate email addresses</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Validate email addresses</div>
+
+<br>When a user inputs an email address, it may be validated by passing
+it to the constructor of <code><a href="http://docs.oracle.com/javaee/7/api/javax/mail/internet/InternetAddress.html">InternetAddress</a></code>.
+If it doesn't comply with RFC822, then a checked exception will be thrown.
+<p>Note that a simple local address, such as <code>"joe"</code>, complies with
+RFC822. If this type of address is undesired (and it usually is), then some extra validation
+will be needed.
+
+</p><p>Basing email validation on 
+<code><a href="http://docs.oracle.com/javaee/7/api/javax/mail/internet/InternetAddress.html">InternetAddress</a></code>
+is highly recommended. 
+<b>A common mistake is to implement an email address parser on your own</b>, using a regular expression or something similar. 
+This is almost always a bad idea: the details are too hard to get right, and you'll likely make mistakes.
+Furthermore, you won't be aware of the mistakes until your code is in production.
+
+</p><p><b>Example</b>
+
+</p><p>Here's a class that validates email
+addresses through the static method <code>isValidEmailAddress</code>. Note
+that it treats local addresses as invalid (as implemented by the call to
+<code>hasNameAndDomain</code>).
+<br></p><pre>
+<span class="keyword">package</span> hirondelle.web4j.util;
+
+<span class="keyword">import</span> java.util.regex.*;
+<span class="keyword">import</span> javax.mail.internet.AddressException;
+<span class="keyword">import</span> javax.mail.internet.InternetAddress;
+<span class="keyword">import</span> javax.servlet.http.HttpServletRequest;
+<span class="keyword">import</span> javax.servlet.http.HttpServletResponse;
+<span class="keyword">import</span> javax.servlet.http.HttpSession;
+
+<span class="comment">/**
+* Static convenience methods for common web-related tasks.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> WebUtil {
+  
+  <span class="comment">/**
+  * Validate the form of an email address.
+  *
+  * &lt;P&gt;Return &lt;tt&gt;true&lt;/tt&gt; only if 
+  *&lt;ul&gt; 
+  * &lt;li&gt; &lt;tt&gt;aEmailAddress&lt;/tt&gt; can successfully construct an 
+  * {@link javax.mail.internet.InternetAddress} 
+  * &lt;li&gt; when parsed with "@" as delimiter, &lt;tt&gt;aEmailAddress&lt;/tt&gt; contains 
+  * two tokens which satisfy {@link hirondelle.web4j.util.Util#textHasContent}.
+  *&lt;/ul&gt;
+  *
+  *&lt;P&gt; The second condition arises since local email addresses, simply of the form
+  * "&lt;tt&gt;albert&lt;/tt&gt;", for example, are valid for 
+  * {@link javax.mail.internet.InternetAddress}, but almost always undesired.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">boolean</span> isValidEmailAddress(String aEmailAddress){
+    <span class="keyword">if</span> (aEmailAddress == <span class="keyword">null</span>) <span class="keyword">return</span> <span class="keyword">false</span>;
+    <span class="keyword">boolean</span> result = <span class="keyword">true</span>;
+    <span class="keyword">try</span> {
+      InternetAddress emailAddr = <span class="keyword">new</span> InternetAddress(aEmailAddress);
+      <span class="keyword">if</span> (! hasNameAndDomain(aEmailAddress)) {
+        result = <span class="keyword">false</span>;
+      }
+    }
+    <span class="keyword">catch</span> (AddressException ex){
+      result = <span class="keyword">false</span>;
+    }
+    <span class="keyword">return</span> result;
+  }
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">boolean</span> hasNameAndDomain(String aEmailAddress){
+    String[] tokens = aEmailAddress.split(<span class="literal">"@"</span>);
+    <span class="keyword">return</span> 
+      tokens.length == <span class="literal">2</span> &amp;&amp;
+      Util.textHasContent(tokens[<span class="literal">0</span>]) &amp;&amp; 
+      Util.textHasContent(tokens[<span class="literal">1</span>]) 
+    ;
+  }
+  
+  <span class="comment">//..elided
+</span>}
+ 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActionc3f2.html?Id=179">Send trouble ticket emails</a> <br>
+  <a href="TopicAction5f31.html?Id=188">A Web App Framework   WEB4J</a> <br>
+  <a href="TopicAction9163.html?Id=242">Launch other applications</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=180 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

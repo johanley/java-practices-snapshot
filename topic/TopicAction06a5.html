@@ -1,0 +1,301 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=158 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:42 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="swing,theme,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Change theme</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Change theme</div>
+
+<br>The default Java <a href="http://docs.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html">look-and-feel</a> has a <em>theme</em> mechanism, whereby custom colors
+and fonts may be defined. This is particularly useful for users with poor vision.
+
+<p>Here's an illustration of a theme created for people with low vision:
+</p><p><img SRC="../images/LowVision.gif" ALT="Illustration of Low Vision theme" height="328" width="686" border="0">
+
+</p><p>Changing theme is accomplished like so:
+<br></p><pre>
+<span class="keyword">package</span> myapp.ui;
+
+<span class="keyword">import</span> javax.swing.*;
+<span class="keyword">import</span> javax.swing.plaf.metal.*;
+
+<span class="keyword">final</span> <span class="keyword">class</span> UpdateTheme {
+
+  <span class="keyword">void</span> update(MetalTheme aTheme, JFrame aFrame){
+    MetalLookAndFeel.setCurrentTheme(aTheme);
+    <span class="keyword">try</span> {
+      UIManager.setLookAndFeel(<span class="keyword">new</span> MetalLookAndFeel());
+    }
+    <span class="keyword">catch</span> ( UnsupportedLookAndFeelException ex ){
+      System.out.println(<span class="literal">"Cannot set new Theme for Java Look and Feel."</span>);
+    }
+    SwingUtilities.updateComponentTreeUI(aFrame);
+  }
+} 
+</pre>
+
+<b>Defining Themes</b>
+<p></p><p>Here, the <code>Theme</code> class defines the set of <code>MetalTheme</code> objects
+available to the application.
+<br></p><pre>
+<span class="keyword">package</span> hirondelle.stocks.util.ui;
+
+<span class="keyword">import</span> javax.swing.plaf.metal.*;
+<span class="keyword">import</span> javax.swing.plaf.basic.BasicBorders;
+<span class="keyword">import</span> javax.swing.border.*;
+<span class="keyword">import</span> javax.swing.plaf.*;
+<span class="keyword">import</span> javax.swing.*;
+<span class="keyword">import</span> java.awt.*;
+<span class="keyword">import</span> java.util.*;
+
+<span class="comment">/**
+* Defines all themes which can allow the user to customize the Java Look and Feel.
+*
+* &lt;P&gt;This application uses only the cross-platform Java Look-and-Feel, and never 
+* attempts to adapt to the native look-and-feel (Windows, Metal, Mac).
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Theme { 
+  
+  <span class="comment">/*
+  * Implementation Note:
+  * This item has not been converted to an enum class, since it 
+  * contains so many data-related settings. 
+  */</span>
+  
+  <span class="comment">/**
+  * A theme identical to the default Java look-and-feel, but whose name 
+  * is "Default" instead of the cryptic "Steel", and which provides a 
+  * &lt;tt&gt;toString&lt;/tt&gt; method (required if &lt;tt&gt;Theme&lt;/tt&gt; objects 
+  * passed to a combo box). Used as the base class for all other themes 
+  * used in this application.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> MetalTheme DEFAULT = <span class="keyword">new</span> Default();
+  
+  <span class="comment">/**
+  * Much like {@link #DEFAULT}, but uses some blue-green colors.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> MetalTheme AQUA = <span class="keyword">new</span> Aqua();
+  
+  <span class="comment">/**
+  * Differs from {@link #DEFAULT} only in font sizes.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> MetalTheme LARGE_FONT = <span class="keyword">new</span> LargeFont();
+  
+  <span class="comment">/**
+  * Large fonts, and high contrast black and white colors.
+  *
+  * &lt;P&gt;This is an amalgam of two example themes from the JDK swing examples ; there 
+  * is apparently no recommended standard for a low-vision theme.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> MetalTheme LOW_VISION = <span class="keyword">new</span> LowVision();
+
+  <span class="comment">/** 
+  * Convert &lt;tt&gt;aText&lt;/tt&gt; into its corresponding &lt;tt&gt;Theme&lt;/tt&gt; object, 
+  * if possible.
+  *
+  * @param aText possibly-null text which may map to a Theme.
+  * @return null if &lt;tt&gt;aText&lt;/tt&gt; is null, else try to match to a 
+  * known &lt;tt&gt;Theme&lt;/tt&gt;.
+  * @throws IllegalArgumentException if &lt;tt&gt;aText&lt;/tt&gt; cannot be 
+  * matched to a known theme.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> MetalTheme valueOf(String aText) { 
+    <span class="keyword">if</span> (aText == <span class="keyword">null</span>) <span class="keyword">return</span> <span class="keyword">null</span>; 
+    <span class="keyword">for</span>(MetalTheme theme: VALUES){
+      <span class="keyword">if</span> (aText.endsWith(theme.getName())){
+        <span class="keyword">return</span> theme;
+      }
+    }
+    <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="literal">"Cannot parse into Theme object:"</span> + aText); 
+  } 
+
+  <span class="comment">/**
+  * Return true if &lt;tt&gt;aTheme&lt;/tt&gt; uses a larger font than the default; this is the 
+  * case only for &lt;tt&gt;LARGE_FONT&lt;/tt&gt; and &lt;tt&gt;LOW_VISION&lt;/tt&gt;.
+  *
+  * &lt;P&gt;Themes with large font sizes need particular care, as their use may 
+  * require changes outside those provided through 
+  * &lt;tt&gt;SwingUtilities.updateComponentTreeUI&lt;/tt&gt;.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">boolean</span> hasLargeFont(MetalTheme aTheme) {
+    <span class="keyword">return</span> aTheme == LARGE_FONT || aTheme == LOW_VISION;
+  }
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> MetalTheme[] fValues = { 
+    DEFAULT, 
+    AQUA, 
+    LARGE_FONT, 
+    LOW_VISION 
+  };
+  
+  <span class="comment">/**Allows user to iterate over all elements of this enumeration.  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> java.util.List&lt;MetalTheme&gt; VALUES = 
+    Collections.unmodifiableList(Arrays.asList(fValues)
+  );
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String fDEFAULT_NAME = <span class="literal">"Default"</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String fAQUA_NAME = <span class="literal">"Aqua"</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String fLARGE_FONT_NAME = <span class="literal">"Large Font"</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String fLOW_VISION_NAME = <span class="literal">"Low Vision"</span>;
+  
+  <span class="comment">/*
+  * All items below are private nested classes which define the various
+  * themes.
+  */</span>
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">class</span> Default <span class="keyword">extends</span> DefaultMetalTheme {
+    <span class="keyword">public</span> String getName(){ 
+      <span class="keyword">return</span> fName;
+    }
+    <span class="comment">/**
+    * This override is provided such that Theme objects can 
+    * be directly passed to JComboBox, instead of Strings. (This would
+    * not be necessary if getName had been named toString instead).
+    */</span>
+    <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">final</span> String toString() {
+      <span class="keyword">return</span> getName();
+    }
+    <span class="keyword">private</span> <span class="keyword">final</span> String fName = fDEFAULT_NAME;
+  }  
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">class</span> Aqua <span class="keyword">extends</span> Default {
+    <span class="keyword">public</span> String getName(){ <span class="keyword">return</span> fName; }
+    <span class="keyword">protected</span> ColorUIResource getPrimary1() { <span class="keyword">return</span> fPrimary1; }
+    <span class="keyword">protected</span> ColorUIResource getPrimary2() { <span class="keyword">return</span> fPrimary2; }
+    <span class="keyword">protected</span> ColorUIResource getPrimary3() { <span class="keyword">return</span> fPrimary3; }
+    <span class="keyword">private</span> <span class="keyword">final</span> String fName = fAQUA_NAME;
+    <span class="keyword">private</span> <span class="keyword">final</span> ColorUIResource fPrimary1 = <span class="keyword">new</span> ColorUIResource(<span class="literal">102</span>, <span class="literal">153</span>, <span class="literal">153</span>);
+    <span class="keyword">private</span> <span class="keyword">final</span> ColorUIResource fPrimary2 = <span class="keyword">new</span> ColorUIResource(<span class="literal">128</span>, <span class="literal">192</span>, <span class="literal">192</span>);
+    <span class="keyword">private</span> <span class="keyword">final</span> ColorUIResource fPrimary3 = <span class="keyword">new</span> ColorUIResource(<span class="literal">159</span>, <span class="literal">235</span>, <span class="literal">235</span>);
+  }  
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">class</span> LargeFont <span class="keyword">extends</span> Default {
+    <span class="keyword">public</span> String getName(){ <span class="keyword">return</span> fName; }
+    <span class="comment">//fonts are larger than defaults
+</span>    <span class="keyword">public</span> FontUIResource getControlTextFont() { <span class="keyword">return</span> fControlFont;}
+    <span class="keyword">public</span> FontUIResource getSystemTextFont() { <span class="keyword">return</span> fSystemFont;}
+    <span class="keyword">public</span> FontUIResource getUserTextFont() { <span class="keyword">return</span> fUserFont;}
+    <span class="keyword">public</span> FontUIResource getMenuTextFont() { <span class="keyword">return</span> fControlFont;}
+    <span class="keyword">public</span> FontUIResource getWindowTitleFont() { <span class="keyword">return</span> fWindowTitleFont;}
+    <span class="keyword">public</span> FontUIResource getSubTextFont() { <span class="keyword">return</span> fSmallFont;}
+    <span class="keyword">private</span> <span class="keyword">final</span> String fName = fLARGE_FONT_NAME;
+    <span class="keyword">private</span> <span class="keyword">final</span> FontUIResource fControlFont = <span class="keyword">new</span> FontUIResource(<span class="literal">"Dialog"</span>, Font.BOLD, <span class="literal">18</span>);
+    <span class="keyword">private</span> <span class="keyword">final</span> FontUIResource fSystemFont = <span class="keyword">new</span> FontUIResource(<span class="literal">"Dialog"</span>, Font.PLAIN, <span class="literal">18</span>);
+    <span class="keyword">private</span> <span class="keyword">final</span> FontUIResource fWindowTitleFont = <span class="keyword">new</span> FontUIResource(
+      <span class="literal">"Dialog"</span>, Font.BOLD,<span class="literal">18</span>
+    );
+    <span class="keyword">private</span> <span class="keyword">final</span> FontUIResource fUserFont = <span class="keyword">new</span> FontUIResource(<span class="literal">"SansSerif"</span>, Font.PLAIN, <span class="literal">18</span>);
+    <span class="keyword">private</span> <span class="keyword">final</span> FontUIResource fSmallFont = <span class="keyword">new</span> FontUIResource(<span class="literal">"Dialog"</span>, Font.PLAIN, <span class="literal">14</span>);
+  }  
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">class</span> LowVision <span class="keyword">extends</span> LargeFont {
+    <span class="keyword">public</span> String getName() { <span class="keyword">return</span> fName; }
+    <span class="comment">//colors are mostly black and white
+</span>    <span class="keyword">public</span> ColorUIResource getPrimaryControlHighlight() { <span class="keyword">return</span> fPrimaryHighlight;}
+    <span class="keyword">public</span> ColorUIResource getControlHighlight() { <span class="keyword">return</span> <span class="keyword">super</span>.getSecondary3(); }
+    <span class="keyword">public</span> ColorUIResource getFocusColor() { <span class="keyword">return</span> getBlack(); }
+    <span class="keyword">public</span> ColorUIResource getTextHighlightColor() { <span class="keyword">return</span> getBlack(); }
+    <span class="keyword">public</span> ColorUIResource getHighlightedTextColor() { <span class="keyword">return</span> getWhite(); }
+    <span class="keyword">public</span> ColorUIResource getMenuSelectedBackground() { <span class="keyword">return</span> getBlack(); }
+    <span class="keyword">public</span> ColorUIResource getMenuSelectedForeground() { <span class="keyword">return</span> getWhite(); }
+    <span class="keyword">public</span> ColorUIResource getAcceleratorForeground() { <span class="keyword">return</span> getBlack(); }
+    <span class="keyword">public</span> ColorUIResource getAcceleratorSelectedForeground() { <span class="keyword">return</span> getWhite(); }
+    <span class="keyword">public</span> <span class="keyword">void</span> addCustomEntriesToTable(UIDefaults aTable) {
+      <span class="keyword">super</span>.addCustomEntriesToTable(aTable);
+      aTable.put( <span class="literal">"ToolTip.border"</span>, fBlackLineBorder);
+      aTable.put( <span class="literal">"TitledBorder.border"</span>, fBlackLineBorder);
+      aTable.put( <span class="literal">"ScrollPane.border"</span>, fBlackLineBorder);
+      aTable.put( <span class="literal">"TextField.border"</span>, fTextBorder);
+      aTable.put( <span class="literal">"PasswordField.border"</span>, fTextBorder);
+      aTable.put( <span class="literal">"TextArea.border"</span>, fTextBorder);
+      aTable.put( <span class="literal">"TextPane.border"</span>, fTextBorder);
+      aTable.put( <span class="literal">"EditorPane.border"</span>, fTextBorder);
+      aTable.put(
+        <span class="literal">"InternalFrame.closeIcon"</span>, 
+        MetalIconFactory.getInternalFrameCloseIcon(fInternalFrameIconSize)
+      );
+      aTable.put(
+        <span class="literal">"InternalFrame.maximizeIcon"</span>, 
+        MetalIconFactory.getInternalFrameMaximizeIcon(fInternalFrameIconSize)
+      );
+      aTable.put(
+        <span class="literal">"InternalFrame.iconifyIcon"</span>,
+         MetalIconFactory.getInternalFrameMinimizeIcon(fInternalFrameIconSize)
+       );
+      aTable.put(
+        <span class="literal">"InternalFrame.minimizeIcon"</span>, 
+         MetalIconFactory.getInternalFrameAltMaximizeIcon(fInternalFrameIconSize)
+       );
+      aTable.put( <span class="literal">"ScrollBar.width"</span>, fScrollBarWidth );
+    }
+    <span class="keyword">protected</span> ColorUIResource getPrimary1() { <span class="keyword">return</span> fPrimary1; } 
+    <span class="keyword">protected</span> ColorUIResource getPrimary2() { <span class="keyword">return</span> fPrimary2; }
+    <span class="keyword">protected</span> ColorUIResource getPrimary3() { <span class="keyword">return</span> fPrimary3; }
+    <span class="keyword">protected</span> ColorUIResource getSecondary2() { <span class="keyword">return</span> fSecondary2; }
+    <span class="keyword">protected</span> ColorUIResource getSecondary3() { <span class="keyword">return</span> fSecondary3; }
+    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String fName = fLOW_VISION_NAME;
+    <span class="keyword">private</span> <span class="keyword">final</span> ColorUIResource fPrimary1 = <span class="keyword">new</span> ColorUIResource(<span class="literal">0</span>, <span class="literal">0</span>, <span class="literal">0</span>);
+    <span class="keyword">private</span> <span class="keyword">final</span> ColorUIResource fPrimary2 = <span class="keyword">new</span> ColorUIResource(<span class="literal">204</span>, <span class="literal">204</span>, <span class="literal">204</span>);
+    <span class="keyword">private</span> <span class="keyword">final</span> ColorUIResource fPrimary3 = <span class="keyword">new</span> ColorUIResource(<span class="literal">255</span>, <span class="literal">255</span>, <span class="literal">255</span>);
+    <span class="keyword">private</span> <span class="keyword">final</span> ColorUIResource fPrimaryHighlight = <span class="keyword">new</span> ColorUIResource(<span class="literal">102</span>,<span class="literal">102</span>,<span class="literal">102</span>);
+    <span class="keyword">private</span> <span class="keyword">final</span> ColorUIResource fSecondary2 = <span class="keyword">new</span> ColorUIResource(<span class="literal">204</span>, <span class="literal">204</span>, <span class="literal">204</span>);
+    <span class="keyword">private</span> <span class="keyword">final</span> ColorUIResource fSecondary3 = <span class="keyword">new</span> ColorUIResource(<span class="literal">255</span>, <span class="literal">255</span>, <span class="literal">255</span>);
+    <span class="keyword">private</span> <span class="keyword">final</span> Border fBlackLineBorder = <span class="keyword">new</span> BorderUIResource(<span class="keyword">new</span> LineBorder(getBlack()));
+    <span class="keyword">private</span> <span class="keyword">final</span> Object fTextBorder = <span class="keyword">new</span> BorderUIResource( 
+      <span class="keyword">new</span> CompoundBorder(fBlackLineBorder, <span class="keyword">new</span> BasicBorders.MarginBorder())
+    );
+    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">int</span> fInternalFrameIconSize = <span class="literal">30</span>;
+    <span class="keyword">private</span> <span class="keyword">final</span> Integer fScrollBarWidth = <span class="keyword">new</span> Integer(<span class="literal">25</span>);
+  }
+}
+ 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction992c.html?Id=148">Look and Feel guidelines</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=158 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:42 GMT -->
+</html>

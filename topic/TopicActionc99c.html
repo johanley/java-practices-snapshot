@@ -1,0 +1,180 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=282 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="collections,removeIf,remove,delete,ConcurrentModificationException,enhanced for,iteration,lambda,listiterator,predicate,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Remove from a collection</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Remove from a collection</div>
+
+<br>
+Sometimes you need to conditionally remove an item from a collection.
+You can't do that in an enhanced-for loop, because it fails with a 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/ConcurrentModificationException.html">ConcurrentModificationException</a></code>.
+
+<p>Options for removing an item from a collection include:
+</p><ul>
+ <li><code>Collection.<a href="https://docs.oracle.com/javase/10/docs/api/java/util/Collection.html#removeIf(java.util.function.Predicate)">removeIf</a></code>
+ </li><li><code>Iterator.<a href="https://docs.oracle.com/javase/10/docs/api/java/util/Iterator.html#remove()">remove</a></code>
+ </li><li><code>ListIterator.<a href="https://docs.oracle.com/javase/10/docs/api/java/util/ListIterator.html#remove()">remove</a></code> (for <code>List</code>s only;  <code>ListIterator</code> can both add and remove items)
+</li></ul> 
+
+<p><b>Example</b><br>
+<br></p><pre>
+<span class="keyword">import</span> <span class="keyword">static</span> java.util.stream.Collectors.toList;
+<span class="keyword">import</span> <span class="keyword">static</span> java.util.stream.Collectors.toSet;
+
+<span class="keyword">import</span> java.util.Collection;
+<span class="keyword">import</span> java.util.Iterator;
+<span class="keyword">import</span> java.util.List;
+<span class="keyword">import</span> java.util.ListIterator;
+<span class="keyword">import</span> java.util.stream.Stream;
+
+<span class="comment">/** Conditionally remove items from a Collection. */</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> RemoveFromCollection {
+
+  <span class="comment">/** 
+   With Java 8, this is usually the preferred method.
+   
+   If the predicate is long, use a method reference expression 
+   instead of a lambda expression.
+   @since Java 8 
+  */</span> 
+  <span class="keyword">void</span> withRemoveIf(){
+    Collection&lt;String&gt; words = words();
+    words.removeIf(w -&gt; w.length() &gt; MAX_WORD_LENGTH);
+  }
+  
+  <span class="comment">/** @since Java 1.2. */</span>
+  <span class="keyword">void</span> withIterator(){
+    Collection&lt;Integer&gt; numbers = numbers();
+    Iterator&lt;Integer&gt; iter = numbers.iterator();
+    <span class="keyword">while</span> (iter.hasNext()){
+      Integer number = iter.next();
+      <span class="keyword">if</span> (number &gt; MAX_NUM){
+        iter.remove();
+      }
+    }
+  }
+
+  <span class="comment">/**
+   In Effective Java, author Joshua Bloch advocates for this style 
+   of using Iterators. The benefit is that the scope of the iterator 
+   object is strictly confined to the loop in which it's used.
+   @since Java 1.2  
+  */</span>
+  <span class="keyword">void</span> withIteratorBlochianStyle(){
+    List&lt;String&gt; words = words();
+    <span class="keyword">for</span>(Iterator&lt;String&gt; iter = words.iterator(); iter.hasNext();){
+      String word = iter.next();
+      <span class="keyword">if</span> (word.length() &gt; MAX_WORD_LENGTH){
+        iter.remove();
+      }
+    }
+  }
+
+
+  <span class="comment">/** 
+   ListIterator works with Lists only.
+   @since Java 1.2 
+  */</span>
+  <span class="keyword">void</span> withListIterator(){
+    List&lt;String&gt; words = words();
+    ListIterator&lt;String&gt; iter = words.listIterator();
+    <span class="keyword">while</span> (iter.hasNext()){
+      String word = iter.next();
+      <span class="keyword">if</span> (word.length() &gt; MAX_WORD_LENGTH){
+        iter.remove();
+      }
+    }
+  }
+
+  <span class="comment">/** Always fails!. */</span>
+  <span class="keyword">void</span> withForEach(){
+    Collection&lt;Integer&gt; numbers = numbers();
+    <span class="keyword">for</span>(Integer number : numbers){
+      <span class="comment">//fails: ConcurrentModificationException
+</span>      <span class="keyword">if</span> (number &gt; MAX_NUM){
+        numbers.remove(number);
+      }
+    }
+  }
+  
+  <span class="keyword">private</span> List&lt;String&gt; words(){
+    <span class="keyword">return</span> collectWords(<span class="literal">"Monty"</span>, <span class="literal">"Python's"</span>, <span class="literal">"Flying"</span>, <span class="literal">"Circus"</span>);
+  }
+  
+  <span class="comment">/** @since Java 8 */</span>
+  <span class="keyword">private</span> List&lt;String&gt; collectWords(String... words){
+    <span class="keyword">return</span> Stream.of(words).collect(toList());
+  }
+  
+  <span class="keyword">private</span> Collection&lt;Integer&gt; numbers(){
+    <span class="keyword">return</span> collectNumbers(<span class="literal">1</span>,<span class="literal">2</span>,<span class="literal">3</span>,<span class="literal">4</span>,<span class="literal">5</span>);
+  }
+  
+  <span class="comment">/** @since Java 8 */</span>
+  <span class="keyword">private</span> Collection&lt;Integer&gt; collectNumbers(Integer... numbers){
+    <span class="keyword">return</span> Stream.of(numbers).collect(toSet());
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> MAX_WORD_LENGTH = <span class="literal">5</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> MAX_NUM = <span class="literal">3</span>;
+  
+  <span class="comment">/** Informal test. */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args) {
+    RemoveFromCollection remove = <span class="keyword">new</span> RemoveFromCollection();
+    remove.withRemoveIf();
+    remove.withIterator();
+    remove.withIteratorBlochianStyle();
+    remove.withListIterator();
+    remove.withForEach();
+  }
+} 
+</pre>
+
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction852c.html?Id=125">Ways of iterating</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=282 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+</html>

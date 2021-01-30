@@ -1,0 +1,293 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/portfolio/EditPortfolioAction.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:35 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+EditPortfolioAction.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.stocks.portfolio;<a name=line.1></a>
+<a name=line.2></a>
+<span class='keyword'>import</span> java.awt.event.*;<a name=line.3></a>
+<span class='keyword'>import</span> javax.swing.*;<a name=line.4></a>
+<span class='keyword'>import</span> javax.swing.event.*;<a name=line.5></a>
+<span class='keyword'>import</span> java.util.logging.*;<a name=line.6></a>
+<span class='keyword'>import</span> java.util.*;<a name=line.7></a>
+<a name=line.8></a>
+<span class='keyword'>import</span> hirondelle.stocks.quotes.Stock;<a name=line.9></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Args;<a name=line.10></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.ui.StandardEditor;<a name=line.11></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.ui.UiUtil;<a name=line.12></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Util;<a name=line.13></a>
+<a name=line.14></a>
+<span class='comment'>/**<a name=line.15></a>
+* Present dialog to edit the list of {@link hirondelle.stocks.quotes.Stock} <a name=line.16></a>
+* objects in the {@link CurrentPortfolio}. (See {@link StockEditor} as well.)<a name=line.17></a>
+*/</span><a name=line.18></a>
+<span class='keyword'>public</span> <span class='keyword'>final</span> <span class='keyword'>class</span> EditPortfolioAction <span class='keyword'>extends</span> AbstractAction {<a name=line.19></a>
+  <a name=line.20></a>
+  <span class='comment'>/**<a name=line.21></a>
+  * Constructor.<a name=line.22></a>
+  *  <a name=line.23></a>
+  * @param aCurrentPortfolio contains the stocks in which the user has an interest.<a name=line.24></a>
+  * @param aFrame parent frame to which this editor is attached (the main window).<a name=line.25></a>
+  */</span><a name=line.26></a>
+  <span class='keyword'>public</span> EditPortfolioAction (CurrentPortfolio aCurrentPortfolio, JFrame aFrame) {<a name=line.27></a>
+    <span class='keyword'>super</span>(<span class='literal'>"Portfolio..."</span>, UiUtil.getEmptyIcon()); <a name=line.28></a>
+    Args.checkForNull(aCurrentPortfolio);<a name=line.29></a>
+    Args.checkForNull(aFrame);<a name=line.30></a>
+    fCurrentPortfolio = aCurrentPortfolio;<a name=line.31></a>
+    fModel = <span class='keyword'>new</span> Model();<a name=line.32></a>
+    fFrame = aFrame;<a name=line.33></a>
+    putValue(SHORT_DESCRIPTION, <span class='literal'>"Edit the stocks in this portfolio"</span>);<a name=line.34></a>
+    putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_E, KeyEvent.CTRL_MASK));<a name=line.35></a>
+    putValue(LONG_DESCRIPTION, <span class='literal'>"Add, change, delete operations on stocks in portfolio."</span>);<a name=line.36></a>
+    putValue(MNEMONIC_KEY, <span class='keyword'>new</span> Integer(KeyEvent.VK_P) );    <a name=line.37></a>
+  }<a name=line.38></a>
+<a name=line.39></a>
+  <span class='comment'>/**<a name=line.40></a>
+  * Display a modal dialog, centered on the main window, to allow the user to <a name=line.41></a>
+  * edit their portfolio of stocks.<a name=line.42></a>
+  *<a name=line.43></a>
+  * &lt;P&gt;If the user selects &lt;tt&gt;OK&lt;/tt&gt;, save any edits and update the display of <a name=line.44></a>
+  * the main window - otherwise, discard all edits.<a name=line.45></a>
+  *<a name=line.46></a>
+  *&lt;P&gt; The current stocks are presented in a table, along with <a name=line.47></a>
+  * &lt;tt&gt;Add-Change-Delete&lt;/tt&gt; buttons. <a name=line.48></a>
+  * The &lt;tt&gt;Add&lt;/tt&gt; button is always enabled, while the &lt;tt&gt;Change&lt;/tt&gt; and <a name=line.49></a>
+  * &lt;tt&gt;Delete&lt;/tt&gt; buttons are enabled only if a table row is selected.<a name=line.50></a>
+  *<a name=line.51></a>
+  *&lt;P&gt; &lt;tt&gt;Add&lt;/tt&gt; and &lt;tt&gt;Change&lt;/tt&gt; operations will verify input of <a name=line.52></a>
+  * each field : when focus leaves a field, any invalid input will cause a <a name=line.53></a>
+  * short message to be placed in the field. Selecting &lt;tt&gt;OK&lt;/tt&gt; while <a name=line.54></a>
+  * any item is still invalid will cause a message to be displayed, <a name=line.55></a>
+  * asking for correction before proceeding.<a name=line.56></a>
+  * The only difference between &lt;tt&gt;Add&lt;/tt&gt; and &lt;tt&gt;Change&lt;/tt&gt; is <a name=line.57></a>
+  * that the &lt;tt&gt;Change&lt;/tt&gt; operation will pre-populate data entry areas.<a name=line.58></a>
+  */</span><a name=line.59></a>
+  <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> actionPerformed(ActionEvent aEvent) {<a name=line.60></a>
+    fLogger.info(<span class='literal'>"Edit the list of stocks in the current portfolio."</span>);<a name=line.61></a>
+    initWorkingCopy();<a name=line.62></a>
+    showDialog();<a name=line.63></a>
+  }<a name=line.64></a>
+<a name=line.65></a>
+  <span class='comment'>// PRIVATE<a name=line.66></a>
+</span><a name=line.67></a>
+  <span class='comment'>/**<a name=line.68></a>
+  * The current portfolio, whose contents are to be edited. It is important to<a name=line.69></a>
+  * note that this field is updated only if the user selects OK and if <a name=line.70></a>
+  * fWorkingCopy does not equal fCurrentPortfolio. All individual <a name=line.71></a>
+  * edits made by the user are performed on fWorkingCopy. This allows the user <a name=line.72></a>
+  * to easily back out of any edits they have performed.<a name=line.73></a>
+  */</span><a name=line.74></a>
+  <span class='keyword'>private</span> CurrentPortfolio fCurrentPortfolio;<a name=line.75></a>
+  <a name=line.76></a>
+  <span class='comment'>/**<a name=line.77></a>
+  * Contains the {@link Stock} objects being edited.<a name=line.78></a>
+  *<a name=line.79></a>
+  * &lt;P&gt;Initially contains all items in fCurrentPortfolio; all edits <a name=line.80></a>
+  * performed by the user will be initially applied only to fWorkingCopy. If <a name=line.81></a>
+  * the user ultimately chooses OK, then the objects in <a name=line.82></a>
+  * fCurrentPortfolio are made to match the items in fWorkingCopy. <a name=line.83></a>
+  * <a name=line.84></a>
+  * &lt;P&gt;Created once upon construction, and emptied and reused each time <a name=line.85></a>
+  * actionPerformed is called.<a name=line.86></a>
+  */</span><a name=line.87></a>
+  <span class='keyword'>private</span> Set&lt;Stock&gt; fWorkingCopy;<a name=line.88></a>
+<a name=line.89></a>
+  <span class='comment'>/**<a name=line.90></a>
+  * Allows the user to select one of the stocks in their portfolio.<a name=line.91></a>
+  */</span><a name=line.92></a>
+  <span class='keyword'>private</span> JList&lt;Model&gt; fStockSelector;<a name=line.93></a>
+  <a name=line.94></a>
+  <span class='comment'>/** Underlies fStockSelector.  */</span><a name=line.95></a>
+  <span class='keyword'>private</span> Model fModel;<a name=line.96></a>
+<a name=line.97></a>
+  <span class='comment'>/** Parent window to which the dialog is attached.  */</span><a name=line.98></a>
+  <span class='keyword'>private</span> JFrame fFrame;<a name=line.99></a>
+  <a name=line.100></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> Logger fLogger = Util.getLogger(EditPortfolioAction.<span class='keyword'>class</span>); <a name=line.101></a>
+  <a name=line.102></a>
+  <span class='comment'>/**<a name=line.103></a>
+  * Create a working copy of the Stock objects in fCurrentPortfolio.<a name=line.104></a>
+  * It is important to note that since Stock objects are immutable, <a name=line.105></a>
+  * then creating a copy with independent storage is unnecessary. <a name=line.106></a>
+  * The &lt;tt&gt;Collection&lt;/tt&gt; of items is edited by adding and<a name=line.107></a>
+  * removing objects themselves, and not by changing the state of objects.<a name=line.108></a>
+  */</span><a name=line.109></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> initWorkingCopy(){<a name=line.110></a>
+    <span class='comment'>/* <a name=line.111></a>
+    * Implementation Note<a name=line.112></a>
+    * TreeSort preserves the sort order, even when the set changes<a name=line.113></a>
+    */</span><a name=line.114></a>
+    fWorkingCopy = <span class='keyword'>new</span> TreeSet&lt;Stock&gt;( fCurrentPortfolio.getStocks() );<a name=line.115></a>
+    fLogger.fine(<span class='literal'>"Working copy inited to: "</span> + fWorkingCopy);<a name=line.116></a>
+  }<a name=line.117></a>
+  <a name=line.118></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> synchDisplayWithWorkingCopy(){<a name=line.119></a>
+    fStockSelector.setSelectedIndex(<span class='literal'>0</span>);<a name=line.120></a>
+    fStockSelector.updateUI();<a name=line.121></a>
+  }<a name=line.122></a>
+  <a name=line.123></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> showDialog(){<a name=line.124></a>
+    Editor editor = <span class='keyword'>new</span> Editor(<span class='literal'>"Edit Portfolio"</span>, fFrame);<a name=line.125></a>
+    editor.showDialog();<a name=line.126></a>
+  }<a name=line.127></a>
+  <a name=line.128></a>
+  <span class='keyword'>private</span> JComponent getStockSelector(){<a name=line.129></a>
+    fStockSelector = <span class='keyword'>new</span> JList&lt;Model&gt;(fModel);<a name=line.130></a>
+    fStockSelector.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);<a name=line.131></a>
+    <span class='comment'>//initially, no item is selected :<a name=line.132></a>
+</span>    <span class='comment'>//fStockSelector.setSelectedIndex(0); <a name=line.133></a>
+</span>    fStockSelector.setToolTipText (<span class='literal'>"Choose item, then change or delete using buttons"</span>);<a name=line.134></a>
+    JScrollPane scrollPane = <span class='keyword'>new</span> JScrollPane(fStockSelector);<a name=line.135></a>
+    <span class='keyword'>return</span> scrollPane;<a name=line.136></a>
+  }<a name=line.137></a>
+<a name=line.138></a>
+  <span class='keyword'>private</span> JComponent getCommandColumn(){<a name=line.139></a>
+    JButton add = <span class='keyword'>new</span> JButton(<span class='literal'>"Add..."</span>);<a name=line.140></a>
+    add.setMnemonic(KeyEvent.VK_A); <span class='comment'>//consumed erroneously by JList in JDK 1.4.0<a name=line.141></a>
+</span>    add.addActionListener( <span class='keyword'>new</span> ActionListener() {<a name=line.142></a>
+      <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> actionPerformed(ActionEvent e) {<a name=line.143></a>
+        addStock();<a name=line.144></a>
+      }<a name=line.145></a>
+    });<a name=line.146></a>
+    <a name=line.147></a>
+    <span class='keyword'>class</span> ChangeAction <span class='keyword'>extends</span> EditAction {<a name=line.148></a>
+      ChangeAction(){<a name=line.149></a>
+        <span class='keyword'>super</span>(<span class='literal'>"Change..."</span>, KeyEvent.VK_C);<a name=line.150></a>
+      }<a name=line.151></a>
+      <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> actionPerformed(ActionEvent event){<a name=line.152></a>
+        changeSelectedStock();<a name=line.153></a>
+      }<a name=line.154></a>
+    }<a name=line.155></a>
+    JButton change = <span class='keyword'>new</span> JButton( <span class='keyword'>new</span> ChangeAction() );<a name=line.156></a>
+    <a name=line.157></a>
+    <span class='keyword'>class</span> DeleteAction <span class='keyword'>extends</span> EditAction {<a name=line.158></a>
+      DeleteAction() {<a name=line.159></a>
+        <span class='keyword'>super</span>(<span class='literal'>"Delete"</span>, KeyEvent.VK_D);<a name=line.160></a>
+      }<a name=line.161></a>
+      <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> actionPerformed(ActionEvent e){<a name=line.162></a>
+        deleteSelectedStock();<a name=line.163></a>
+      }<a name=line.164></a>
+    }<a name=line.165></a>
+    <a name=line.166></a>
+    JButton delete = <span class='keyword'>new</span> JButton( <span class='keyword'>new</span> DeleteAction() );<a name=line.167></a>
+    java.util.List&lt;JComponent&gt; buttons = <span class='keyword'>new</span> ArrayList&lt;&gt;();<a name=line.168></a>
+    buttons.add(add);<a name=line.169></a>
+    buttons.add(change);<a name=line.170></a>
+    buttons.add(delete);<a name=line.171></a>
+    <span class='keyword'>return</span> UiUtil.getCommandColumn(buttons);<a name=line.172></a>
+  }<a name=line.173></a>
+  <a name=line.174></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> addStock(){<a name=line.175></a>
+    StockEditor stockEditor = <span class='keyword'>new</span> StockEditor(fFrame);<a name=line.176></a>
+    Stock newStock = stockEditor.addStock();<a name=line.177></a>
+    fLogger.fine(<span class='literal'>"Adding stock to working copy: "</span> + newStock);<a name=line.178></a>
+    <span class='keyword'>if</span> ( newStock != <span class='keyword'>null</span> ) {<a name=line.179></a>
+      fWorkingCopy.add(newStock);<a name=line.180></a>
+      synchDisplayWithWorkingCopy();<a name=line.181></a>
+    }<a name=line.182></a>
+  }<a name=line.183></a>
+  <a name=line.184></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> changeSelectedStock(){<a name=line.185></a>
+    fLogger.fine(<span class='literal'>"Changing stock..."</span>);<a name=line.186></a>
+    Stock selectedStock = getSelectedStock();<a name=line.187></a>
+    StockEditor stockEditor = <span class='keyword'>new</span> StockEditor(fFrame);<a name=line.188></a>
+    Stock changedStock = stockEditor.changeStock(selectedStock);<a name=line.189></a>
+    <span class='keyword'>if</span> ( changedStock != <span class='keyword'>null</span> ) {<a name=line.190></a>
+      fWorkingCopy.remove(selectedStock);<a name=line.191></a>
+      fWorkingCopy.add(changedStock);<a name=line.192></a>
+      synchDisplayWithWorkingCopy();<a name=line.193></a>
+    }<a name=line.194></a>
+  }<a name=line.195></a>
+  <a name=line.196></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> deleteSelectedStock(){<a name=line.197></a>
+    Stock selectedStock = getSelectedStock();<a name=line.198></a>
+    fWorkingCopy.remove(selectedStock);<a name=line.199></a>
+    synchDisplayWithWorkingCopy();<a name=line.200></a>
+  }<a name=line.201></a>
+<a name=line.202></a>
+  <span class='keyword'>private</span> Stock getSelectedStock(){<a name=line.203></a>
+    <span class='keyword'>int</span> idx = fStockSelector.getSelectionModel().getLeadSelectionIndex();<a name=line.204></a>
+    Collection&lt;Stock&gt; collection = fWorkingCopy; <span class='comment'>//need as 'generic temp variable'<a name=line.205></a>
+</span>    java.util.List&lt;Stock&gt; stocks = <span class='keyword'>new</span> ArrayList&lt;&gt;(collection);<a name=line.206></a>
+    <span class='keyword'>return</span> stocks.get(idx);<a name=line.207></a>
+  }<a name=line.208></a>
+<a name=line.209></a>
+  <span class='keyword'>private</span> <span class='keyword'>boolean</span> isSelectionPresent() {<a name=line.210></a>
+    <span class='keyword'>return</span> ! fStockSelector.getSelectionModel().isSelectionEmpty();<a name=line.211></a>
+  }<a name=line.212></a>
+<a name=line.213></a>
+  <span class='comment'>/**<a name=line.214></a>
+  * Both the change and delete actions should be enabled only if there <a name=line.215></a>
+  * is a selection made in the table. This private class encapsulates <a name=line.216></a>
+  * that behavior.<a name=line.217></a>
+  */</span><a name=line.218></a>
+  <span class='keyword'>private</span> <span class='keyword'>abstract</span> <span class='keyword'>class</span> EditAction <span class='keyword'>extends</span> AbstractAction <span class='keyword'>implements</span> ListSelectionListener{<a name=line.219></a>
+    EditAction(String aText, <span class='keyword'>int</span> aMnemonic){<a name=line.220></a>
+      <span class='keyword'>super</span>(aText);<a name=line.221></a>
+      putValue(MNEMONIC_KEY, <span class='keyword'>new</span> Integer(aMnemonic) );    <a name=line.222></a>
+      setEnabled(<span class='keyword'>false</span>);<a name=line.223></a>
+      fStockSelector.getSelectionModel().addListSelectionListener(<span class='keyword'>this</span>);<a name=line.224></a>
+    }<a name=line.225></a>
+    <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> valueChanged(ListSelectionEvent event) {<a name=line.226></a>
+      fLogger.fine(<span class='literal'>"Firing EditAction.valueChanged"</span>);<a name=line.227></a>
+      setEnabled(isSelectionPresent());<a name=line.228></a>
+    }<a name=line.229></a>
+  }<a name=line.230></a>
+  <a name=line.231></a>
+  <span class='comment'>/**<a name=line.232></a>
+  * The implementation of this nested class is kept short by calling methods <a name=line.233></a>
+  * of the enclosing class.<a name=line.234></a>
+  */</span><a name=line.235></a>
+  <span class='keyword'>private</span> <span class='keyword'>final</span> <span class='keyword'>class</span> Editor <span class='keyword'>extends</span> StandardEditor { <a name=line.236></a>
+    Editor(String aTitle, JFrame aParent){<a name=line.237></a>
+      <span class='keyword'>super</span>(aTitle, aParent, StandardEditor.CloseAction.HIDE);<a name=line.238></a>
+    }<a name=line.239></a>
+    <span class='keyword'>@Override</span> <span class='keyword'>protected</span> JComponent getEditorUI () {<a name=line.240></a>
+      JPanel content = <span class='keyword'>new</span> JPanel();<a name=line.241></a>
+      content.setLayout(<span class='keyword'>new</span> BoxLayout(content, BoxLayout.X_AXIS));<a name=line.242></a>
+      content.add( getStockSelector());<a name=line.243></a>
+      content.add( getCommandColumn() );<a name=line.244></a>
+      <span class='keyword'>return</span> content;<a name=line.245></a>
+    }<a name=line.246></a>
+    <span class='keyword'>@Override</span> <span class='keyword'>protected</span> <span class='keyword'>void</span> okAction() {<a name=line.247></a>
+      <span class='keyword'>if</span> (fWorkingCopy.equals(fCurrentPortfolio.getStocks())) {<a name=line.248></a>
+        fLogger.fine(<span class='literal'>"No detected change in underlying stocks."</span>);<a name=line.249></a>
+      }<a name=line.250></a>
+      <span class='keyword'>else</span> {<a name=line.251></a>
+        fLogger.fine(<span class='literal'>"Detected change in underlying stocks."</span>);<a name=line.252></a>
+        fCurrentPortfolio.setStocks(fWorkingCopy);<a name=line.253></a>
+        fCurrentPortfolio.setNeedsSave(<span class='keyword'>true</span>);<a name=line.254></a>
+        fCurrentPortfolio.notifyObservers();<a name=line.255></a>
+      }<a name=line.256></a>
+      dispose();<a name=line.257></a>
+    }<a name=line.258></a>
+  }  <a name=line.259></a>
+<a name=line.260></a>
+  <span class='comment'>/**<a name=line.261></a>
+  * Adapts fWorkingCopy to a ListModel, and controls how each Stock is <a name=line.262></a>
+  * represented as text in the JList.<a name=line.263></a>
+  */</span><a name=line.264></a>
+  <span class='keyword'>private</span> <span class='keyword'>final</span> <span class='keyword'>class</span> Model <span class='keyword'>extends</span> AbstractListModel {<a name=line.265></a>
+    <span class='keyword'>@Override</span> <span class='keyword'>public</span> Object getElementAt(<span class='keyword'>int</span> aRowIndex) {<a name=line.266></a>
+      Collection&lt;Stock&gt; collection = fWorkingCopy;<a name=line.267></a>
+      java.util.List&lt;Stock&gt; list = <span class='keyword'>new</span> ArrayList&lt;&gt;(collection);<a name=line.268></a>
+      Stock stock = list.get(aRowIndex);<a name=line.269></a>
+      <span class='keyword'>return</span> stock.getName();<a name=line.270></a>
+    }<a name=line.271></a>
+    <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>int</span> getSize() {<a name=line.272></a>
+      <span class='keyword'>return</span> fWorkingCopy.size();<a name=line.273></a>
+    }<a name=line.274></a>
+  }<a name=line.275></a>
+}<a name=line.276></a>
+<a name=line.277></a>
+ <a name=line.278></a>
+</PRE><a name=line.279></a>
+ </BODY><a name=line.280></a>
+<HTML><a name=line.281></a>

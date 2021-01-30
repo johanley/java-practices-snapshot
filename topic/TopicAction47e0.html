@@ -1,0 +1,169 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=210 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Beware of DecimalFormat</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Beware of DecimalFormat</div>
+
+<br>Parsing user input into numbers (especially numbers representing money) is a very common task. Such parsing is 
+often implemented with <code><a href="https://docs.oracle.com/javase/10/docs/api/java/text/DecimalFormat.html">DecimalFormat</a></code>. 
+However, parsing with <code>DecimalFormat</code> should be done with care. 
+You may even want to consider an alternative. Here's why:
+<ul>
+<li>surprisingly, a <code><a href="https://docs.oracle.com/javase/10/docs/api/java/text/Format.html">Format</a></code> does not 
+need to parse <em>all</em> of its input. That is, if it finds a 
+match at the <em>start</em> of an input <code>String</code>, it will cease parsing, and return a value. When parsing user input, this 
+kind of behavior is not usually desired. To accomodate this behavior, an extra step is needed - a 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/text/ParsePosition.html">ParsePosition</a></code> object 
+needs to be passed as an <a href="TopicAction6a39.html?Id=37">output parameter</a> to <code>DecimalFormat</code>. 
+</li><li>the class seems to be rather <a href="https://bugs.java.com/bugdatabase/">buggy</a>.
+</li><li>the class is harder than most to understand.
+</li></ul>
+
+<p>Here's an example of parsing with <code>DecimalFormat</code>. An example run appears below. As you can see, 
+</p><ul>
+<li>parsing user input will always require the caller to use 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/text/ParsePosition.html">ParsePosition</a></code> to detect if 
+the whole input has been parsed.
+</li><li>there are cases when the parsing seems just plain <em>wrong</em>.
+</li></ul>
+<br><pre>
+<span class="keyword">import</span> java.text.*;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> BewareDecimalFormat {
+  
+  <span class="comment">/**
+  * parseUserInput DecimalFormat.
+  */</span> 
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main (String... arguments) {
+
+    String patternOne = <span class="literal">"#,##0.00"</span>;
+    log(<span class="literal">"Format : "</span> + patternOne);
+    parseUserInput(<span class="literal">"1000"</span>, patternOne);
+    parseUserInput(<span class="literal">"1,000.00"</span>, patternOne);
+    parseUserInput(<span class="literal">"1000.33"</span>, patternOne);
+    parseUserInput(<span class="literal">".20"</span>, patternOne);
+    parseUserInput(<span class="literal">".2"</span>, patternOne); 
+    parseUserInput(<span class="literal">".222"</span>, patternOne); 
+    parseUserInput(<span class="literal">".222333444"</span>, patternOne); 
+    parseUserInput(<span class="literal">"100.222333444"</span>, patternOne); 
+    parseUserInput(<span class="literal">".22A"</span>, patternOne); 
+    parseUserInput(<span class="literal">".22BlahA"</span>, patternOne); 
+    parseUserInput(<span class="literal">"22Blah"</span>, patternOne); 
+    parseUserInput(<span class="literal">"Blah22"</span>, patternOne); 
+    parseUserInput(<span class="literal">"100000,000.00"</span>, patternOne);
+    parseUserInput(<span class="literal">"10,0000,000.00"</span>, patternOne);
+    parseUserInput(<span class="literal">"1,0000,0000.00"</span>, patternOne);
+
+    String patternTwo= <span class="literal">"#,###0.00"</span>; <span class="comment">//group every 4 digits, not 3
+</span>    log(<span class="literal">" "</span>);
+    log(<span class="literal">"Format : "</span> + patternTwo);
+    parseUserInput(<span class="literal">"1000.00"</span>, patternTwo);
+    parseUserInput(<span class="literal">"1,000.00"</span>, patternTwo);
+    parseUserInput(<span class="literal">"1,0000.00"</span>, patternTwo);
+    parseUserInput(<span class="literal">"1,00000.00"</span>, patternTwo);
+    log(<span class="literal">"Done."</span>);
+  }
+
+  <span class="comment">// PRIVATE
+</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> parseUserInput(String value, String decimalFormatPattern) {
+    DecimalFormat format = <span class="keyword">new</span> DecimalFormat(decimalFormatPattern);
+    ParsePosition parsePosition = <span class="keyword">new</span> ParsePosition(<span class="literal">0</span>);
+    Object object = format.parse(value, parsePosition);
+
+    <span class="keyword">if</span>(object == <span class="keyword">null</span>) {
+      log(<span class="literal">"Failed to parse: "</span> + value);
+    }
+    <span class="keyword">else</span> <span class="keyword">if</span>(parsePosition.getIndex() &lt; value.length()) {
+      log(
+        value + <span class="literal">" parsed OK (not whole input) ParsePos:"</span> + 
+        parsePosition.getIndex() + <span class="literal">", Parse Result: "</span> + object 
+      );
+    }
+    <span class="keyword">else</span> {
+      log(
+        value + <span class="literal">" parsed OK. ParsePos: "</span> + parsePosition.getIndex() + 
+        <span class="literal">", Parse Result: "</span> + object
+      );
+    } 
+  }
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(Object message){
+    System.out.println(String.valueOf(message));
+  }
+} 
+</pre>
+
+<br>Example run:
+<pre>
+&gt;java -cp . BewareDecimalFormat
+Format : #,##0.00
+1000 parsed OK. ParsePos: 4, Parse Result: 1000
+1,000.00 parsed OK. ParsePos: 8, Parse Result: 1000
+1000.33 parsed OK. ParsePos: 7, Parse Result: 1000.33
+.20 parsed OK. ParsePos: 3, Parse Result: 0.2
+.2 parsed OK. ParsePos: 2, Parse Result: 0.2
+.222 parsed OK. ParsePos: 4, Parse Result: 0.222
+.222333444 parsed OK. ParsePos: 10, Parse Result: 0.222333444
+100.222333444 parsed OK. ParsePos: 13, Parse Result: 100.222333444
+.22A parsed OK (not whole input) ParsePos:3, Parse Result: 0.22
+.22BlahA parsed OK (not whole input) ParsePos:3, Parse Result: 0.22
+22Blah parsed OK (not whole input) ParsePos:2, Parse Result: 22
+Failed to parse: Blah22
+100000,000.00 parsed OK. ParsePos: 13, Parse Result: 100000000
+10,0000,000.00 parsed OK. ParsePos: 14, Parse Result: 100000000
+1,0000,0000.00 parsed OK. ParsePos: 14, Parse Result: 100000000
+
+Format : #,###0.00
+1000.00 parsed OK. ParsePos: 7, Parse Result: 1000
+1,000.00 parsed OK. ParsePos: 8, Parse Result: 1000
+1,0000.00 parsed OK. ParsePos: 9, Parse Result: 10000
+1,00000.00 parsed OK. ParsePos: 10, Parse Result: 100000
+Done.</pre>
+<br>
+<p></p>
+
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=210 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

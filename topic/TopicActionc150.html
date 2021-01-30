@@ -1,0 +1,228 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=54 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="portability,thread,timer,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Schedule periodic tasks </title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Schedule periodic tasks </div>
+
+<br>Tasks can be scheduled for execution in the future.
+Such tasks can be performed either periodically, or just once. 
+As well, the first execution can be delayed to a specific time in the future.
+
+<p>There are two different styles of implementing a scheduled task:
+</p><ul>
+ <li><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/ScheduledExecutorService.html">ScheduledExecutorService</a></code> 
+    and <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/ScheduledFuture.html">ScheduledFuture</a></code>
+ </li><li><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Timer.html">Timer</a></code> and <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/TimerTask.html">TimerTask</a></code>
+</li></ul>
+
+<p>The first pair is the more modern API. 
+As usual, the more modern API is usually the preferred one.
+
+The main difference between these two APIs is that the first always uses relative times, while the second does not. 
+If needed, you always can transform a <code>LocalDateTime</code>, <code>Date</code>, or similar object into a relative time:
+</p><pre>
+LocalDateTime now = LocalDateTime.now();
+LocalDateTime futureTime = LocalDateTime.parse("2100-01-01T00:00:00"); 
+Long msecsUntil = ChronoUnit.MILLIS.between(now, futureTime);
+
+//with JDK &lt;8
+Date futureDate = ...
+Long startTime = futureDate.getTime() - System.currentTimeMillis();
+</pre>
+(This will only work if the system clock is not reset.) 
+
+
+<p><b>Example 1</b><br>
+</p><p>Here's an example of an <code>AlarmClock</code> class, which uses a <code>ScheduledExecutorService</code>:
+<br></p><pre>
+<span class="keyword">import</span> java.util.concurrent.Executors;
+<span class="keyword">import</span> java.util.concurrent.ScheduledExecutorService;
+<span class="keyword">import</span> java.util.concurrent.ScheduledFuture;
+<span class="keyword">import</span> java.util.concurrent.TimeUnit;
+
+<span class="comment">/**
+ Run a simple task once every second, starting 3 seconds from now.
+ Cancel the task after 20 seconds.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> AlarmClock {
+  
+  <span class="comment">/** Run the example. */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args) <span class="keyword">throws</span> InterruptedException {
+    log(<span class="literal">"Main started."</span>);
+    AlarmClock alarmClock = <span class="keyword">new</span> AlarmClock(<span class="literal">3</span>, <span class="literal">1</span>, <span class="literal">20</span>);
+    alarmClock.activateAlarmThenStop();
+    <span class="comment">/*
+    To start the alarm at a specific date in the future, the initial delay
+    needs to be calculated relative to the current time, as in : 
+    Date futureDate = ...
+    long startTime = futureDate.getTime() - System.currentTimeMillis();
+    AlarmClock alarm = new AlarmClock(startTime, 1, 20);
+    This works only if the system clock isn't reset.
+    */</span>
+    log(<span class="literal">"Main ended."</span>);
+  }
+  
+  AlarmClock(<span class="keyword">long</span> initialDelay, <span class="keyword">long</span> delayBetweenBeeps, <span class="keyword">long</span> stopAfter){
+    <span class="keyword">this</span>.initialDelay = initialDelay;
+    <span class="keyword">this</span>.delayBetweenRuns = delayBetweenBeeps;
+    <span class="keyword">this</span>.shutdownAfter = stopAfter;
+    <span class="keyword">this</span>.scheduler = Executors.newScheduledThreadPool(NUM_THREADS);    
+  }
+  
+  <span class="comment">/** Sound the alarm for a few seconds, then stop. */</span>
+  <span class="keyword">void</span> activateAlarmThenStop(){
+    Runnable soundAlarmTask = <span class="keyword">new</span> SoundAlarmTask();
+    ScheduledFuture&lt;?&gt; soundAlarmFuture = scheduler.scheduleWithFixedDelay(
+      soundAlarmTask, initialDelay, delayBetweenRuns, TimeUnit.SECONDS
+    );
+    Runnable stopAlarm = <span class="keyword">new</span> StopAlarmTask(soundAlarmFuture);
+    scheduler.schedule(stopAlarm, shutdownAfter, TimeUnit.SECONDS);
+  }
+
+  <span class="comment">// PRIVATE 
+</span>  <span class="keyword">private</span> <span class="keyword">final</span> ScheduledExecutorService scheduler;
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">long</span> initialDelay;
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">long</span> delayBetweenRuns;
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">long</span> shutdownAfter;
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(String msg){
+    System.out.println(msg);
+  }
+
+  <span class="comment">/** If invocations might overlap, you can specify more than a single thread.*/</span> 
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> NUM_THREADS = <span class="literal">1</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">boolean</span> DONT_INTERRUPT_IF_RUNNING = <span class="keyword">false</span>;
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">class</span> SoundAlarmTask <span class="keyword">implements</span> Runnable {
+    <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> run() {
+      ++count;
+      log(<span class="literal">"beep "</span> + count);
+    }
+    <span class="keyword">private</span> <span class="keyword">int</span> count;
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">class</span> StopAlarmTask <span class="keyword">implements</span> Runnable {
+    StopAlarmTask(ScheduledFuture&lt;?&gt; schedFuture){
+      <span class="keyword">this</span>.schedFuture = schedFuture;
+    }
+    <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> run() {
+      log(<span class="literal">"Stopping alarm."</span>);
+      schedFuture.cancel(DONT_INTERRUPT_IF_RUNNING);
+      <span class="comment">/* 
+       Note that this Task also performs cleanup, by asking the 
+       scheduler to shutdown gracefully. 
+      */</span>
+      scheduler.shutdown();
+    }
+    <span class="keyword">private</span> ScheduledFuture&lt;?&gt; schedFuture;
+  }
+} 
+</pre>
+
+<p></p><p><b>Example 2</b><br>
+</p><p>
+This example uses the older classes, <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Timer.html">Timer</a></code>
+and <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/TimerTask.html">TimerTask</a></code>.
+
+</p><p>Here, a task is performed once a day at 4 a.m., starting tomorrow morning.
+<br></p><pre>
+<span class="keyword">import</span> java.util.Timer;
+<span class="keyword">import</span> java.util.TimerTask;
+<span class="keyword">import</span> java.util.Calendar;
+<span class="keyword">import</span> java.util.GregorianCalendar;
+<span class="keyword">import</span> java.util.Date;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> FetchMail <span class="keyword">extends</span> TimerTask {
+
+  <span class="comment">/** Construct and use a TimerTask and Timer. */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main (String... arguments ) {
+    TimerTask fetchMail = <span class="keyword">new</span> FetchMail();
+    <span class="comment">//perform the task once a day at 4 a.m., starting tomorrow morning
+</span>    <span class="comment">//(other styles are possible as well)
+</span>    Timer timer = <span class="keyword">new</span> Timer();
+    timer.scheduleAtFixedRate(fetchMail, getTomorrowMorning4am(), fONCE_PER_DAY);
+  }
+
+  <span class="comment">/**
+  * Implements TimerTask's abstract run method.
+  */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> run(){
+    <span class="comment">//toy implementation
+</span>    System.out.println(<span class="literal">"Fetching mail..."</span>);
+  }
+
+  <span class="comment">// PRIVATE
+</span>
+  <span class="comment">//expressed in milliseconds
+</span>  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="keyword">long</span> fONCE_PER_DAY = <span class="literal">1000</span>*<span class="literal">60</span>*<span class="literal">60</span>*<span class="literal">24</span>;
+
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="keyword">int</span> fONE_DAY = <span class="literal">1</span>;
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="keyword">int</span> fFOUR_AM = <span class="literal">4</span>;
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="keyword">int</span> fZERO_MINUTES = <span class="literal">0</span>;
+
+  <span class="keyword">private</span> <span class="keyword">static</span> Date getTomorrowMorning4am(){
+    Calendar tomorrow = <span class="keyword">new</span> GregorianCalendar();
+    tomorrow.add(Calendar.DATE, fONE_DAY);
+    Calendar result = <span class="keyword">new</span> GregorianCalendar(
+      tomorrow.get(Calendar.YEAR),
+      tomorrow.get(Calendar.MONTH),
+      tomorrow.get(Calendar.DATE),
+      fFOUR_AM,
+      fZERO_MINUTES
+    );
+    <span class="keyword">return</span> result.getTime();
+  }
+}
+ 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction6407.html?Id=160">Timers</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=54 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

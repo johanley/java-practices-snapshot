@@ -1,0 +1,122 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=248 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Prefer modern libraries for concurrency</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Prefer modern libraries for concurrency</div>
+
+<br>
+Version 1.5 of the JDK included a new <a href="https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/package-summary.html">package</a> called java.util.concurrent.
+It contains modern tools for operations involving threads. 
+You should usually prefer using this package instead of older, more low-level techniques.
+
+<p>The java.util.concurrent package is fairly large. 
+The best guide to its contents is likely the excellent book <i><a href="http://www.amazon.com/exec/obidos/ASIN/0321349601/ref=nosim/javapractices-20">Java Concurrency in Practice</a></i>, written by Brian Goetz and other experts.
+The following is a very brief sketch of the most important elements in java.util.concurrent.
+
+</p><p>The most important idea is the <i>separation of tasks and the policy for their execution</i>.
+A <i>task</i> (an informal term) comes in two flavours:
+</p><ul>
+ <li><code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Runnable.html">java.lang.Runnable</a></code> - a task which doesn't return a value (like a <code>void</code> method).
+ </li><li><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/Callable.html">Callable</a></code> - a task which can return a value (this is the more flexible form)
+</li></ul>
+
+<p>For executing tasks, there are 3 important interfaces, which are linked in an inheritance chain.
+Starting at the top level, they are:
+</p><ul>
+ <li><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/Executor.html">Executor</a></code> - a single execute method
+ </li><li><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/ExecutorService.html">ExecutorService</a></code> - common workhorse; submit and invoke methods; includes lifecycle methods
+ </li><li><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/ScheduledExecutorService.html">ScheduledExecutorService</a></code> - executes tasks after a specific time interval, or periodically
+</li></ul>
+
+The <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/Executors.html">Executors</a></code> factory class returns implementations of <code>ExecutorService</code> and <code>ScheduledExecutorService</code>.
+
+<p>When you need to be informed of the result of a task after it completes, you will likely use these items:
+</p><ul>
+ <li><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/Future.html">Future</a></code> - see the result of a task, or cancel it
+ </li><li><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/CompletionService.html">CompletionService</a></code> - accepts tasks, and returns their <code>Future</code>s
+ </li><li><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/ExecutorCompletionService.html">ExecutorCompletionService</a></code> - an implementation of <code>CompletionService</code>
+</li></ul>
+
+<p>Finally, the following are used to synchronize between threads:
+</p><ul>
+<li><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/CountDownLatch.html">CountDownLatch</a></code> 
+</li><li><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/CyclicBarrier.html">CyclicBarrier</a></code> 
+</li><li><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/FutureTask.html">FutureTask</a></code> 
+</li></ul>
+
+<p>Some example code:
+</p><ul>
+ <li><a href="TopicActionaf2f.html?Id=247">pinging N web sites in parallel</a>
+ </li><li><a href="TopicAction7721.html?Id=51">fetching the list of available printers</a>
+</li></ul>
+
+<p>Concurrency uses many specialized terms. Some definitions:
+</p><ul>
+ <li><i>user thread, daemon thread</i> - in Java, the JRE terminates when all user threads terminate; a single user thread will prevent the JRE from terminating. A daemon thread, on the other hand, will not prevent the JRE from terminating.
+ </li><li><i>blocking</i> - if a thread pauses execution until a certain condition is met, then it's said to be blocking.
+ </li><li><i>safety</i> - when nothing unpleasant happens in a multithreaded environment (this is admittedly vague).
+ </li><li><i>liveness</i> - execution continues, eventually; there may be significant pauses in a thread, but the application never completely hangs.
+ </li><li><i>deadlock</i> - execution hangs, since a pair of threads each holds (and keeps) a lock that the other thread needs in order to continue.
+ </li><li><i>race condition</i> - if you are unlucky with the timing of how threads interleave their execution, then bad things will happen.
+ </li><li><i>re-entrant</i> - if a thread already holds a re-entrant lock, and if it needs to re-acquire the lock, then the re-acquisition always succeeds without blocking. Most locks are re-entrant, including Java's intrinsic locks (see below).
+ </li><li><i>intrinsic lock</i> - the built-in locks of the Java language. These correspond to uses of the <code>synchronized</code> keyword.
+ </li><li><i>mutex lock</i> - mutually exclusive locks are held by at most one thread at a time. For example, intrinsic locks are mutexes. Read-write locks are <i>not</i> mutexes, since they allow N readers to access the same data at once.
+ </li><li><i>thread confinement</i> - data that is only accessed by a single thread is always safe, since it's confined to a single thread.
+ </li><li><i>semaphore</i> - object pools containing a limited number of resources use a semaphore to keep track of how many of the resources are currently in use.
+</li></ul>
+
+Here's the lifecycle of a task submitted to an <code>Executor</code>:
+<ul>
+ <li><i>created</i> - the task object has been created, but not yet submitted to an <code>Executor</code>.
+ </li><li><i>submitted</i> - the task has been submitted to an <code>Executor</code>, but hasn't been started yet. In this state, the task can always be cancelled. 
+ </li><li><i>started</i> - the task has begun. The task may be cancelled, if the task is responsive to interruption.
+ </li><li><i>completed</i> - the task has finished. Cancelling a completed task has no effect.
+</li></ul>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActionaa3f.html?Id=225">Modernize old code</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=248 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

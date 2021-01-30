@@ -1,0 +1,161 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=104 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="regular expression,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Compile regular expressions once</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Compile regular expressions once</div>
+
+<br><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/regex/Pattern.html">Pattern</a></code>
+objects compile the regular expressions which are passed to them. 
+(The compilation happens in memory.)
+If a regular expression is used many times, then this compilation should be performed only once.
+<p>Be wary of the these convenience methods, which compile a regular expression
+each time they are called:
+</p><ul>
+<li>
+<code>Pattern.matches</code></li>
+
+<li>
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/String.html">String</a>.matches</code></li>
+
+<li>
+<code>String.replaceAll</code></li>
+
+<li>
+<code>String.replaceFirst</code></li>
+
+<li>
+<code>String.split</code></li>
+</ul>
+<b>Example</b>
+<p>Here's a comparison of the performance of <code>String.matches</code> versus
+the use of <code>Pattern</code> and <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/regex/Matcher.html">Matcher</a></code>.
+</p><p>An example run (with the HotSpot compiler turned off) gives:
+</p><pre>Time for String: 67.693 ms
+Time for Pattern: 12.178 ms</pre>
+<br><pre>
+<span class="keyword">import</span> java.io.IOException;
+<span class="keyword">import</span> java.nio.charset.Charset;
+<span class="keyword">import</span> java.nio.charset.StandardCharsets;
+<span class="keyword">import</span> java.nio.file.Path;
+<span class="keyword">import</span> java.nio.file.Paths;
+<span class="keyword">import</span> java.util.Scanner;
+<span class="keyword">import</span> java.util.regex.Matcher;
+<span class="keyword">import</span> java.util.regex.Pattern;
+
+<span class="comment">/** JDK 7+. */</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> FindMatch {
+
+  <span class="comment">/**
+   Count the number of times the word "assert" occurs in a file.
+  
+   Compare the execution times of two techniques.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main (String... arguments) <span class="keyword">throws</span> IOException{
+    FindMatch findMatch = <span class="keyword">new</span> FindMatch(<span class="literal">"assert"</span>);
+    Path path = Paths.get(<span class="literal">"C:\\Temp\\InheritanceInterpreter.java"</span>);
+
+    Stopwatch stopwatch = <span class="keyword">new</span> Stopwatch();
+    stopwatch.start();
+    findMatch.countMatchesUsingString(path);
+    stopwatch.stop();
+    log(<span class="literal">"Time for String: "</span> + stopwatch);
+
+    stopwatch.start();
+    findMatch.countMatchesUsingPattern(path);
+    stopwatch.stop();
+    log(<span class="literal">"Time for Pattern: "</span> + stopwatch);
+  }
+
+  <span class="keyword">public</span> FindMatch(String target){
+    <span class="keyword">this</span>.targetWord = target;
+    <span class="keyword">this</span>.pattern = Pattern.compile(targetWord);
+  }
+
+  <span class="keyword">int</span> countMatchesUsingString(Path path) <span class="keyword">throws</span> IOException {
+    <span class="keyword">int</span> result = <span class="literal">0</span>;
+    <span class="keyword">try</span> (Scanner scanner =  <span class="keyword">new</span> Scanner(path, ENCODING.name())){
+      <span class="keyword">while</span> (scanner.hasNextLine()){
+        String line = scanner.nextLine();
+        <span class="keyword">if</span>( line.matches(targetWord) ){
+          ++ result;
+        }
+      }      
+    }
+    <span class="keyword">return</span> result;
+  }
+  
+  <span class="keyword">int</span> countMatchesUsingPattern(Path path) <span class="keyword">throws</span> IOException {
+    <span class="keyword">int</span> result = <span class="literal">0</span>;
+    Matcher matcher = pattern.matcher(<span class="literal">""</span>);
+    <span class="keyword">try</span> (Scanner scanner =  <span class="keyword">new</span> Scanner(path, ENCODING.name())){
+      <span class="keyword">while</span> (scanner.hasNextLine()){
+        String line = scanner.nextLine();
+        matcher.reset(line); <span class="comment">//reset the input each time
+</span>        <span class="keyword">if</span> (! matcher.find()) {
+          ++result;
+        }
+      }      
+    }
+    <span class="keyword">return</span> result;
+  }
+  
+  <span class="comment">// PRIVATE 
+</span>  <span class="keyword">private</span> <span class="keyword">final</span> String targetWord;
+  <span class="keyword">private</span> <span class="keyword">final</span> Pattern pattern;
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> Charset ENCODING = StandardCharsets.UTF_8;
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(Object thing){
+    System.out.println(thing);
+  }
+} 
+</pre>
+
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActiondd78.html?Id=85">Time execution speed</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=104 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

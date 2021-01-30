@@ -1,0 +1,49 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/movies/javadoc/src-html/hirondelle/movies/exception/InvalidInputException.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:31 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+InvalidInputException.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.movies.exception;<a name=line.1></a>
+<a name=line.2></a>
+<span class='keyword'>import</span> java.util.*;<a name=line.3></a>
+<span class='keyword'>import</span> hirondelle.movies.util.Args;<a name=line.4></a>
+<a name=line.5></a>
+<span class='comment'>/**<a name=line.6></a>
+  Checked exception thrown when a user input validation error occurs. <a name=line.7></a>
+ <a name=line.8></a>
+  &lt;P&gt;Most applications need to handle erroneous user input in a controlled way. <a name=line.9></a>
+  When user input is found to be invalid, objects of this class are created and thrown, <a name=line.10></a>
+  and appropriate error messages are displayed to the user. <a name=line.11></a>
+*/</span><a name=line.12></a>
+<span class='keyword'>public</span> <span class='keyword'>final</span> <span class='keyword'>class</span> InvalidInputException <span class='keyword'>extends</span> Exception {<a name=line.13></a>
+  <a name=line.14></a>
+  <span class='comment'>/**  Add a new error message to this exception. */</span><a name=line.15></a>
+  <span class='keyword'>public</span> <span class='keyword'>void</span> add(String aErrorMessage){<a name=line.16></a>
+    Args.checkForContent(aErrorMessage);<a name=line.17></a>
+    fErrorMessages.add(aErrorMessage);<a name=line.18></a>
+  }<a name=line.19></a>
+  <a name=line.20></a>
+  <span class='comment'>/** Return an unmodfiable list of error messages. */</span><a name=line.21></a>
+  <span class='keyword'>public</span> List&lt;String&gt; getErrorMessages(){<a name=line.22></a>
+    <span class='keyword'>return</span> Collections.unmodifiableList(fErrorMessages);<a name=line.23></a>
+  }<a name=line.24></a>
+<a name=line.25></a>
+  <span class='comment'>/** Return &lt;tt&gt;true&lt;/tt&gt; only if {@link #add(String)} has been called at least once.*/</span><a name=line.26></a>
+  <span class='keyword'>public</span> <span class='keyword'>boolean</span> hasErrors(){<a name=line.27></a>
+    <span class='keyword'>return</span> ! fErrorMessages.isEmpty();<a name=line.28></a>
+  }<a name=line.29></a>
+<a name=line.30></a>
+  <span class='comment'>// PRIVATE <a name=line.31></a>
+</span>  <span class='keyword'>private</span> List&lt;String&gt; fErrorMessages = <span class='keyword'>new</span> ArrayList&lt;&gt;();<a name=line.32></a>
+}<a name=line.33></a>
+ <a name=line.34></a>
+</PRE><a name=line.35></a>
+ </BODY><a name=line.36></a>
+<HTML><a name=line.37></a>

@@ -1,0 +1,757 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=13 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="currency,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Representing money</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Representing money</div>
+
+<br>Representing money:
+<ul>
+<li>
+use <code><a href="https://docs.oracle.com/javase/10/docs/api/java/math/BigDecimal.html">BigDecimal</a></code>,
+<code>int</code>,
+or <code>long</code> (<code>BigDecimal</code> is the recommended default) </li>
+
+
+<li>
+the <code>int</code> and <code>long</code> forms represent pennies (or the equivalent,
+of course)</li>
+
+<li>
+<code>BigDecimal</code> is a little more inconvenient to use, but has built-in
+rounding modes</li>
+
+<li>
+<code>double</code> or <code>float</code> are <a href="TopicActionb0f5.html?Id=213">not recommended</a>, since they always carry small
+rounding differences</li>
+
+<li>
+the <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Currency.html">Currency</a></code>
+class encapsulates standard identifiers for the world's currencies</li>
+</ul>
+
+Number of digits:
+<ul>
+<li>
+<code>&lt;=9</code>: use <code>BigDecimal</code>, <code>int</code>, or <code>long</code></li>
+
+<li>
+<code>&lt;=18</code>: use <code>BigDecimal</code>, or <code>long</code> </li>
+
+<li>
+<code>&gt;18</code>: use <code>BigDecimal</code> (another reason for using <code>BigDecimal</code> by default)</li>
+</ul>
+Reminders for <code>BigDecimal</code>:
+<ul>
+<li>
+the recommended constructor is <code>BigDecimal(String)</code>, not <code>BigDecimal(double)</code>
+- see <a href="https://docs.oracle.com/javase/10/docs/api/java/math/BigDecimal.html#BigDecimal(double)">javadoc</a></li>
+
+<li>
+<code>BigDecimal</code> objects are immutable - operations always return new
+objects, and never modify the state of existing objects</li>
+
+<li>the 
+<a href="https://docs.oracle.com/javase/10/docs/api/java/math/BigDecimal.html#ROUND_HALF_EVEN">ROUND_HALF_EVEN</a>
+style of <a href="http://en.wikipedia.org/wiki/Rounding">rounding</a> introduces the least bias. 
+It is also called <em>bankers' rounding</em>, or <em>round-to-even</em>. 
+</li></ul>
+<b>Example 1</b>
+<p>Example of using <code>BigDecimal</code> to perform monetary calculations:
+<br></p><pre>
+<span class="keyword">import</span> java.math.BigDecimal;
+<span class="keyword">import</span> java.math.RoundingMode;
+<span class="keyword">import</span> java.util.Objects;
+
+<span class="comment">/**
+* Example of typical calculations with monetary values, implemented with
+* &lt;code&gt;BigDecimal&lt;/code&gt;.
+*
+* &lt;P&gt;This example is for a currency which has two decimal places.
+*
+* See
+* http://java.sun.com/j2se/1.5.0/docs/api/java/math/BigDecimal.html
+*
+* Note in particular how the &lt;em&gt;default&lt;/em&gt; scale of the result of an
+* operation is calculated from the scales of the two input numbers :
+* &lt;ul&gt;
+*  &lt;li&gt; a + b : max[ scale(a), scale(b) ]
+*  &lt;li&gt; a - b : max[ scale(a), scale(b) ]
+*  &lt;li&gt; a * b : scale(a) + scale(b)
+*  &lt;li&gt; a / b : scale(a) - scale(b)
+* &lt;/ul&gt;
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> MoneyCalculation {
+
+  <span class="comment">/**
+  * Simple test harness.
+  *
+  * Takes two numeric arguments, representing monetary values, in a form
+  * which can be passed successfully to the &lt;tt&gt;BigDecimal(String)&lt;/tt&gt;
+  * constructor (&lt;code&gt;25.00, 25.0, 25&lt;/code&gt;, etc).
+  *
+  * Note that the &lt;code&gt;String&lt;/code&gt; constructor is preferred for
+  * &lt;code&gt;BigDecimal&lt;/code&gt;.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args){
+    BigDecimal amountOne = <span class="keyword">new</span> BigDecimal(args[<span class="literal">0</span>]);
+    BigDecimal amountTwo = <span class="keyword">new</span> BigDecimal(args[<span class="literal">1</span>]);
+    MoneyCalculation calc = <span class="keyword">new</span> MoneyCalculation(amountOne, amountTwo);
+    calc.doCalculations();
+  }
+
+  <span class="keyword">public</span> MoneyCalculation(BigDecimal amountOne, BigDecimal amountTwo){
+    <span class="keyword">this</span>.amountOne = rounded(amountOne);
+    <span class="keyword">this</span>.amountTwo = rounded(amountTwo);
+  }
+
+  <span class="keyword">public</span> <span class="keyword">void</span> doCalculations() {
+    log(<span class="literal">"Amount One: "</span> + amountOne);
+    log(<span class="literal">"Amount Two: "</span> + amountTwo);
+    log(<span class="literal">"Sum : "</span> + getSum());
+    log(<span class="literal">"Difference : "</span> + getDifference());
+    log(<span class="literal">"Average : "</span> + getAverage());
+    log(<span class="literal">"5.25% of Amount One: "</span> + getPercentage());
+    log(<span class="literal">"Percent Change From Amount One to Two: "</span> + getPercentageChange());
+  }
+
+  <span class="comment">// PRIVATE
+</span>
+  <span class="keyword">private</span> BigDecimal amountOne;
+  <span class="keyword">private</span> BigDecimal amountTwo;
+
+  <span class="comment">/**
+  * Defined centrally, to allow for easy changes to the rounding mode.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> RoundingMode ROUNDING_MODE = RoundingMode.HALF_EVEN;
+
+  <span class="comment">/**
+  * Number of decimals to retain. Also referred to as "scale".
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> DECIMALS = <span class="literal">2</span>;
+  <span class="comment">//An alternate style for this value :
+</span>  <span class="comment">//private static int DECIMAL_PLACES =
+</span>  <span class="comment">//  Currency.getInstance("USD").getDefaultFractionDigits()
+</span>  <span class="comment">//;
+</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> EXTRA_DECIMALS = <span class="literal">4</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> BigDecimal TWO = <span class="keyword">new</span> BigDecimal(<span class="literal">"2"</span>);
+  <span class="keyword">private</span> <span class="keyword">static</span> BigDecimal HUNDRED = <span class="keyword">new</span> BigDecimal(<span class="literal">"100"</span>);
+  <span class="keyword">private</span> <span class="keyword">static</span> BigDecimal PERCENTAGE = <span class="keyword">new</span> BigDecimal(<span class="literal">"5.25"</span>);
+
+  <span class="keyword">private</span> <span class="keyword">void</span> log(String text){
+    System.out.println(Objects.toString(text));
+  }
+
+  <span class="keyword">private</span> BigDecimal getSum(){
+    <span class="keyword">return</span> amountOne.add(amountTwo);
+  }
+
+  <span class="keyword">private</span> BigDecimal getDifference(){
+    <span class="keyword">return</span> amountTwo.subtract(amountOne);
+  }
+
+  <span class="keyword">private</span> BigDecimal getAverage(){
+    <span class="keyword">return</span> getSum().divide(TWO, ROUNDING_MODE);
+  }
+
+  <span class="keyword">private</span> BigDecimal getPercentage(){
+    BigDecimal result = amountOne.multiply(PERCENTAGE);
+    result = result.divide(HUNDRED, ROUNDING_MODE);
+    <span class="keyword">return</span> rounded(result);
+  }
+
+  <span class="keyword">private</span> BigDecimal getPercentageChange(){
+    BigDecimal fractionalChange = getDifference().divide(
+      amountOne, EXTRA_DECIMALS, ROUNDING_MODE
+    );
+    <span class="keyword">return</span> rounded(fractionalChange.multiply(HUNDRED));
+  }
+
+  <span class="keyword">private</span> BigDecimal rounded(BigDecimal number){
+    <span class="keyword">return</span> number.setScale(DECIMALS, ROUNDING_MODE);
+  }
+} 
+</pre>
+
+<br>An example run gives:
+<p></p><p><code>&gt;java -cp . MoneyCalculation 513.89 612.25</code>
+<br><code>Amount One: 513.89</code>
+<br><code>Amount Two: 612.25</code>
+<br><code>Sum : 1126.14</code>
+<br><code>Difference : 98.36</code>
+<br><code>Average : 563.07</code>
+<br><code>5.25% of Amount One: 26.98</code>
+<br><code>Percent Change From Amount One to Two: 19.14</code>
+
+</p><p><b>Example 2</b>
+</p><p>The lack of an actual <code>Money</code> class in the standard JDK libraries is frustrating.
+Such a class would have some nice advantages:
+</p><ul>
+ <li>the name <code>Money</code> reads at a higher level of abstraction than <code>BigDecimal</code>
+ </li><li>operations on <code>BigDecimal</code> can be wrapped to yield a more suitable form for practical use
+</li></ul> 
+Here's an example of such a <code>Money</code> class. 
+<br><pre>
+<span class="keyword">import</span> java.util.*;
+<span class="keyword">import</span> java.io.Serializable;
+<span class="keyword">import</span> java.io.IOException;
+<span class="keyword">import</span> java.io.ObjectInputStream;
+<span class="keyword">import</span> java.io.ObjectOutputStream;
+<span class="keyword">import</span> java.math.BigDecimal;
+<span class="keyword">import</span> <span class="keyword">static</span> java.math.BigDecimal.ZERO;
+<span class="keyword">import</span> java.math.RoundingMode;
+
+<span class="comment">/**
+* Represent an amount of money in any currency.
+*
+* &lt;P&gt;This class assumes &lt;em&gt;decimal currency&lt;/em&gt;, without funky divisions 
+* like 1/5 and so on. &lt;code&gt;Money&lt;/code&gt; objects are immutable. Like {@link BigDecimal}, 
+* many operations return new &lt;code&gt;Money&lt;/code&gt; objects. In addition, most operations 
+* involving more than one &lt;code&gt;Money&lt;/code&gt; object will throw a 
+* &lt;code&gt;MismatchedCurrencyException&lt;/code&gt; if the currencies don't match.
+* 
+* &lt;h2&gt;Decimal Places and Scale&lt;/h2&gt;
+* Monetary amounts can be stored in the database in various ways. Let's take the 
+* example of dollars. It may appear in the database in the following ways :
+* &lt;ul&gt;
+*  &lt;li&gt;as &lt;code&gt;123456.78&lt;/code&gt;, with the usual number of decimal places 
+*    associated with that currency.
+*  &lt;li&gt;as &lt;code&gt;123456&lt;/code&gt;, without any decimal places at all.
+*  &lt;li&gt;as &lt;code&gt;123&lt;/code&gt;, in units of thousands of dollars.
+*  &lt;li&gt;in some other unit, such as millions or billions of dollars.
+* &lt;/ul&gt;
+* 
+* &lt;P&gt;The number of decimal places or style of units is referred to as the 
+* &lt;em&gt;scale&lt;/em&gt; by {@link java.math.BigDecimal}. This class's constructors 
+* take a &lt;code&gt;BigDecimal&lt;/code&gt;, so you need to understand its idea of scale.
+*  
+* &lt;P&gt;The scale can be negative. Using the above examples :
+* &lt;table border='1' cellspacing='0' cellpadding='3'&gt;
+*  &lt;tr&gt;&lt;th&gt;Number&lt;/th&gt;&lt;th&gt;Scale&lt;/th&gt;&lt;/tr&gt;
+*  &lt;tr&gt;&lt;td&gt;123456.78&lt;/th&gt;&lt;th&gt;2&lt;/th&gt;&lt;/tr&gt;
+*  &lt;tr&gt;&lt;td&gt;123456&lt;/th&gt;&lt;th&gt;0&lt;/th&gt;&lt;/tr&gt;
+*  &lt;tr&gt;&lt;td&gt;123 (thousands)&lt;/th&gt;&lt;th&gt;-3&lt;/th&gt;&lt;/tr&gt;
+* &lt;/table&gt;
+* 
+* &lt;P&gt;Note that scale and rounding are two separate issues.
+* In addition, rounding is only necessary for multiplication and division operations.
+* It doesn't apply to addition and subtraction.
+* 
+* &lt;h2&gt;Operations and Scale&lt;/h2&gt;
+* &lt;P&gt;Operations can be performed on items having &lt;em&gt;different scale&lt;/em&gt;. 
+* For example, these  operations are valid (using an &lt;em&gt;ad hoc&lt;/em&gt; 
+* symbolic notation): 
+* &lt;PRE&gt;
+* 10.plus(1.23) =&gt; 11.23
+* 10.minus(1.23) =&gt; 8.77
+* 10.gt(1.23) =&gt; true
+* 10.eq(10.00) =&gt; true
+* &lt;/PRE&gt; 
+* This corresponds to typical user expectations. 
+* An important exception to this rule is that {@link #equals(Object)} is sensitive 
+* to scale (while {@link #eq(Money)} is not). That is,  
+* &lt;PRE&gt;
+*   10.equals(10.00) =&gt; false
+* &lt;/PRE&gt;
+*   
+* &lt;h2&gt;Multiplication, Division and Extra Decimal Places&lt;/h2&gt;
+* &lt;P&gt;Operations involving multiplication and division are different, since the result
+* can have a scale which exceeds that expected for the given currency. For example 
+* &lt;PRE&gt;($10.00).times(0.1256) =&gt; $1.256&lt;/PRE&gt;
+* which has more than two decimals. In such cases, &lt;em&gt;this class will always round 
+* to the expected number of decimal places for that currency.&lt;/em&gt; 
+* This is the simplest policy, and likely conforms to the expectations of most 
+* end users.
+* 
+* &lt;P&gt;This class takes either an &lt;code&gt;int&lt;/code&gt; or a {@link BigDecimal} for its 
+* multiplication and division methods. It doesn't take &lt;code&gt;float&lt;/code&gt; or 
+* &lt;code&gt;double&lt;/code&gt; for those methods, since those types don't interact well with
+* &lt;code&gt;BigDecimal&lt;/code&gt;. Instead, the &lt;code&gt;BigDecimal&lt;/code&gt; class must be used when the 
+* factor or divisor is a non-integer.
+*  
+* &lt;P&gt;&lt;em&gt;The {@link #init(Currency, RoundingMode)} method must be called at least 
+* once before using the other members of this class.&lt;/em&gt; It establishes your 
+* desired defaults. Typically, it will be called once (and only once) upon startup.
+*  
+* &lt;P&gt;Various methods in this class have unusually terse names, such as 
+* {@link #lt} and {@link #gt}. The intent is that such names will improve the 
+* legibility of mathematical expressions. Example : 
+* &lt;PRE&gt; if (amount.lt(hundred)) {
+*     cost = amount.times(price); 
+*  }&lt;/PRE&gt;
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Money <span class="keyword">implements</span> Comparable&lt;Money&gt;, Serializable {
+  
+  <span class="comment">/**
+  * Thrown when a set of &lt;code&gt;Money&lt;/code&gt; objects do not have matching currencies. 
+  * 
+  * &lt;P&gt;For example, adding together Euros and Dollars does not make any sense.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">class</span> MismatchedCurrencyException <span class="keyword">extends</span> RuntimeException { 
+    MismatchedCurrencyException(String message){
+      <span class="keyword">super</span>(message);
+    }
+  }
+  
+  <span class="comment">/**
+  * Set default values for currency and rounding style.
+  * 
+  * &lt;em&gt;Your application must call this method upon startup&lt;/em&gt;.
+  * This method should usually be called only once (upon startup).
+  * 
+  * &lt;P&gt;The recommended rounding style is {@link RoundingMode#HALF_EVEN}, also called 
+  * &lt;em&gt;banker's rounding&lt;/em&gt;; this rounding style introduces the least bias.
+  * 
+  * &lt;P&gt;Setting these defaults allow you to use the more terse constructors of this class, 
+  * which are much more convenient.
+  *  
+  * &lt;P&gt;(In a servlet environment, each app has its own classloader. Calling this 
+  * method in one app will never affect the operation of a second app running in the same 
+  * servlet container. They are independent.)
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> init(Currency defaultCurrency, RoundingMode defaultRounding){
+    DEFAULT_CURRENCY = defaultCurrency;
+    DEFAULT_ROUNDING = defaultRounding;
+  }
+
+  <span class="comment">/**
+  * Full constructor.
+  * 
+  * @param amount is required, can be positive or negative. The number of 
+  * decimals in the amount cannot &lt;em&gt;exceed&lt;/em&gt; the maximum number of 
+  * decimals for the given {@link Currency}. It's possible to create a 
+  * &lt;code&gt;Money&lt;/code&gt; object in terms of 'thousands of dollars', for instance. 
+  * Such an amount would have a scale of -3.
+  * @param currency is required.
+  * @param roundingStyle is required, must match a rounding style used by 
+  * {@link BigDecimal}.
+  */</span>
+  <span class="keyword">public</span> Money(BigDecimal amount, Currency currency, RoundingMode roundingStyle){
+    <span class="keyword">this</span>.amount = amount;
+    <span class="keyword">this</span>.currency = currency;
+    <span class="keyword">this</span>.rounding = roundingStyle;
+    validateState();
+  }
+  
+  <span class="comment">/**
+  * Constructor taking only the money amount. 
+  * 
+  * &lt;P&gt;The currency and rounding style both take default values.
+  * @param amount is required, can be positive or negative.
+  */</span>
+  <span class="keyword">public</span> Money(BigDecimal amount){
+    <span class="keyword">this</span>(amount, DEFAULT_CURRENCY, DEFAULT_ROUNDING);
+  }
+  
+  <span class="comment">/**
+  * Constructor taking the money amount and currency. 
+  * 
+  * &lt;P&gt;The rounding style takes a default value.
+  * @param amount is required, can be positive or negative.
+  * @param currency is required.
+  */</span>
+  <span class="keyword">public</span> Money(BigDecimal amount, Currency currency){
+    <span class="keyword">this</span>(amount, currency, DEFAULT_ROUNDING);
+  }
+  
+  <span class="comment">/** Return the amount passed to the constructor. */</span>
+  <span class="keyword">public</span> BigDecimal getAmount() { <span class="keyword">return</span> amount; }
+  
+  <span class="comment">/** Return the currency passed to the constructor, or the default currency. */</span>
+  <span class="keyword">public</span> Currency getCurrency() { <span class="keyword">return</span> currency; }
+  
+  <span class="comment">/** Return the rounding style passed to the constructor, or the default rounding style. */</span>
+  <span class="keyword">public</span> RoundingMode getRoundingStyle() { <span class="keyword">return</span> rounding; }
+  
+  <span class="comment">/**
+  * Return &lt;code&gt;true&lt;/code&gt; only if &lt;code&gt;that&lt;/code&gt; &lt;code&gt;Money&lt;/code&gt; has the same currency 
+  * as this &lt;code&gt;Money&lt;/code&gt;.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">boolean</span> isSameCurrencyAs(Money that){
+    <span class="keyword">boolean</span> result = <span class="keyword">false</span>;
+     <span class="keyword">if</span> ( that != <span class="keyword">null</span> ) { 
+       result = <span class="keyword">this</span>.currency.equals(that.currency);
+     }
+     <span class="keyword">return</span> result; 
+  }
+  
+  <span class="comment">/** Return &lt;code&gt;true&lt;/code&gt; only if the amount is positive. */</span>
+  <span class="keyword">public</span> <span class="keyword">boolean</span> isPlus(){
+    <span class="keyword">return</span> amount.compareTo(ZERO) &gt; <span class="literal">0</span>;
+  }
+  
+  <span class="comment">/** Return &lt;code&gt;true&lt;/code&gt; only if the amount is negative. */</span>
+  <span class="keyword">public</span> <span class="keyword">boolean</span> isMinus(){
+    <span class="keyword">return</span> amount.compareTo(ZERO) &lt;  <span class="literal">0</span>;
+  }
+  
+  <span class="comment">/** Return &lt;code&gt;true&lt;/code&gt; only if the amount is zero. */</span>
+  <span class="keyword">public</span> <span class="keyword">boolean</span> isZero(){
+    <span class="keyword">return</span> amount.compareTo(ZERO) ==  <span class="literal">0</span>;
+  }
+  
+  <span class="comment">/** 
+  * Add &lt;code&gt;that&lt;/code&gt; &lt;code&gt;Money&lt;/code&gt; to this &lt;code&gt;Money&lt;/code&gt;.
+  * Currencies must match.  
+  */</span>
+  <span class="keyword">public</span> Money plus(Money that){
+    checkCurrenciesMatch(that);
+    <span class="keyword">return</span> <span class="keyword">new</span> Money(amount.add(that.amount), currency, rounding);
+  }
+
+  <span class="comment">/** 
+  * Subtract &lt;code&gt;that&lt;/code&gt; &lt;code&gt;Money&lt;/code&gt; from this &lt;code&gt;Money&lt;/code&gt;. 
+  * Currencies must match.  
+  */</span>
+  <span class="keyword">public</span> Money minus(Money that){
+    checkCurrenciesMatch(that);
+    <span class="keyword">return</span> <span class="keyword">new</span> Money(amount.subtract(that.amount), currency, rounding);
+  }
+
+  <span class="comment">/**
+  * Sum a collection of &lt;code&gt;Money&lt;/code&gt; objects.
+  * Currencies must match. You are encouraged to use database summary functions 
+  * whenever possible, instead of this method. 
+  * 
+  * @param moneys collection of &lt;code&gt;Money&lt;/code&gt; objects, all of the same currency.
+  * If the collection is empty, then a zero value is returned.
+  * @param currencyIfEmpty is used only when &lt;code&gt;moneys&lt;/code&gt; is empty; that way, this 
+  * method can return a zero amount in the desired currency.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> Money sum(Collection&lt;Money&gt; moneys, Currency currencyIfEmpty){
+    Money sum = <span class="keyword">new</span> Money(ZERO, currencyIfEmpty);
+    <span class="keyword">for</span>(Money money : moneys){
+      sum = sum.plus(money);
+    }
+    <span class="keyword">return</span> sum;
+  }
+  
+  <span class="comment">/** 
+  * Equals (insensitive to scale).
+  * 
+  * &lt;P&gt;Return &lt;code&gt;true&lt;/code&gt; only if the amounts are equal.
+  * Currencies must match. 
+  * This method is &lt;em&gt;not&lt;/em&gt; synonymous with the &lt;code&gt;equals&lt;/code&gt; method.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">boolean</span> eq(Money that) {
+    checkCurrenciesMatch(that);
+    <span class="keyword">return</span> compareAmount(that) == <span class="literal">0</span>;
+  }
+
+  <span class="comment">/** 
+  * Greater than.
+  * 
+  * &lt;P&gt;Return &lt;code&gt;true&lt;/code&gt; only if  'this' amount is greater than
+  * 'that' amount. Currencies must match. 
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">boolean</span> gt(Money that) { 
+    checkCurrenciesMatch(that);
+    <span class="keyword">return</span> compareAmount(that) &gt; <span class="literal">0</span>;  
+  }
+  
+  <span class="comment">/** 
+  * Greater than or equal to.
+  * 
+  * &lt;P&gt;Return &lt;code&gt;true&lt;/code&gt; only if 'this' amount is 
+  * greater than or equal to 'that' amount. Currencies must match. 
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">boolean</span> gteq(Money that) { 
+    checkCurrenciesMatch(that);
+    <span class="keyword">return</span> compareAmount(that) &gt;= <span class="literal">0</span>;  
+  }
+  
+  <span class="comment">/** 
+  * Less than.
+  * 
+  * &lt;P&gt;Return &lt;code&gt;true&lt;/code&gt; only if 'this' amount is less than
+  * 'that' amount. Currencies must match. 
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">boolean</span> lt(Money that) { 
+    checkCurrenciesMatch(that);
+    <span class="keyword">return</span> compareAmount(that) &lt; <span class="literal">0</span>;  
+  }
+  
+  <span class="comment">/** 
+  * Less than or equal to.
+  * 
+  * &lt;P&gt;Return &lt;code&gt;true&lt;/code&gt; only if 'this' amount is less than or equal to
+  * 'that' amount. Currencies must match.  
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">boolean</span> lteq(Money that) { 
+    checkCurrenciesMatch(that);
+    <span class="keyword">return</span> compareAmount(that) &lt;= <span class="literal">0</span>;  
+  }
+  
+  <span class="comment">/**
+  * Multiply this &lt;code&gt;Money&lt;/code&gt; by an integral factor.
+  * 
+  * The scale of the returned &lt;code&gt;Money&lt;/code&gt; is equal to the scale of 'this' 
+  * &lt;code&gt;Money&lt;/code&gt;.
+  */</span>
+  <span class="keyword">public</span> Money times(<span class="keyword">int</span> aFactor){  
+    BigDecimal factor = <span class="keyword">new</span> BigDecimal(aFactor);
+    BigDecimal newAmount = amount.multiply(factor);
+    <span class="keyword">return</span> <span class="keyword">new</span> Money(newAmount, currency, rounding);
+  }
+  
+  <span class="comment">/**
+  * Multiply this &lt;code&gt;Money&lt;/code&gt; by an non-integral factor (having a decimal point).
+  * 
+  * &lt;P&gt;The scale of the returned &lt;code&gt;Money&lt;/code&gt; is equal to the scale of 
+  * 'this' &lt;code&gt;Money&lt;/code&gt;. 
+  */</span>
+  <span class="keyword">public</span> Money times(<span class="keyword">double</span> factor){
+    BigDecimal newAmount = amount.multiply(asBigDecimal(factor));
+    newAmount = newAmount.setScale(getNumDecimalsForCurrency(), rounding);
+    <span class="keyword">return</span>  <span class="keyword">new</span> Money(newAmount, currency, rounding);
+  }
+  
+  <span class="comment">/**
+  * Divide this &lt;code&gt;Money&lt;/code&gt; by an integral divisor.
+  * 
+  * &lt;P&gt;The scale of the returned &lt;code&gt;Money&lt;/code&gt; is equal to the scale of 
+  * 'this' &lt;code&gt;Money&lt;/code&gt;. 
+  */</span>
+  <span class="keyword">public</span> Money div(<span class="keyword">int</span> aDivisor){
+    BigDecimal divisor = <span class="keyword">new</span> BigDecimal(aDivisor);
+    BigDecimal newAmount = amount.divide(divisor, rounding);
+    <span class="keyword">return</span> <span class="keyword">new</span> Money(newAmount, currency, rounding);
+  }
+
+  <span class="comment">/**
+  * Divide this &lt;code&gt;Money&lt;/code&gt; by an non-integral divisor.
+  * 
+  * &lt;P&gt;The scale of the returned &lt;code&gt;Money&lt;/code&gt; is equal to the scale of 
+  * 'this' &lt;code&gt;Money&lt;/code&gt;. 
+  */</span>
+  <span class="keyword">public</span> Money div(<span class="keyword">double</span> divisor){  
+    BigDecimal newAmount = amount.divide(asBigDecimal(divisor), rounding);
+    <span class="keyword">return</span> <span class="keyword">new</span> Money(newAmount, currency, rounding);
+  }
+
+  <span class="comment">/** Return the absolute value of the amount. */</span>
+  <span class="keyword">public</span> Money abs(){
+    <span class="keyword">return</span> isPlus() ? <span class="keyword">this</span> : times(-<span class="literal">1</span>);
+  }
+  
+  <span class="comment">/** Return the amount x (-1). */</span>
+  <span class="keyword">public</span> Money negate(){ 
+    <span class="keyword">return</span> times(-<span class="literal">1</span>); 
+  }
+  
+  <span class="comment">/**
+  * Returns 
+  * {@link #getAmount()}.getPlainString() + space + {@link #getCurrency()}.getSymbol().
+  * 
+  * &lt;P&gt;The return value uses the runtime's &lt;em&gt;default locale&lt;/em&gt;, and will not 
+  * always be suitable for display to an end user.
+  */</span>
+  <span class="keyword">public</span> String toString(){
+    <span class="keyword">return</span> amount.toPlainString() + <span class="literal">" "</span> + currency.getSymbol();
+  }
+  
+  <span class="comment">/**
+  * Like {@link BigDecimal#equals(java.lang.Object)}, this &lt;code&gt;equals&lt;/code&gt; method 
+  * is also sensitive to scale.
+  * 
+  * For example, &lt;code&gt;10&lt;/code&gt; is &lt;em&gt;not&lt;/em&gt; equal to &lt;code&gt;10.00&lt;/code&gt;
+  * The {@link #eq(Money)} method, on the other hand, is &lt;em&gt;not&lt;/em&gt; 
+  * sensitive to scale.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">boolean</span> equals(Object aThat){
+    <span class="keyword">if</span> (<span class="keyword">this</span> == aThat) <span class="keyword">return</span> <span class="keyword">true</span>;
+    <span class="keyword">if</span> (! (aThat <span class="keyword">instanceof</span> Money) ) <span class="keyword">return</span> <span class="keyword">false</span>;
+    Money that = (Money)aThat;
+    <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="literal">0</span>; i &lt; <span class="keyword">this</span>.getSigFields().length; ++i){
+      <span class="keyword">if</span> (!Objects.equals(<span class="keyword">this</span>.getSigFields()[i], that.getSigFields()[i])){
+        <span class="keyword">return</span> <span class="keyword">false</span>;
+      }
+    }
+    <span class="keyword">return</span> <span class="keyword">true</span>;    
+  }
+  
+  <span class="keyword">public</span> <span class="keyword">int</span> hashCode(){
+    <span class="keyword">return</span> Objects.hash(getSigFields());
+  }
+  
+  <span class="keyword">public</span> <span class="keyword">int</span> compareTo(Money that) {
+    <span class="keyword">final</span> <span class="keyword">int</span> EQUAL = <span class="literal">0</span>;
+    
+    <span class="keyword">if</span> ( <span class="keyword">this</span> == that ) <span class="keyword">return</span> EQUAL;
+
+    <span class="comment">//the object fields are never null 
+</span>    <span class="keyword">int</span> comparison = <span class="keyword">this</span>.amount.compareTo(that.amount);
+    <span class="keyword">if</span> ( comparison != EQUAL ) <span class="keyword">return</span> comparison;
+
+    comparison = <span class="keyword">this</span>.currency.getCurrencyCode().compareTo(
+      that.currency.getCurrencyCode()
+    );
+    <span class="keyword">if</span> ( comparison != EQUAL ) <span class="keyword">return</span> comparison;    
+
+    
+    comparison = <span class="keyword">this</span>.rounding.compareTo(that.rounding);
+    <span class="keyword">if</span> ( comparison != EQUAL ) <span class="keyword">return</span> comparison;    
+    
+    <span class="keyword">return</span> EQUAL;
+  }
+  
+  <span class="comment">// PRIVATE //
+</span>  
+  <span class="comment">/** 
+  * The money amount. 
+  * Never null. 
+  * @serial 
+  */</span>
+  <span class="keyword">private</span> BigDecimal amount;
+  
+  <span class="comment">/** 
+  * The currency of the money, such as US Dollars or Euros.
+  * Never null. 
+  * @serial 
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">final</span> Currency currency;
+  
+  <span class="comment">/** 
+  * The rounding style to be used. 
+  * See {@link BigDecimal}.
+  * @serial  
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">final</span> RoundingMode rounding;
+  
+  <span class="comment">/**
+  * The default currency to be used if no currency is passed to the constructor. 
+  */</span> 
+  <span class="keyword">private</span> <span class="keyword">static</span> Currency DEFAULT_CURRENCY;
+  
+  <span class="comment">/**
+  * The default rounding style to be used if no currency is passed to the constructor.
+  * See {@link BigDecimal}. 
+  */</span> 
+  <span class="keyword">private</span> <span class="keyword">static</span> RoundingMode DEFAULT_ROUNDING;
+  
+  <span class="keyword">private</span> Object[] getSigFields() {
+    <span class="keyword">return</span> <span class="keyword">new</span> Object[] {amount, currency, rounding};
+  }
+  
+  <span class="comment">/**
+  * Determines if a deserialized file is compatible with this class.
+  *
+  * Maintainers must change this value if and only if the new version
+  * of this class is not compatible with old versions. See Sun docs
+  * for &lt;a href=http://java.sun.com/products/jdk/1.1/docs/guide
+  * /serialization/spec/version.doc.html&gt; details. &lt;/a&gt;
+  *
+  * Not necessary to include in first version of the class, but
+  * included here as a reminder of its importance.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">long</span> serialVersionUID = <span class="literal">7526471155622776147L</span>;
+
+  <span class="comment">/**
+  * Always treat de-serialization as a full-blown constructor, by
+  * validating the final state of the de-serialized object.
+  */</span>  
+  <span class="keyword">private</span> <span class="keyword">void</span> readObject(
+    ObjectInputStream inputStream
+  ) <span class="keyword">throws</span> ClassNotFoundException, IOException {
+    <span class="comment">//always perform the default de-serialization first
+</span>    inputStream.defaultReadObject();
+    <span class="comment">//defensive copy for mutable date field
+</span>    <span class="comment">//BigDecimal is not technically immutable, since its non-final
+</span>    amount = <span class="keyword">new</span> BigDecimal( amount.toPlainString() );
+    <span class="comment">//ensure that object state has not been corrupted or tampered with maliciously
+</span>    validateState();
+  }
+
+  <span class="keyword">private</span> <span class="keyword">void</span> writeObject(ObjectOutputStream outputStream) <span class="keyword">throws</span> IOException {
+    <span class="comment">//perform the default serialization for all non-transient, non-static fields
+</span>    outputStream.defaultWriteObject();
+  }  
+
+  <span class="keyword">private</span> <span class="keyword">void</span> validateState(){
+    <span class="keyword">if</span>( amount == <span class="keyword">null</span> ) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="literal">"Amount cannot be null"</span>);
+    }
+    <span class="keyword">if</span>( currency == <span class="keyword">null</span> ) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="literal">"Currency cannot be null"</span>);
+    }
+    <span class="keyword">if</span> ( amount.scale() &gt; getNumDecimalsForCurrency() ) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(
+        <span class="literal">"Number of decimals is "</span> + amount.scale() + <span class="literal">", but currency only takes "</span> + 
+        getNumDecimalsForCurrency() + <span class="literal">" decimals."</span>
+      );    
+    }
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">int</span> getNumDecimalsForCurrency(){
+    <span class="keyword">return</span> currency.getDefaultFractionDigits();
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">void</span> checkCurrenciesMatch(Money aThat){
+    <span class="keyword">if</span> (! <span class="keyword">this</span>.currency.equals(aThat.getCurrency())) {
+       <span class="keyword">throw</span> <span class="keyword">new</span> MismatchedCurrencyException(
+         aThat.getCurrency() + <span class="literal">" doesn't match the expected currency : "</span> + currency
+       ); 
+    }
+  }
+  
+  <span class="comment">/** Ignores scale: 0 same as 0.00 */</span>
+  <span class="keyword">private</span> <span class="keyword">int</span> compareAmount(Money aThat){
+    <span class="keyword">return</span> <span class="keyword">this</span>.amount.compareTo(aThat.amount);
+  }
+  
+  <span class="keyword">private</span> BigDecimal asBigDecimal(<span class="keyword">double</span> aDouble){
+    String asString = Double.toString(aDouble);
+    <span class="keyword">return</span> <span class="keyword">new</span> BigDecimal(asString);
+  }
+} 
+</pre>
+
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActionb0f5.html?Id=213">Beware of floating point numbers</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=13 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

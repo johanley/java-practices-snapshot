@@ -1,0 +1,118 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=215 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Constructors shouldn't call overridables</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Constructors shouldn't call overridables</div>
+
+<br>
+Constructors should not call an overridable method - that is, they should only call methods 
+that are <code>private</code>, <code>static</code>, or <code>final</code>.
+
+<p>The reason why is best illustrated with a bit of code:
+<br></p><pre>
+<span class="keyword">import</span> java.util.Objects;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> ConstructorOverridable {
+
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args){
+    log(<span class="literal">"BUILD AN ANIMAL :"</span>);
+    Animal animal = <span class="keyword">new</span> Animal();
+    log(<span class="literal">" "</span>);
+    log(<span class="literal">"BUILD A FISH :"</span>);
+    Animal fish = <span class="keyword">new</span> Fish();
+  }
+  
+  <span class="comment">// PRIVATE
+</span>  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(Object object){
+    System.out.println(Objects.toString(object));
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">class</span> Animal{
+    Animal(){
+      log(<span class="literal">"Animal ctor"</span>);
+      <span class="comment">//call an overridable method from ctor - dangerous
+</span>      perform();
+    }
+    <span class="keyword">void</span> perform(){
+      log(<span class="literal">"Animal perform."</span>);
+    }
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">class</span> Fish <span class="keyword">extends</span> Animal {
+    Fish(){
+      <span class="comment">//every constructor has an implicit call to super(); for first line 
+</span>      <span class="keyword">super</span>();
+      log(<span class="literal">"Fish ctor. This is the earliest Tail Shape can be initialized."</span>);
+    }
+    <span class="keyword">void</span> perform(){
+      <span class="comment">//in general, this method can depend on Fish data
+</span>      log(<span class="literal">"Fish perform. Can fail since Tail Shape is : "</span> + tailShape);
+    }
+    <span class="keyword">private</span> String tailShape;
+  }
+}
+ 
+</pre>
+
+An example run of this class demonstrates the problem:
+<p></p><pre>
+BUILD AN ANIMAL :
+Animal ctor
+Animal perform.
+ 
+BUILD A FISH :
+Animal ctor
+Fish perform. Can fail since Tail Shape is : null
+Fish ctor. This is the earliest Tail Shape can be initialized.
+</pre>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction19ff.html?Id=11">Constructors in general</a> <br>
+  <a href="TopicActionaf17.html?Id=69">Designing for subclassing</a> <br>
+  <a href="TopicAction18c3.html?Id=89">Overridable methods need special care</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=215 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+</html>

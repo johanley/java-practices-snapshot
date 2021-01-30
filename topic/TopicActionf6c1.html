@@ -1,0 +1,160 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=77 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="database,exception,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Data exception wrapping</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Data exception wrapping</div>
+
+<br>Data can be stored in various ways, for example:
+<ul>
+<li>
+a relational database</li>
+
+<li>
+text files</li>
+
+<li>
+on the web (for example, fetching the weather forecast from a web site)</li>
+</ul>
+If the storage method changes, then the low level <code>Exception</code> objects
+thrown by the data access layer can also change. For example, when the
+data store is moved from text files to a relational database, <code>IOException</code>
+is replaced with <code>SQLException.</code>
+
+<p>In order to prevent such a change from propagating to higher layers,
+one can wrap such low level <code>Exception</code>s in a generic "data exception"
+wrapper, designed exclusively to protect the higher layers from such changes.
+
+</p><p><code>Throwable.<a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Throwable.html#getCause()">getCause()</a></code>
+can always be used to extract the original exception, if desired. 
+(However, you sometimes need to <a href="TopicAction5ee8.html?Id=235">be careful</a> that both client and server know about the class of an underlying exception.)
+
+</p><p><b>Example</b>
+
+</p><p>When building applications with the WEB4J tool, <code>DAOException</code> 
+is the only checked exception that should be emitted by an application's data access layer.
+All occurrences of checked exceptions are either handled within the data layer, 
+or, if they are thrown, translated into a <code>DAOException</code>.
+
+</p><p>In the following example, <code>ConnectionSrc</code> encapulates how an application
+creates or accesses <code>Connection</code>s. When an <code>SQLException</code>
+or a <code>NamingException</code> occurs in its implementation, it is
+always wrapped in a <code>DAOException</code>, and then re-thrown to the caller.
+
+</p><p>This example is particulary appropriate because of the <code>NamingException</code>. 
+If the <code>NamingException</code> was <em>not</em> translated into a <code>DAOException</code>, 
+and thrown as is, then it would be visible <em>directly</em> to the caller. That is, the caller would 
+know that the data layer is implemented using JNDI - which is likely inappropriate.
+<br></p><pre>
+<span class="keyword">import</span> java.sql.Connection;
+<span class="keyword">import</span> java.sql.SQLException;
+<span class="keyword">import</span> java.util.logging.LogManager;
+<span class="keyword">import</span> java.util.logging.Logger;
+
+<span class="keyword">import</span> javax.naming.Context;
+<span class="keyword">import</span> javax.naming.InitialContext;
+<span class="keyword">import</span> javax.naming.NamingException;
+<span class="keyword">import</span> javax.sql.DataSource;
+
+<span class="comment">/** 
+ Fetch a &lt;code&gt;Connection&lt;/code&gt; from a pool managed by the container.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> ConnectionSrc {
+
+  <span class="comment">/** 
+   The caller needs to close the connection.
+   @param dbConnString example &lt;code&gt;java:comp/env/jdbc/blahblahblah&lt;/code&gt;.  
+  */</span>
+  Connection getConnectionByName(String dbConnString) <span class="keyword">throws</span> DAOException {
+    Connection result = <span class="keyword">null</span>;
+    <span class="keyword">try</span> {
+      Context initialContext = <span class="keyword">new</span> InitialContext();
+      DataSource datasource = (DataSource)initialContext.lookup(dbConnString);
+      <span class="keyword">if</span> ( datasource == <span class="keyword">null</span> ){
+        logger.severe(<span class="literal">"Datasource is null for : "</span> + dbConnString);
+      }
+      result = datasource.getConnection();
+    }
+    <span class="keyword">catch</span> (NamingException ex){
+      <span class="keyword">throw</span> wrappedException(<span class="literal">"Config error. Connection string: "</span> + dbConnString, ex);
+    }
+    <span class="keyword">catch</span> (SQLException ex){
+      <span class="keyword">throw</span> wrappedException(<span class="literal">"Can't connect "</span> + dbConnString, ex);
+    }
+    <span class="keyword">return</span> result;
+  }
+  
+  <span class="comment">//..elided
+</span>  
+  <span class="comment">//PRIVATE
+</span>
+  <span class="comment">/** 
+   If desired, the caller can inspect the cause by calling Throwable.getCause().
+   (That can be a problem sometimes if the runtime environment can't load the  
+   class for the underlying Throwable.) 
+  */</span>
+  <span class="keyword">private</span> DAOException wrappedException(String message, Throwable ex) {
+    DAOException result = <span class="keyword">new</span> DAOException(message + <span class="literal">" "</span> + ex.getMessage());
+    result.initCause(ex);
+    <span class="keyword">return</span> result;
+  }
+  
+  <span class="keyword">private</span> Logger logger = LogManager.getLogManager().getLogger(
+    <span class="keyword">this</span>.getClass().getPackageName()
+  );
+} 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction564b.html?Id=66">Data access objects</a> <br>
+  <a href="TopicAction0d22.html?Id=76">Reduce database code duplication</a> <br>
+  <a href="TopicAction62d0.html?Id=120">Exception translation</a> <br>
+  <a href="TopicAction5f31.html?Id=188">A Web App Framework   WEB4J</a> <br>
+  <a href="TopicAction5ee8.html?Id=235">Beware of unknown root causes</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=77 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+</html>

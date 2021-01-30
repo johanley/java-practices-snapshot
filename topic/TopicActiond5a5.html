@@ -1,0 +1,109 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=33 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="junit,test,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Use a testing framework (JUnit)</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Use a testing framework (JUnit)</div>
+
+<br>Use a testing framework to ensure your class fulfills its <a href="TopicAction63b6.html?Id=194">contract</a>.
+<p>One widely used framework is <a href="https://github.com/junit-team/junit">JUnit</a>.
+JUnit has these advantages:
+</p><ul>
+<li>it's simple to use</li>
+<li>it can test a single class at a time, or a suite of tests can be created
+for a group of classes</li>
+<li>it <i>greatly</i> increases your confidence in the correctness of your code</li>
+<li>it often improves the design of the class you are testing - since you spend
+more time thinking about <a href="TopicAction59d6.html?Id=74">how an object is actually
+<i>used</i></a>, instead of its implementation, defects in its interface
+become more obvious</li>
+<li>failure of a test is glaringly obvious</li>
+<li>the positive feedback provided by successful tests produces unmistakably
+warm, fuzzy feelings even in the embittered heart of an experienced programmer ;)</li>
+</ul>
+
+
+<h3>Test Doubles</h3>
+Unit testing is about testing classes in isolation, one at a time. 
+However, classes usually don't operate in isolation - they usually have <em>collaborators</em>, other 
+classes needed for correct operation.
+In some cases, those collaborators aren't immediately available during unit testing. 
+For example, in a servlet application, the underlying request and response objects are created by the 
+servlet container, and passed to the application for further processing.
+During unit testing, the 'real' request and response are not typically available, since the servlet 
+container isn't running.
+
+<p>Thus, <a href="http://www.martinfowler.com/bliki/TestDouble.html">test doubles</a> are often required during unit testing.
+Test doubles are used to mimic the collaborators of a class being tested.
+See <a href="http://xunitpatterns.com/Using Test Doubles.html">xUnitPatterns.com</a> by Gerard 
+Meszaros for more information.
+
+</p><h3>Tests and Packages</h3>
+Some programmers put their unit tests in a package separate from the classes being tested. 
+This is neither necessary nor desirable. 
+It's not necessary since the tests can always be placed in the same package as the items being tested. 
+It's not desirable for two reasons:
+<ul>
+ <li>it's not compatible with <a href="TopicActionfc56.html?Id=205">package-by-feature</a>
+ </li><li>it often forces you to increase the scope of items being tested to <code>public</code>, merely for the sake of running unit tests
+</li></ul>
+
+<p>From <em>Effective Java</em>, by Johsua Bloch:
+</p><p><em>"It is not acceptable to make a class, interface, or member a part of a package's exported API to facilitate testing.
+Luckily, it isn't necessary either, as tests can be made to run as part of the package being tested, thus gaining access to its package-private elements."</em>
+
+
+
+</p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction59d6.html?Id=74">Construct classes from the outside in</a> <br>
+  <a href="TopicAction55f0.html?Id=135">Using Ant for build scripts</a> <br>
+  <a href="TopicAction0450.html?Id=174">Test using main method</a> <br>
+  <a href="TopicAction63b6.html?Id=194">Design by Contract</a> <br>
+  <a href="TopicAction3987.html?Id=198">Choose form validation style carefully</a> <br>
+  <a href="TopicActionec62.html?Id=234">Use a fake system clock</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=33 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

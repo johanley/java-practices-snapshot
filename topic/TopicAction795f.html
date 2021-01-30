@@ -1,0 +1,146 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=193 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Struts seems mediocre</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Struts seems mediocre</div>
+
+<br>The legacy <a href="https://struts.apache.org/struts1eol-announcement.html">Struts 1</a> front end framework
+was one of the first java web application tools to be published, and at one time it was widely used.
+
+<p>(Calling Struts an "application framework" is inaccurate. Struts assists
+the developer in building only the front end of an application. It does
+nothing for the model layer or the database layer. It's not a full-stack framework.)
+
+</p><p>It can be argued with some force that Struts 1 is a mediocre tool. Here
+are some reasons why.
+</p><p><b>No policies for translating request parameters into common java objects.</b>
+</p><p>All java web applications need to translate raw request parameter values
+into common items such as <code>Integer</code>, <code>Date</code>, and <code>BigDecimal</code>.
+However, <i>Struts 1 provides no support for this task</i>. It
+does not define reasonable default policies, nor does it encourage the
+user to define such policies in any way.
+
+</p><p><b>ActionForms are a massive parallel structure to the "real" model.</b>
+</p><p>The <code>ActionForm</code> classes are not intended as the actual model.
+They are intended as a preliminary validation buffer between the raw HTTP
+request and the "real" model class. (For example, an <code>ActionForm</code>
+might validate that a request parameter can be parsed into an <code>Integer</code>,
+whereas the related model class might validate that the <code>Integer</code>
+is within the range <code>1..10</code>.) <code>ActionForm</code>s include only
+<code>String</code>
+and <code>boolean</code> items, and nothing else. Since <code>ActionForm</code>s
+and model classes exist as a pair, this creates <i>massive unnecessary
+parallelism</i>.
+</p><p>This point is closely related to the first one. If centrally defined
+policies for translating request parameters into <code>Integer</code>, <code>Date</code>,
+<code>BigDecimal</code>,
+and so on, existed, then model objects could indeed be constructed out
+of request parameters more or less directly.
+</p><p>Furthermore, even though Struts 1 requires that model objects be constructed
+out of related <code>ActionForm</code>s, it gives no direct support to the
+programmer for performing this task.
+
+</p><p><b>Data validation is separated from the Model Object.</b>
+</p><p>A fundamental idea in object programming is to unite data with related actions.
+Typical business applications are excellent for illustrating this 
+idea, since business data usually has many related <em>validations</em>. 
+Thus, the Model Object should typically encapsulate both data and validations.
+In Struts 1, however, data validation is completely <em>separated</em> from the Model Object. 
+Why? Why have the creators of Struts 1 lost sight of such a fundamental, basic idea in 
+object programming? It does not seem to have any justification.
+
+</p><p><b>Standard HTML forms are not used.</b>
+</p><p>In Struts 1, forms usually depart widely from standard HTML, and are usually
+implemented with a specific set of custom tags. This is neither necessary
+nor desirable. It's not necessary since other tools have demonstrated
+that dynamically populated forms can simply reuse standard HTML forms as
+part of their implementation. It's not desirable since the page author
+cannot reuse their knowledge of standard HTML, but is instead forced to
+learn a new set of custom tags specific to Struts 1. This is unproductive.
+</p><p><b>Actions must be thread-safe.</b>
+</p><p><code>Action</code>s are always cached and reused by Struts 1. This is both
+a performance optimization and a constraint, since it requires <code>Action</code>s
+to be safe for use in a multi-threaded environment.
+</p><p>As a performance optimization, this policy is of dubious quality. The
+stack traces of a web container are large. If an <code>Action</code> is "just
+another object", it's of very little benefit to cache and reuse it. On
+the other hand, designs in which an <code>Action</code> holds a reference to
+an expensive object (such as a database connection) are often inferior.
+</p><p>As a constraint, Joshua Bloch explains clearly in <i><a href="http://www.amazon.com/exec/obidos/ASIN/0134685997/ref=nosim/javapractices-20">Effective
+Java</a></i> that ensuring a class is usable in a multi-threaded environment
+is a non-trivial task. Forcing all <code>Action</code> implementations to be
+thread-safe seems an onerous requirement having doubtful benefit. For example,
+in a Struts 1 <code>Action</code>, data shared between methods cannot be stored
+in a field; rather, it must be passed as a parameter.
+
+</p><p><b>Struts 1 is an unimpressive implementation of the Command pattern.</b>
+</p><p>The <code>execute</code> method has four arguments, which must always be
+passed in, regardless of whether or not the argument is actually relevant
+to a particular action. In the <i>Design Patterns</i> book, the number
+of arguments to the <code>execute</code> method is exactly zero. There is a
+good reason for this, and it's illustrated by almost every design pattern
+in the Gang Of Four book: the central methods of any design are free of
+implementation details. Data needed by the implementation of an abstraction
+is almost always passed to a <i>constructor</i>. This keeps the abstractions
+clean, and places data specific to the implementation in a place where
+inheritance and polymorphism do not apply (the constructor).
+
+</p><p>In addition, Struts 1 always requires a cast to be performed in an <code>Action</code>, 
+to get access to a specific <code>ActionForm</code>.
+Casts are something to be avoided unless absolutely necessary, since they
+lead to runtime errors.
+</p><p>The <a href="TopicAction5f31.html?Id=188">web4j</a> tool was built out of strong dissatisfaction
+with the Struts 1 front end framework.
+<br>
+</p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction703a.html?Id=138">Parse parameters into domain objects</a> <br>
+  <a href="TopicActionae2d.html?Id=139">Command objects</a> <br>
+  <a href="TopicAction9b6b.html?Id=177">Pre populate forms</a> <br>
+  <a href="TopicAction5f31.html?Id=188">A Web App Framework   WEB4J</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=193 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

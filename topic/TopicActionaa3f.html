@@ -1,0 +1,372 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=225 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Modernize old code</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Modernize old code</div>
+
+<br>
+Java has been around since 1995. There is a large amount of code that has been written for older versions of the JDK.
+Such code will still run, but there are many advantages to modernizing such code, when you get the chance, 
+to take advantage of more modern libraries and language features.
+
+<p>
+In particular, the Java 5 release (JDK 1.5) marked a significant change, and noticeably altered (and improved) the character of typical Java code. 
+When updating old code to more recent versions of Java, it's helpful to use a quick checklist of things to look out for.
+Here's a list of such items related to the Java 5 release:
+
+</p><p><b>Use @Override liberally</b>
+<br>The <code>@Override</code> standard annotation identifies methods that override a superclass method. 
+It should be <a href="TopicAction4b04.html?Id=223">used liberally</a> to indicate your intent to override.
+It's also used when implementing methods defined by an interface.
+
+</p><p><b>Avoid raw types</b>
+<br>Raw types should almost always <a href="TopicActionb2d5.html?Id=224">be avoided</a> in favor of parameterized types.
+
+</p><p><b>Use for-each loops</b>
+<br>The <a href="TopicAction23e0.html?Id=196">enhanced for loop</a> (also called the for-each loop) should be used whenever available.
+It's more compact, concise, and clear.
+
+</p><p><b>Replace constants with enumerations</b>
+<br>Using <code>public static final</code> constants to represent sets of related items should be avoided in favor of the <a href="TopicAction2161.html?Id=1">enumerations</a> now supported by Java.
+In addition, you should consider replacing any "<a href="TopicAction2161.html?Id=1#Legacy">roll-your-own</a>" implementations of type-safe enumerations with the new language construct.
+
+
+</p><p><b>Replace <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/StringBuffer.html">StringBuffer</a></code> with <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/StringBuilder.html">StringBuilder</a></code></b>
+<br>The older <code>StringBuffer</code> class is thread-safe, while the new <code>StringBuilder</code> is not.
+However, it's almost always used in a context in which thread safety is superfluous. 
+Hence, the extra cost of synchronization is paid without benefit. 
+Although the performance improvement in moving from <code>StringBuffer</code> to <code>StringBuilder</code> may only be very slight (or perhaps not even measurable), it's generally considered better form to prefer <code>StringBuilder</code>.
+
+</p><p><b>Use sequence parameters when appropriate</b>
+<br>Sequence parameters (<a href="http://docs.oracle.com/javase/1.5.0/docs/guide/language/varargs.html">varargs</a>) let you replace <code>Object[]</code> parameters (containing 0..N items) appearing at the <em>end</em> of a parameter list with an alternate form more convenient for the caller.
+For example, 
+</p><pre>  public static void main(String[] aArgs){}</pre>
+can now be replaced with:
+<pre>  public static void main(String... aArgs){}</pre>
+
+
+<p><b>Be careful with Comparable</b>
+<br>The <a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Comparable.html"><code>Comparable</code></a> interface has been made generic.
+For example, 
+</p><pre>  class Anatomy implements Comparable{
+    public int compareTo(Object aThat){}
+  }</pre>
+should now be replaced with :
+<pre>  class Anatomy implements Comparable&lt;Anatomy&gt;{
+    public int compareTo(Anatomy aThat){}
+  }
+
+</pre>
+
+<p><b>Example</b>
+</p><p>Here's an example of code written using Java 5 features:
+<br></p><pre>
+<span class="keyword">import</span> java.util.*;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Office {
+
+  <span class="comment">/** 
+  * Use sequence parameter (varargs) for main method.
+  * 
+  * Use a sequence parameter whenever array parameter appears at 
+  * the END of the parameter list, and represents 0..N items.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args){
+    <span class="comment">//Use parameterized type 'List&lt;String&gt;', not the raw type 'List'
+</span>    List&lt;String&gt; employees = Arrays.asList(<span class="literal">"Tom"</span>, <span class="literal">"Fiorella"</span>, <span class="literal">"Pedro"</span>);
+    Office office = <span class="keyword">new</span> Office(AirConditioning.OFF, employees);    
+    System.out.println(office);
+    
+    <span class="comment">//prefer the for-each style of loop
+</span>    <span class="keyword">for</span>(String workingStiff: employees){
+      System.out.println(workingStiff);
+    }
+  }
+
+  <span class="comment">/**
+  * Preferred : use enumerations, not int or String constants.
+  */</span>
+  <span class="keyword">enum</span> AirConditioning {OFF, LOW, MEDIUM, HIGH}
+
+  <span class="comment">/*
+  * Definitely NOT the preferred style :
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> OFF = <span class="literal">1</span>;
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> LOW = <span class="literal">2</span>;
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> MEDIUM = <span class="literal">3</span>;
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> HIGH = <span class="literal">4</span>;
+  
+  Office(AirConditioning airConditioning, List&lt;String&gt; employees){
+    <span class="keyword">this</span>.airConditioning = airConditioning;
+    <span class="keyword">this</span>.employees = employees; <span class="comment">//(no defensive copy here)
+</span>  }
+  
+  AirConditioning getAirConditioning(){
+    <span class="keyword">return</span> airConditioning;
+  }
+  
+  List&lt;String&gt; getEmployees(){
+    <span class="keyword">return</span> employees; 
+  }
+
+  <span class="comment">/*
+  * Get used to typing @Override for toString, equals, and hashCode :
+  */</span>
+  
+  <span class="keyword">@Override</span> <span class="keyword">public</span> String toString(){
+    <span class="comment">//..elided
+</span>  }
+  
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">boolean</span> equals(Object that){
+    <span class="comment">//..elided
+</span>  }
+  
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">int</span> hashCode(){
+    <span class="comment">//..elided
+</span>  }
+  
+  <span class="comment">// PRIVATE //
+</span>  <span class="keyword">private</span> <span class="keyword">final</span> List&lt;String&gt; employees;
+  <span class="keyword">private</span> <span class="keyword">final</span> AirConditioning airConditioning;
+} 
+</pre>
+
+
+<p></p><p><a href="http://docs.oracle.com/javase/7/docs/webnotes/adoptionGuide/index.html">JDK 7</a> 
+also has some new tools which improve the character of typical Java code:
+
+</p><p><b>Use 'diamond' syntax for generic declarations</b>
+<br>Declarations of the form:
+</p><pre>  List&lt;String&gt; blah = new ArrayList&lt;String&gt;();
+  Map&lt;String, String&gt; blah = new LinkedHashMap&lt;String, String&gt;();
+</pre>
+can now be replaced with a more concise syntax:
+<pre>  List&lt;String&gt; blah = new ArrayList&lt;&gt;();
+  Map&lt;String, String&gt; blah = new LinkedHashMap&lt;&gt;();
+</pre>
+
+
+<p><b>Use try-with-resources</b>
+<br>The <a href="http://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html">try-with-resources</a>
+feature lets you eliminate most finally blocks in your code.
+
+</p><p><b>Use Path and Files for basic input/output</b>
+<br>The new <a href="http://docs.oracle.com/javase/tutorial/essential/io/fileio.html">java.nio</a> 
+package is a large improvement over the older File API.
+
+</p><p><b>Objects</b>
+<br>The new <a href="https://docs.oracle.com/javase/10/docs/api/java/util/Objects.html">Objects</a> 
+class has simple utility methods for common tasks.
+
+
+
+</p><p><a href="http://www.oracle.com/technetwork/java/javase/8-whats-new-2157071.html">JDK 8</a> has these highlights:
+
+</p><p><b>Interfaces</b>
+<br>Interfaces can now define static helper (utility) methods.
+
+</p><p>Interfaces can now define <a href="http://docs.oracle.com/javase/tutorial/java/IandI/defaultmethods.html"><code>default</code></a> methods. 
+ These methods both define a method in the API, and provide a default implementation for that method. 
+ Default methods aren't abstract.
+ As a second benefit, <code>default</code> methods let you add new methods to an existing interface, without breaking any existing implementations. 
+ (That's because the existing implementations will simply inherit the <code>default</code> implementation of the new method.)
+
+
+</p><p><b>Functional interfaces and functional methods </b>
+<br>A <a href="https://docs.oracle.com/javase/10/docs/api/java/lang/FunctionalInterface.html">functional interface</a> 
+is simply a new term for something that already exists: an interface having exactly 1 abstract method (called the <em>functional method</em>).
+An example would be the <a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Comparable.html">Comparable</a> interface.
+
+</p><p>A number of <a href="https://docs.oracle.com/javase/10/docs/api/java/util/function/package-summary.html">standard functional interfaces</a> 
+are pre-defined in the JDK. You may reuse them in your application whenever you please. 
+For example, a functional method that takes an object of some type <code>T</code> and returns a boolean can be created using <a href="https://docs.oracle.com/javase/10/docs/api/java/util/function/Predicate.html"><code>Predicate&lt;T&gt;</code></a>. 
+You don't have to explicitly create a new interface. 
+
+</p><p>A trade-off: the names of things in this package take some getting used to, and can be ambiguous. 
+For example:
+</p><ul>
+ <li><code>Consumer.accept</code>
+ </li><li><code>Supplier.get</code>
+ </li><li><code>Function.apply</code>
+</li></ul>
+If you use these, then you're forced to use the names of these pre-defined classes and methods.
+If you define your own interfaces instead, then the names will very likely be much more descriptive.
+
+<p>The term <em>functional interface</em> has been created because they provide target types for 2 new constructs in the Java programming language: 
+<em>lambda expressions</em> and <em>method references</em>.
+
+
+</p><p><b>Lambda expressions</b>
+<br><a href="http://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html">Lambda expressions</a> 
+let you pass a short implementation of a functional interface as a parameter to a method.
+They offer you the choice of a more compact syntax for doing things that were already possible.
+
+</p><p>Lambda expressions don't define a new scope. 
+They see all <code>final</code> and effectively-<code>final</code> variables in the scope where they appear.
+
+
+</p><p><b>Method references</b>
+<br><a href="http://docs.oracle.com/javase/tutorial/java/javaOO/methodreferences.html">Method references</a> 
+(like <code>Integer::sum</code>) are compact lambda expressions for any method that has a name.
+
+
+</p><p><b>Streams, pipelines, and aggregate operations</b>
+<br><a href="https://docs.oracle.com/javase/10/docs/api/java/util/stream/package-summary.html">java.util.stream</a> 
+lets you treat collections and other items in a functional style. 
+It defines <em>streams</em>. 
+A stream can be processed with a <em>pipeline</em> of N sequential <a href="http://docs.oracle.com/javase/tutorial/collections/streams/index.html">aggregate operations</a> (intermediate and terminal).
+Aggregate operations are also called <em>stream operations</em>.
+
+
+</p><p><b>Dates and times</b>
+<br>At long last, <a href="http://docs.oracle.com/javase/8/docs/technotes/guides/datetime/index.html">replacements for the old date-time classes</a> 
+have been added.
+
+
+</p><p><b>Comparator</b>
+<br>The <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Comparator.html">Comparator</a></code> interface 
+has some new methods, both <code>static</code> methods and <code>default</code> methods.
+
+</p><p><b>Example</b>
+</p><p>Here's an example of code written using Java 8 features:
+<br></p><pre>
+<span class="keyword">import</span> java.time.LocalDateTime;
+
+<span class="comment">/** A 'functional interface', since there's exactly 1 abstract method.*/</span>
+<span class="keyword">public</span> <span class="keyword">interface</span> Explosion {
+
+  <span class="comment">/** The 'functional method'. */</span>
+  <span class="keyword">void</span> blowUp();
+  
+  <span class="comment">/** A default method, that can be overridden by an implementation. */</span>
+  <span class="keyword">default</span> <span class="keyword">void</span> countdown(<span class="keyword">int</span> startingWithSeconds){
+    <span class="keyword">int</span> count = startingWithSeconds;
+    <span class="keyword">while</span> (count &gt; <span class="literal">0</span>){
+      <span class="comment">//elided: there's no actual delay here
+</span>      System.out.println(count);
+    }
+  }
+  
+  <span class="comment">/** Static methods: helper or utility. */</span> 
+  <span class="keyword">static</span> <span class="keyword">int</span> numSecondsLeftInTheCurrentMinute(){
+    <span class="comment">//there's no time zone info in LocalDateTime;
+</span>    <span class="comment">//the local/default time zone is implicit here
+</span>    LocalDateTime now = LocalDateTime.now(); 
+    <span class="keyword">return</span> <span class="literal">60</span> - now.getSecond();
+  }
+} 
+</pre>
+
+<br><pre>
+<span class="keyword">import</span> java.util.Arrays;
+<span class="keyword">import</span> java.util.Comparator;
+<span class="keyword">import</span> java.util.List;
+
+<span class="keyword">public</span> <span class="keyword">class</span> ExampleJava8 {
+  
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args) {
+    ExampleJava8 thing = <span class="keyword">new</span> ExampleJava8();
+    thing.useStreams();
+    thing.useLambdaExpression();
+  }
+  
+  <span class="comment">/** This prints beatrice and charles. */</span>
+  <span class="keyword">void</span> useStreams(){
+    List&lt;String&gt; names = Arrays.asList(<span class="literal">"allan"</span>, <span class="literal">"beatrice"</span>, <span class="literal">"charles"</span>, <span class="literal">"diana"</span>);
+    <span class="comment">//disadvantage with chaining in general: if there's a NullPointerException, 
+</span>    <span class="comment">//then it will usually be hard to know which item in the chain is null
+</span>    names
+      .stream()
+      .filter(name -&gt; name.length() &gt; <span class="literal">5</span>)  <span class="comment">//filter-in the names longer than 5 chars
+</span>      .forEach(e -&gt; log(e))    <span class="comment">// print the name
+</span>    ;
+  }
+  
+  <span class="comment">/** 
+   There are variations in the syntax for lambda expressions.
+   The variations are according to the number of parameters to the method, 
+   and the number of lines in the method's implementation.
+   The intent of these variations is to let the code be as short as possible.
+  */</span>
+  <span class="keyword">void</span> useLambdaExpression(){
+    <span class="comment">//a 0-param method, with a 1-line impl
+</span>    Runnable runner1line = () -&gt; log(<span class="literal">"Bang!"</span>);
+    runner1line.run();
+    
+    <span class="comment">//a 0-param method, with an N-line impl
+</span>    Runnable runnerNline = () -&gt; {
+      log(<span class="literal">"Teenage Fanclub"</span>);
+      log(<span class="literal">"Alvvays"</span>);
+      log(<span class="literal">"The Smiths"</span>);
+    };
+    runnerNline.run();
+    
+    <span class="comment">//a 2-param method, that returns an int
+</span>    Comparator&lt;String&gt; compare = (a, b) -&gt; {<span class="keyword">return</span> a.length() - b.length();};
+    
+    <span class="comment">//there are other variations not shown here...
+</span>  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(Object thing){
+    System.out.println(thing.toString());
+  }
+} 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction2161.html?Id=1">Type Safe Enumerations</a> <br>
+  <a href="TopicAction3eed.html?Id=10">Implementing compareTo</a> <br>
+  <a href="TopicActionc857.html?Id=41">Know the core libraries</a> <br>
+  <a href="TopicAction5f93.html?Id=119">Overloading can be tricky</a> <br>
+  <a href="TopicAction23e0.html?Id=196">Use for each liberally</a> <br>
+  <a href="TopicAction4b04.html?Id=223">Use @Override liberally</a> <br>
+  <a href="TopicActionb2d5.html?Id=224">Avoid raw types</a> <br>
+  <a href="TopicAction4ab6.html?Id=248">Prefer modern libraries for concurrency</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=225 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

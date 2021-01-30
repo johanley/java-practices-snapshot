@@ -1,0 +1,285 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=207 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Compare and sort Strings</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Compare and sort Strings</div>
+
+<br>
+
+Comparing and sorting Strings is a bit tricky, and should be done with some care. 
+This is particularly true when the text is displayed to the end user, or when working with localized text.
+
+<p><span class="highlight">There are <em>two</em> fundamentally different ways of comparing strings</span>:
+</p><ul>
+<li>simple <em>Unicode</em> ordering - used by <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/String.html">String</a></code>
+</li><li><em>localized</em> ordering (the kind expected by an end user) - used by <code><a href="https://docs.oracle.com/javase/10/docs/api/java/text/Collator.html">Collator</a></code>
+</li></ul>
+
+This causes problems, because:
+<ul>
+<li>there are only occasional mismatches between the two styles
+</li><li>it's easy to forget to apply the distinction, when needed
+</li></ul>
+
+Commonly used <code>String</code> methods such as:
+<ul>
+ <li><code>String.<a href="https://docs.oracle.com/javase/10/docs/api/java/lang/String.html#equalsIgnoreCase(java.lang.String)">equalsIgnoreCase</a>(String)</code> 
+ </li><li><code>String.<a href="https://docs.oracle.com/javase/10/docs/api/java/lang/String.html#compareTo(java.lang.String)">compareTo</a>(String)</code> 
+</li></ul>
+can be dangerous to use, depending on the context.
+The reason is that programmers tend to apply them to tasks they really aren't meant for, simply out of habit.
+
+<p><span class="highlight">The fundamental difference is that <em>localized</em> comparison depends on <code>Locale</code>, while <code>String</code> is largely <em>ignorant</em> of <code>Locale</code>.</span> 
+Here is a quote from <em>The Java Programming Language</em> by Arnold, Gosling, and Holmes:
+
+</p><p><em>"You should be aware that internationalization and localization issues of full Unicode strings are not addressed
+with [String] methods. For example, when you're comparing two strings to determine which is 'greater', characters 
+in strings are compared numerically by their Unicode values, not by their localized notion of order."</em>
+
+</p><p>The only robust way of doing <em>localized</em> comparison or sorting of <code>String</code>s, in the manner expected by an end user, is to use a <code><a href="https://docs.oracle.com/javase/10/docs/api/java/text/Collator.html">Collator</a></code>, not the methods of the <code>String</code> class.
+
+</p><p><b>Example 1 - Unicode Ordering</b>
+</p><p>Here's an example of simple Unicode ordering of Strings.
+Note the use of <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/String.html#CASE_INSENSITIVE_ORDER">String.CASE_INSENSITIVE_ORDER</a></code>, 
+an implementation of <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Comparator.html">Comparator</a></code>.
+
+</p><p>Reminder - the following items are important with <em>any</em> form of comparison or sorting:
+</p><ul>
+<li>the <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Comparator.html">Comparator</a></code> and 
+ <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Comparable.html">Comparable</a></code> interfaces
+</li><li>the various <code>sort</code> methods of 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Collections.html">Collections</a></code> and 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Arrays.html">Arrays</a></code>
+</li></ul>
+<br><pre>
+<span class="keyword">import</span> java.util.*;
+
+<span class="comment">/** Sorting Strings in Unicode order. */</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> SortStringsNoLocale {
+
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args){
+    List&lt;String&gt; insects = Arrays.asList(<span class="literal">"Wasp"</span>, <span class="literal">"ant"</span>, <span class="literal">""</span>, <span class="literal">"Bee"</span>);
+    log(<span class="literal">"Original:"</span>);
+    log(insects);
+    log(<span class="literal">"Sorted:"</span>);
+    sortList(insects);
+    log(insects);
+    log(<span class="literal">""</span>);
+
+    Map&lt;String,String&gt; capitals = <span class="keyword">new</span> LinkedHashMap&lt;&gt;();
+    capitals.put(<span class="literal">"finland"</span>, <span class="literal">"Helsinki"</span>);
+    capitals.put(<span class="literal">"United States"</span>, <span class="literal">"Washington"</span>);
+    capitals.put(<span class="literal">"Mongolia"</span>, <span class="literal">"Ulan Bator"</span>);
+    capitals.put(<span class="literal">"Canada"</span>, <span class="literal">"Ottawa"</span>);
+    log(<span class="literal">"Original:"</span>);
+    log(capitals);
+    log(<span class="literal">"Sorted:"</span>);
+    log(sortMapByKey(capitals));
+  }
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> sortList(List&lt;String&gt; items){
+    Collections.sort(items, String.CASE_INSENSITIVE_ORDER);
+  }
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(Object thing){
+    System.out.println(Objects.toString(thing)); 
+  }
+
+  <span class="keyword">private</span> <span class="keyword">static</span> Map&lt;String, String&gt; sortMapByKey(Map&lt;String, String&gt; items){
+    TreeMap&lt;String, String&gt; result = 
+      <span class="keyword">new</span> TreeMap&lt;&gt;(String.CASE_INSENSITIVE_ORDER)
+    ;
+    result.putAll(items);
+    <span class="keyword">return</span> result;
+  }
+} 
+</pre>
+
+The class outputs the following:
+<pre>
+Original:
+[Wasp, ant, , Bee]
+Sorted:
+[, ant, Bee, Wasp]
+
+Original:
+{finland=Helsinki, United States=Washington, Mongolia=Ulan Bator, Canada=Ottawa}
+Sorted:
+{Canada=Ottawa, finland=Helsinki, Mongolia=Ulan Bator, United States=Washington}
+</pre>
+
+<p><b>Example 2 - Localized Ordering</b>
+</p><p>Here's an example of using a <code><a href="https://docs.oracle.com/javase/10/docs/api/java/text/Collator.html">Collator</a></code> to perform <em>localized</em> sorting and comparison of Strings.
+Note the importance of <code>Collator</code> 'strength' for fine-tuning the comparison. 
+To ignore case, for example, either <code>PRIMARY</code> or <code>SECONDARY</code> strength can be used.
+
+
+</p><pre>
+<span class="keyword">package</span> hirondelle.jp.util;
+
+<span class="keyword">import</span> java.text.Collator;
+<span class="keyword">import</span> java.util.*;
+
+<span class="comment">/** 
+ Use Collator to sort and compare text.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> SimpleCollator {
+
+  <span class="comment">/** Simple harness to exercise the code.  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main (String... aArguments) {
+    <span class="comment">//This data is based on an example in Java Class Libraries, 
+</span>    <span class="comment">//by Chan, Lee, and Kramer
+</span>    List&lt;String&gt; words = Arrays.asList(
+      <span class="literal">"Äbc"</span>, <span class="literal">"äbc"</span>, <span class="literal">"Àbc"</span>, <span class="literal">"àbc"</span>, <span class="literal">"Abc"</span>, <span class="literal">"abc"</span>, <span class="literal">"ABC"</span>
+    );
+    
+    log(<span class="literal">"Different 'Collation Strength' values give different sort results: "</span>);
+    log(words + <span class="literal">" - Original Data"</span>);
+    sort(words, Strength.Primary);
+    sort(words, Strength.Secondary);
+    sort(words, Strength.Tertiary);
+    
+    log(EMPTY_LINE);
+    log(<span class="literal">"Case kicks in only with Tertiary Collation Strength  : "</span>);
+    List&lt;String&gt; wordsForCase = Arrays.asList(<span class="literal">"cache"</span>, <span class="literal">"CACHE"</span>, <span class="literal">"Cache"</span>);
+    log(wordsForCase + <span class="literal">" - Original Data"</span>);
+    sort(wordsForCase, Strength.Primary);
+    sort(wordsForCase, Strength.Secondary);
+    sort(wordsForCase, Strength.Tertiary);
+    
+    log(EMPTY_LINE);
+    log(<span class="literal">"Accents kick in with Secondary Collation Strength."</span>);
+    log(<span class="literal">"Compare with no accents present: "</span>);
+    compare(<span class="literal">"abc"</span>, <span class="literal">"ABC"</span>, Strength.Primary);
+    compare(<span class="literal">"abc"</span>, <span class="literal">"ABC"</span>, Strength.Secondary);
+    compare(<span class="literal">"abc"</span>, <span class="literal">"ABC"</span>, Strength.Tertiary);
+    
+    log(EMPTY_LINE);
+    log(<span class="literal">"Compare with accents present: "</span>);
+    compare(<span class="literal">"abc"</span>, <span class="literal">"ÀBC"</span>, Strength.Primary);
+    compare(<span class="literal">"abc"</span>, <span class="literal">"ÀBC"</span>, Strength.Secondary);
+    compare(<span class="literal">"abc"</span>, <span class="literal">"ÀBC"</span>, Strength.Tertiary);
+  }
+
+  <span class="comment">// PRIVATE //
+</span>  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String EMPTY_LINE = <span class="literal">""</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Locale TEST_LOCALE = Locale.FRANCE;
+  
+  <span class="comment">/** Transform some Collator 'int' consts into an equivalent enum. */</span>
+  <span class="keyword">private</span> <span class="keyword">enum</span> Strength {
+    Primary(Collator.PRIMARY), <span class="comment">//base char
+</span>    Secondary(Collator.SECONDARY), <span class="comment">//base char + accent
+</span>    Tertiary(Collator.TERTIARY), <span class="comment">// base char + accent + case
+</span>    Identical(Collator.IDENTICAL); <span class="comment">//base char + accent + case + bits
+</span>    
+    <span class="keyword">int</span> getStrength() { <span class="keyword">return</span> fStrength; }
+    
+    <span class="keyword">private</span> <span class="keyword">int</span> fStrength;
+    <span class="keyword">private</span> Strength(<span class="keyword">int</span> aStrength){
+      fStrength = aStrength;
+    }
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> sort(List&lt;String&gt; aWords, Strength aStrength){
+    Collator collator = Collator.getInstance(TEST_LOCALE);
+    collator.setStrength(aStrength.getStrength());
+    Collections.sort(aWords, collator);
+    log(aWords.toString() + <span class="literal">" "</span> + aStrength);
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> compare(String aThis, String aThat, Strength aStrength){
+    Collator collator = Collator.getInstance(TEST_LOCALE);
+    collator.setStrength(aStrength.getStrength());
+    <span class="keyword">int</span> comparison = collator.compare(aThis, aThat);
+    <span class="keyword">if</span> ( comparison == <span class="literal">0</span> ) {
+      log(<span class="literal">"Collator sees them as the same : "</span> + aThis + <span class="literal">", "</span> + aThat + <span class="literal">" - "</span> + aStrength);
+    }
+    <span class="keyword">else</span> {
+      log(<span class="literal">"Collator sees them as DIFFERENT  : "</span> + aThis + <span class="literal">", "</span> + aThat + <span class="literal">" - "</span> + aStrength);
+    }
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(String aMessage){
+    System.out.println(aMessage);
+  }
+}  
+</pre>
+
+
+
+This class outputs the following:
+<pre>
+Different 'Collation Strength' values give different sort results: 
+[Äbc, äbc, Àbc, àbc, Abc, abc, ABC] - Original Data
+[Äbc, äbc, Àbc, àbc, Abc, abc, ABC] Primary
+[Abc, abc, ABC, Àbc, àbc, Äbc, äbc] Secondary
+[abc, Abc, ABC, àbc, Àbc, äbc, Äbc] Tertiary
+
+Case kicks in only with Tertiary Collation Strength  : 
+[cache, CACHE, Cache] - Original Data
+[cache, CACHE, Cache] Primary
+[cache, CACHE, Cache] Secondary
+[cache, Cache, CACHE] Tertiary
+
+Accents kick in with Secondary Collation Strength.
+Compare with no accents present: 
+Collator sees them as the same : abc, ABC - Primary
+Collator sees them as the same : abc, ABC - Secondary
+Collator sees them as DIFFERENT: abc, ABC - Tertiary
+
+Compare with accents present: 
+Collator sees them as the same : abc, ÀBC - Primary
+Collator sees them as DIFFERENT: abc, ÀBC - Secondary
+Collator sees them as DIFFERENT: abc, ÀBC - Tertiary
+</pre>
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction3eed.html?Id=10">Implementing compareTo</a> <br>
+  <a href="TopicAction95c3.html?Id=18">Determine if Strings are equal</a> <br>
+  <a href="TopicActionc6f5.html?Id=65">Choosing the right Collection</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=207 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

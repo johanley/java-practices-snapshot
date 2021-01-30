@@ -1,0 +1,213 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=246 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Copy a file</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Copy a file</div>
+
+<br>
+In JDK 7+, copying a file is a simple operation, involving a single call to 
+File.<a href="https://docs.oracle.com/javase/10/docs/api/java/nio/file/Files.html#copy(java.nio.file.Path,java.nio.file.Path,java.nio.file.CopyOption...)">copy</a>.
+<p><b>Example</b>
+<br></p><pre>
+<span class="keyword">import</span> java.io.IOException;
+<span class="keyword">import</span> java.nio.file.CopyOption;
+<span class="keyword">import</span> java.nio.file.Files;
+<span class="keyword">import</span> java.nio.file.Path;
+<span class="keyword">import</span> java.nio.file.Paths;
+<span class="keyword">import</span> java.nio.file.StandardCopyOption;
+
+<span class="comment">/** JDK 7+. */</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> CopyFilesNew {
+  
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args) <span class="keyword">throws</span> IOException {
+    Path FROM = Paths.get(<span class="literal">"C:\\Temp\\from.txt"</span>);
+    Path TO = Paths.get(<span class="literal">"C:\\Temp\\to.txt"</span>);
+    <span class="comment">//overwrite existing file, if exists
+</span>    CopyOption[] options = <span class="keyword">new</span> CopyOption[]{
+      StandardCopyOption.REPLACE_EXISTING,
+      StandardCopyOption.COPY_ATTRIBUTES
+    }; 
+    Files.copy(FROM, TO, options);
+  }
+} 
+</pre>
+
+In older JDKs, however, copying a file involves a lot more code.
+It can be done either with 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/nio/channels/FileChannel.html">FileChannel</a></code>s or 
+with basic streams.
+The <code>FileChannel</code> technique is usually faster.
+
+<p></p><p>Here's an example showing both techniques.
+<br></p><pre>
+<span class="keyword">import</span> java.io.BufferedInputStream;
+<span class="keyword">import</span> java.io.BufferedOutputStream;
+<span class="keyword">import</span> java.io.File;
+<span class="keyword">import</span> java.io.FileInputStream;
+<span class="keyword">import</span> java.io.FileNotFoundException;
+<span class="keyword">import</span> java.io.FileOutputStream;
+<span class="keyword">import</span> java.io.IOException;
+<span class="keyword">import</span> java.io.InputStream;
+<span class="keyword">import</span> java.io.OutputStream;
+<span class="keyword">import</span> java.nio.channels.FileChannel;
+
+<span class="comment">/** 
+ Copy files, using two techniques, FileChannels and streams.
+ Using FileChannels is usually faster than using streams.
+ JDK 6-.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> CopyFiles {
+  
+  <span class="comment">/* Change these settings before running this class. */</span>
+  
+  <span class="comment">/** The file to be copied. */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String INPUT_FILE = <span class="literal">"C:\\TEMP\\cottage.jpg"</span>;
+  
+  <span class="comment">/**
+   The name of the copy to be created by this class.  
+   If this file doesn't exist, it will be created, along with any 
+   needed parent directories.  
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String COPY_FILE_TO = <span class="literal">"C:\\TEMP10\\cottage_2.jpg"</span>;
+  
+  <span class="comment">/** Run the example. */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args) <span class="keyword">throws</span> IOException{
+    File source = <span class="keyword">new</span> File(INPUT_FILE);
+    File target = <span class="keyword">new</span> File(COPY_FILE_TO);
+    CopyFiles test = <span class="keyword">new</span> CopyFiles();
+    test.copyWithChannels(source, target, <span class="keyword">false</span>);
+    <span class="comment">//test.copyWithStreams(source, target, false);
+</span>    log(<span class="literal">"Done."</span>);
+  }
+
+  <span class="comment">/** This may fail for VERY large files. */</span>
+  <span class="keyword">private</span> <span class="keyword">void</span> copyWithChannels(File source, File target, <span class="keyword">boolean</span> append) {
+    log(<span class="literal">"Copying files with channels."</span>);
+    ensureTargetDirectoryExists(target.getParentFile());
+    FileChannel inChannel = <span class="keyword">null</span>;
+    FileChannel outChannel = <span class="keyword">null</span>;
+    FileInputStream inStream = <span class="keyword">null</span>;
+    FileOutputStream outStream = <span class="keyword">null</span>;
+    <span class="keyword">try</span>{
+      <span class="keyword">try</span> {
+        inStream = <span class="keyword">new</span> FileInputStream(source);
+        inChannel = inStream.getChannel();
+        outStream = <span class="keyword">new</span>  FileOutputStream(target, append);        
+        outChannel = outStream.getChannel();
+        <span class="keyword">long</span> bytesTransferred = <span class="literal">0</span>;
+        <span class="comment">//defensive loop - there's usually only a single iteration :
+</span>        <span class="keyword">while</span>(bytesTransferred &lt; inChannel.size()){
+          bytesTransferred += inChannel.transferTo(<span class="literal">0</span>, inChannel.size(), outChannel);
+        }
+      }
+      <span class="keyword">finally</span> {
+        <span class="comment">//being defensive about closing all channels and streams 
+</span>        <span class="keyword">if</span> (inChannel != <span class="keyword">null</span>) inChannel.close();
+        <span class="keyword">if</span> (outChannel != <span class="keyword">null</span>) outChannel.close();
+        <span class="keyword">if</span> (inStream != <span class="keyword">null</span>) inStream.close();
+        <span class="keyword">if</span> (outStream != <span class="keyword">null</span>) outStream.close();
+      }
+    }
+    <span class="keyword">catch</span> (FileNotFoundException ex){
+      log(<span class="literal">"File not found: "</span> + ex);
+    }
+    <span class="keyword">catch</span> (IOException ex){
+      log(ex);
+    }
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">void</span> copyWithStreams(File source, File target, <span class="keyword">boolean</span> append) {
+    log(<span class="literal">"Copying files with streams."</span>);
+    ensureTargetDirectoryExists(target.getParentFile());
+    InputStream inStream = <span class="keyword">null</span>;
+    OutputStream outStream = <span class="keyword">null</span>;
+    <span class="keyword">try</span>{
+      <span class="keyword">try</span> {
+        <span class="keyword">byte</span>[] bucket = <span class="keyword">new</span> <span class="keyword">byte</span>[<span class="literal">32</span>*<span class="literal">1024</span>];
+        inStream = <span class="keyword">new</span> BufferedInputStream(<span class="keyword">new</span> FileInputStream(source));
+        outStream = <span class="keyword">new</span> BufferedOutputStream(<span class="keyword">new</span> FileOutputStream(target, append));
+        <span class="keyword">int</span> bytesRead = <span class="literal">0</span>;
+        <span class="keyword">while</span>(bytesRead != -<span class="literal">1</span>){
+          bytesRead = inStream.read(bucket); <span class="comment">//-1, 0, or more
+</span>          <span class="keyword">if</span>(bytesRead &gt; <span class="literal">0</span>){
+            outStream.write(bucket, <span class="literal">0</span>, bytesRead);
+          }
+        }
+      }
+      <span class="keyword">finally</span> {
+        <span class="keyword">if</span> (inStream != <span class="keyword">null</span>) inStream.close();
+        <span class="keyword">if</span> (outStream != <span class="keyword">null</span>) outStream.close();
+      }
+    }
+    <span class="keyword">catch</span> (FileNotFoundException ex){
+      log(<span class="literal">"File not found: "</span> + ex);
+    }
+    <span class="keyword">catch</span> (IOException ex){
+      log(ex);
+    }
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">void</span> ensureTargetDirectoryExists(File targetDir){
+    <span class="keyword">if</span>(!targetDir.exists()){
+      targetDir.mkdirs();
+    }
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(Object thing){
+    System.out.println(String.valueOf(thing));
+  }
+} 
+</pre>
+
+
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActiona0d7.html?Id=8">Always close streams</a> <br>
+  <a href="TopicAction21b1.html?Id=245">Reading and writing binary files</a> <br>
+  <a href="TopicActionedb0.html?Id=272">Copy a directory tree</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=246 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

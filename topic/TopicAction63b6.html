@@ -1,0 +1,126 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=194 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Design by Contract</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Design by Contract</div>
+
+<br>The specification of a class or interface is the collection of non-private
+items provided as services to the caller, along with instructions for their
+use, as stated in javadoc. It's a challenge to construct a specification
+which:
+<ul>
+<li>
+is as simple as possible</li>
+
+<li>
+is as clear as possible</li>
+
+<li>
+has no ambiguity</li>
+
+<li>
+is completely accurate</li>
+
+<li>
+allows the reader to completely ignore implementation details (unless there
+is a bug)</li>
+
+<li>
+pours understanding into the mind of the reader as quickly as possible,
+with little chance for misunderstanding</li>
+</ul>
+Design By Contract is an effective guideline of lasting value for creating
+a specification.
+<p>The fundamental idea of Design By Contract is to treat the services
+offered by a class or interface as a contract between the class (or interface)
+and its caller. Here, the word "contract" is meant to convey a kind of
+formal, unambiguous agreement between two parties.&nbsp; <i>C++ FAQs</i>
+describes a contract as being made of two parts:
+</p><ul>
+<li>
+<i>requirements</i> upon the caller made by the class</li>
+
+<li>
+<i>promises</i> made by the class to the caller</li>
+</ul>
+If the caller fulfills the requirements, then the class promises to deliver
+some well-defined service.
+<p>Some changes to a specification/contract will break the caller, and
+some won't. For determining if a change will break a caller, <i>C++ FAQs</i>
+uses the memorable phrase "<span class="highlight">require no more, promise no less</span>": if
+the new specification does not require more from the caller than before,
+and if it does not promise to deliver less than before, then the new specification
+is compatible with the old, and will not break the caller.
+</p><p>Although Design By Contract is a formal part of some programming languages,
+such as Eiffel, it's not a formal part of Java. Nevertheless, Design By
+Contract is very useful for designing classes and interfaces. It can both
+guide the discovery of a more robust design, and allow more effective expression
+of that design in javadoc.
+</p><p>Requirements are simply any conditions on use, for example:
+</p><ul>
+<li>
+conditions on argument values</li>
+
+<li>
+conditions on order of execution of methods</li>
+
+<li>
+conditions on execution in a multi-threaded environment</li>
+</ul>
+Requirements must be stated in javadoc, and may be enforced by throwing
+checked or unchecked exceptions when the stated conditions are violated. Using 
+assertions for enforcing requirements is <a href="TopicActionbf65.html?Id=100">not recommended</a>.
+<p>Promises are stated in javadoc. They can be enforced by <a href="../home/HomeAction.html#Assertions">assertions</a>
+at the end of a method.
+<br>
+</p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActionebc1.html?Id=60">Use javadoc liberally</a> <br>
+  <a href="TopicAction59d6.html?Id=74">Construct classes from the outside in</a> <br>
+  <a href="TopicActionfbf8.html?Id=102">Assert use cases</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=194 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

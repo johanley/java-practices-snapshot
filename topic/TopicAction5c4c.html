@@ -1,0 +1,132 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=169 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:48 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="menu,swing,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Align menu items</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Align menu items</div>
+
+<br>Misalignment of text in menus is a common occurrence in Swing applications.
+It occurs when icons appear for some menu items, but not for all.
+<p>One way to correct this problem is to implement an empty <code>Icon</code>
+having the desired size, but whose <code>paintIcon</code> method does nothing.
+For menu items without an icon, adding an empty <code>Icon</code> will simply
+move the text over the desired amount.
+</p><p><b>Example</b>
+<br></p><pre>
+<span class="keyword">package</span> hirondelle.stocks.util.ui;
+
+<span class="keyword">import</span> javax.swing.Icon;
+<span class="keyword">import</span> java.awt.Component;
+<span class="keyword">import</span> java.awt.Graphics;
+<span class="keyword">import</span> hirondelle.stocks.util.Args;
+
+<span class="comment">/**
+* Represents a square icon having no graphical content.
+*
+* &lt;P&gt;Intended for use with &lt;tt&gt;Action&lt;/tt&gt; and &lt;tt&gt;JMenuItem&lt;/tt&gt;. 
+* Alignment of text is poor when the same menu mixes menu items without an icon with 
+* menu items having an icon. In such cases, items without an icon can use 
+* an &lt;tt&gt;EmptyIcon&lt;/tt&gt; to take up the proper amount of space, and allow 
+* for alignment of all text in the menu.
+*/</span>
+<span class="keyword">final</span> <span class="keyword">class</span> EmptyIcon <span class="keyword">implements</span> Icon {
+
+  <span class="comment">/**
+  * Convenience object for small icons, whose size matches the size of 
+  * small icons in Sun's graphics repository.
+  */</span>
+  <span class="keyword">static</span> <span class="keyword">final</span> EmptyIcon SIZE_16 = <span class="keyword">new</span> EmptyIcon(<span class="literal">16</span>);
+
+  <span class="comment">/**
+  * Convenience object for large icons, whose size matches the size of 
+  * large icons in Sun's graphics repository.
+  */</span>
+  <span class="keyword">static</span> <span class="keyword">final</span> EmptyIcon SIZE_24 = <span class="keyword">new</span> EmptyIcon(<span class="literal">24</span>);
+  
+  <span class="comment">/**
+  * EmptyIcon objects are always square, having identical height and width.
+  *
+  * @param aSize length of any side of the icon in pixels, must 
+  * be in the range 1..100 (inclusive).
+  */</span>
+  EmptyIcon(<span class="keyword">int</span> aSize) {
+    Args.checkForRange(aSize, <span class="literal">1</span>, <span class="literal">100</span>);
+    fSize = aSize;
+  }
+
+  <span class="comment">/**
+  * Return the icon size (width is same as height).
+  */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">int</span> getIconWidth() {
+    <span class="keyword">return</span> fSize;
+  }
+
+  <span class="comment">/**
+  * Return the icon size (width is same as height).
+  */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">int</span> getIconHeight() {
+    <span class="keyword">return</span> fSize;
+  }
+
+  <span class="comment">/**
+  * This implementation is empty, and paints nothing.
+  */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> paintIcon(Component c, Graphics g, <span class="keyword">int</span> x, <span class="keyword">int</span> y) {
+    <span class="comment">//empty
+</span>  }
+
+  <span class="comment">// PRIVATE
+</span>  <span class="keyword">private</span> <span class="keyword">int</span> fSize;
+}
+ 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActionb4fd.html?Id=159">Actions</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=169 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:48 GMT -->
+</html>

@@ -1,0 +1,213 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=279 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="optional,null,return type,empty container,empty string,empty collection,nullable,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Return Optional not null</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Return Optional not null</div>
+
+<br>
+Returning a possibly-<code>null</code> object from a method is usually undesirable.
+The caller of such a method may not be aware that it can return <code>null</code>.
+If the caller has not written code to handle the <code>null</code> case, and a <code>null</code> is returned, 
+then an error will almost always result.
+
+<p>The problem with returning <code>null</code> is that the caller is not <em>forced</em> 
+into handling the <code>null</code> case.
+
+</p><p>In these common cases:
+</p><ul>
+ <li>an empty container, with no items in it: an empty collection, map, or array
+ </li><li>an empty String
+</li></ul>
+you can usually simply return an <em>empty</em> object instead of <code>null</code>, and it will work fine, without 
+special handling. In these cases, there's usually no need for the caller to explicitly handle the empty case.
+
+<p>What do you do when a suitable, well-behaved "empty" object is not available? 
+In those cases, you should return an <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Optional.html">Optional&lt;T&gt;</a></code>.
+<code>Optional&lt;T&gt;</code> was created especially for nullable return values. 
+When the return type of a method is <code>Optional&lt;T&gt;</code>, then the caller is <em>forced</em> into 
+explicitly handling the <code>null</code> case.
+
+</p><p><b>Example</b>
+</p><p>In the example below, the class has a private <code>LocalDate</code> that holds a birth date. 
+It has no "empty" default value.
+The <code>getBirthDate</code> method returns an <code>Optional&lt;LocalDate&gt;</code> to the caller.
+<br></p><pre>
+<span class="keyword">import</span> java.time.LocalDate;
+<span class="keyword">import</span> java.util.Collections;
+<span class="keyword">import</span> java.util.LinkedHashSet;
+<span class="keyword">import</span> java.util.Objects;
+<span class="keyword">import</span> java.util.Optional;
+<span class="keyword">import</span> java.util.Set;
+<span class="keyword">import</span> java.util.stream.Stream;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Human {
+
+  <span class="comment">/** 
+   Constructor. 
+    
+   @param name never null or empty
+   @param address never null, can be empty
+   @param friends never null, can be empty; a defensive copy is made 
+   @param birthDate can be null!
+  */</span>
+  <span class="keyword">public</span> Human(String name, String address, Set&lt;Human&gt; friends, LocalDate birthDate){
+    <span class="keyword">this</span>.name = Objects.requireNonNull(name).trim();
+    <span class="keyword">if</span> (<span class="keyword">this</span>.name.length() == <span class="literal">0</span>){
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="literal">"Name is empty."</span>);
+    }
+    <span class="keyword">this</span>.address = Objects.requireNonNull(address).trim(); 
+    <span class="keyword">this</span>.friends.addAll(Objects.requireNonNull(friends)); <span class="comment">//defensive copy
+</span>    <span class="keyword">this</span>.birthDate = birthDate; <span class="comment">//immutable, no need to copy
+</span>  }
+  
+  <span class="comment">//..elided
+</span>  
+  <span class="comment">/** Never null or empty. */</span>
+  <span class="keyword">public</span> String getName() {
+    <span class="keyword">return</span> name;
+  }
+  
+  <span class="comment">/** Might be an empty String. */</span>
+  <span class="keyword">public</span> String getAddress() {
+    <span class="keyword">return</span> address;
+  }
+
+  <span class="comment">/** Might be an empty Set. */</span>
+  <span class="keyword">public</span> Set&lt;Human&gt; getFriends() {
+    <span class="comment">//make sure the caller can't modify the private Set
+</span>    <span class="keyword">return</span> Collections.unmodifiableSet(friends);
+  }
+  
+  <span class="comment">/** 
+   May or may not be present. 
+   
+   The returned Optional object is itself never null! 
+   That would completely defeat the purpose of using {@code Optional&lt;T&gt;}. 
+  */</span>
+  <span class="keyword">public</span> Optional&lt;LocalDate&gt; getBirthDate() {
+    <span class="keyword">return</span> Optional.ofNullable(birthDate);
+  }
+  
+  <span class="comment">/** Debugging only. */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> String toString(){
+    String SEP = <span class="literal">", "</span>;
+    <span class="keyword">return</span> name + SEP + address + SEP + friends + SEP + birthDate; 
+  }
+
+  <span class="comment">// PRIVATE
+</span>  
+  <span class="comment">/** Required. Never empty. Its value will come from somewhere. */</span>
+  <span class="keyword">private</span> String name;
+  
+  <span class="comment">/** Optional. Default to an empty String. */</span>
+  <span class="keyword">private</span> String address = <span class="literal">""</span>;
+
+  <span class="comment">/** Optional. Default to an empty Set. */</span>
+  <span class="keyword">private</span> Set&lt;Human&gt; friends = <span class="keyword">new</span> LinkedHashSet&lt;&gt;();
+  
+  <span class="comment">/** 
+   Optional. No suitable default! Possibly null.
+   
+   Note that the field itself doesn't have to be of type {@code Optional&lt;LocalDate&gt;}.
+   Optional is not Serializable; it can't be passed over the 
+   network, or persisted to a file system. 
+  */</span>
+  <span class="keyword">private</span> LocalDate birthDate;
+  
+  <span class="comment">/** 
+   Exercise this class.
+   
+   Output:
+   &lt;pre&gt;
+    Jane, 123 Easy Street, [], 1966-06-30
+    Bob, 456 Happy Path, [Jane, 123 Easy Street, [], 1966-06-30], null
+    Birthdate unknown.
+    1966-06-30
+   &lt;/pre&gt;
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args) {
+    Human jane = <span class="keyword">new</span> Human(
+      <span class="literal">"Jane"</span>, <span class="literal">"123 Easy Street"</span>, Collections.emptySet(), LocalDate.of(<span class="literal">1966</span>, <span class="literal">6</span>, <span class="literal">30</span>)
+    );
+    
+    Set&lt;Human&gt; friends = <span class="keyword">new</span> LinkedHashSet&lt;&gt;();
+    friends.add(jane);
+    Human bob = <span class="keyword">new</span> Human(<span class="literal">"Bob"</span>, <span class="literal">"456 Happy Path"</span>, friends, <span class="keyword">null</span>);
+    
+    log(jane.toString(), bob.toString());
+    
+    <span class="comment">/**
+     This kind of code is OK, but you should really try and 
+     use one of the helper methods defined by Optional. 
+    */</span>
+    <span class="keyword">if</span> (bob.getBirthDate().isPresent()){
+      log(bob.getBirthDate());
+    }
+    <span class="keyword">else</span> {
+      log(<span class="literal">"Birthdate unknown."</span>);
+    }
+   
+    <span class="comment">//here's an example of using one of Optional's helper methods
+</span>    jane.getBirthDate().ifPresent(birthDate -&gt; log(birthDate));
+    bob.getBirthDate().ifPresent(birthDate -&gt; log(birthDate)); <span class="comment">//nothing output!
+</span>  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(Object... msgs){
+    Stream.of(msgs).forEach(System.out::println);
+  }
+}
+ 
+</pre>
+
+
+
+
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActiona124.html?Id=59">Prefer empty items to null ones</a> <br>
+  <a href="TopicAction772f.html?Id=134">Avoid null if possible</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=279 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

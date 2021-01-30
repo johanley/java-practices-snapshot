@@ -1,0 +1,86 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=191 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Manage sessions closely</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Manage sessions closely</div>
+
+<br>
+
+The Servlet API is, unfortunately, rather liberal in creating sessions. 
+Various tools have default behaviors which can implicitly create sessions in the background.
+It's very easy for an application to "accidentally" create a session, even when one was not explicitly requested.
+
+
+<p>An an example, JSPs will often create a session if one doesn't already exist. 
+This allows JSPs to use the implicit <code>session</code> variable.
+As a second example, the <code><a href="https://docs.oracle.com/javaee/7/api/javax/servlet/http/HttpServletRequest.html#getSession--">request.getSession()</a></code> method will also automatically create a session if one doesn't already exist.
+
+</p><p>However, sessions should be managed with some care, for two main reasons:
+</p><ul>
+ <li>sessions have various security risks associated with them.
+ </li><li>sessions consume server resources.
+</li></ul>
+
+<p>So, the creation and destruction of sessions should likely be tightly controlled by the application.
+
+</p><p>Here's an example of a reasonable set of policies regarding sessions:
+</p><ul>
+ <li>use a <code>&lt;%@ page session="false" %&gt;</code> directive at the top of every JSP that doesn't use a session
+ </li><li>consider <a href="TopicAction0836.html?Id=226">disabling URL rewriting</a> altogether
+ </li><li>create a new session only when the user logs in (and not before)
+ </li><li>when the user logs out, invalidate the session and delete any related cookie
+ </li><li>in <code>web.xml</code>, ensure session time out is set to value which isn't unnecessarily long
+ </li><li>defend against Cross-Site Request Forgery attacks (which hijack existing sessions)
+</li></ul>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction37f1.html?Id=95">Emit flexible URLs</a> <br>
+  <a href="TopicAction1c49.html?Id=109">Always maintain HttpSessions </a> <br>
+  <a href="TopicAction9f4f.html?Id=116">Beware of custom cookies</a> <br>
+  <a href="TopicAction85b1.html?Id=217">Beware of common hacks</a> <br>
+  <a href="TopicAction0836.html?Id=226">Beware of URL rewriting</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=191 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

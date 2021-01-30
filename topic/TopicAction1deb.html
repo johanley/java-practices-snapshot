@@ -1,0 +1,681 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=17 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="equals,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Implementing equals</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Implementing equals</div>
+
+<br>All objects have both <em>identity</em> (the object's location in memory) and
+<em>state</em> (the object's data). The <code>==</code> operator always compares identity.
+The default implementation of <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Object.html#equals(java.lang.Object)">equals</a></code>
+compares identity as well.
+
+<p>Sometimes the default implementation of <code>equals</code> has the desired
+behaviour (as in a <a href="TopicAction2161.html?Id=1">type-safe enumeration</a>, for
+example), but <span class="highlight"><code>equals</code> should usually compare state, not identity.
+This is particularly true for <a href="TopicActiond08d.html?Id=187">"data-centric" classes</a>
+which map to database records.</span>
+
+</p><p><code><a href="TopicAction78db.html?Id=28">hashCode</a></code> and <code>equals</code> are
+closely related:
+
+</p><ul>
+<li>if you override <code>equals</code>, you must override <code>hashCode</code>.</li>
+<li><code>hashCode</code> must generate equal values for equal objects.</li>
+<li><code>equals</code> and <code>hashCode</code> must depend on the same set of "significant" fields. You 
+must use the same set of fields in both of these methods. You are not required to use all fields. 
+For example, a calculated field that depends on others should very likely be omitted from <code>equals</code> 
+and <code>hashCode</code>.
+</li></ul>
+
+Objects placed in a <code>List</code>, <code>Set</code>, or <code>Map</code> (as either
+a key or value) should have an appropriate definition of <code>equals</code>.
+(See, for example, the javadoc for <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Collection.html#contains(java.lang.Object)">Collection.contains</a></code>
+, <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Map.html#containsKey(java.lang.Object)">Map.containsKey</a></code>,
+and <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Map.html#containsValue(java.lang.Object)">Map.containsValue</a></code>
+.)
+
+
+<p>When implementing <code>equals</code>, fields are compared differently, according to their type:
+</p><ul>
+<li>
+object fields, including collections : use <code>equals</code></li>
+
+<li>
+<a href="TopicAction2161.html?Id=1">type-safe enumerations</a> : use either <code>equals</code>
+or <code>==</code> (they amount to the same thing, in this case)</li>
+
+<li>
+possibly-null object fields : use both <code>==</code> and <code>equals</code></li>
+
+<li>
+array fields : use <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Arrays.html">Arrays</a>.equals</code></li>
+
+<li>
+primitive fields other than <code>float</code> or <code>double</code> : use <code>==</code></li>
+
+<li>
+<code>float</code> : convert to <code>int</code> using <code>Float.<a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Float.html#floatToIntBits(float)">floatToIntBits</a></code>,
+then use <code>==</code></li>
+
+<li>
+<code>double</code> :&nbsp; convert to <code>long</code> using <code>Double.<a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Double.html#doubleToLongBits(double)">doubleToLongBits</a></code>,
+then use <code>==</code></li>
+</ul>
+
+It's worth noting that if fields are implemented with wrapper classes
+(<code>Integer</code>, <code>Boolean</code>, and so on), then implementation of
+<code>equals</code>
+is simpler, since there is only one case: calling the
+<code>equals</code>
+method recursively. (The <code><a href="TopicAction3eed.html?Id=10">compareTo</a></code> method
+is also simplified in this case.)
+
+<p>In an <code>equals</code> method, it's usually worthwhile to <em>order</em> field comparisons 
+such that the most significant comparisons are performed first. That is, fields most 
+likely to differ should be evaluated first. This allows the 
+<a href="http://docs.oracle.com/javase/specs/jls/se7/html/jls-15.html#jls-15.23"><code>&amp;&amp;</code></a> 
+"short-circuit" logical operator to minimize execution time.
+
+</p><p>If you extend a <i>concrete</i> class, and add a new field which contributes to <code>equals</code>, 
+then you have to be careful (as shown below in Example 3).
+
+</p><p><b>Example 1</b>
+</p><p>The simplest case for implementing <code>equals</code> (and <code>hashCode</code>) is to not use primitive fields or array fields.
+This is usually not an onerous restriction, because:
+</p><ul>
+ <li>in general, Collections are <a href="TopicAction55c9.html?Id=39">preferred over arrays</a>
+ </li><li>since only objects can be null, objects are <a href="TopicActiondfce.html?Id=199">preferred over primitives</a> for modeling optional data 
+</li></ul> 
+<br><pre>
+<span class="keyword">import</span> java.time.LocalDate;
+<span class="keyword">import</span> java.util.List;
+<span class="keyword">import</span> java.util.Objects;
+<span class="keyword">import</span> java.util.Set;
+
+<span class="comment">/**
+ With respect to implementing equals and hashCode, the simplest case is to 
+ simply never use primitive fields or array fields.
+ 
+ If a significant field is an array, then equals and hashCode need to process each 
+ element of the array. For this reason, it's simpler to use a Collection 
+ instead of an array.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> ApartmentComplex {
+
+  <span class="comment">/** Possible features of an apartment building. */</span>
+  <span class="keyword">enum</span> Feature {
+    AIR_COND, CENTRAL_VAC, INDOOR_PARKING
+  }
+  
+  <span class="comment">/**
+   Constructor.
+    
+   @param name possibly empty
+   @param isDecrepit never null
+   @param options never null, possibly empty
+   @param maintenanceChecks never null, possibly empty
+   @param features never null, possibly empty; callers typically use EnumSet.of(). 
+   @param numApartments nullable
+   @param numTenants nullable
+  */</span>
+  <span class="keyword">public</span> ApartmentComplex(
+    String name,
+    Boolean isDecrepit,
+    Set&lt;String&gt; options,
+    List&lt;LocalDate&gt; maintenanceChecks,
+    Set&lt;Feature&gt; features,
+    Integer numApartments,
+    Long numTenants
+  ){
+    <span class="keyword">this</span>.name = Objects.requireNonNull(name);
+    <span class="keyword">this</span>.isDecrepit = Objects.requireNonNull(isDecrepit);
+    <span class="keyword">this</span>.options = Objects.requireNonNull(options);
+    <span class="keyword">this</span>.maintenanceChecks = Objects.requireNonNull(maintenanceChecks);
+    <span class="keyword">this</span>.features = Objects.requireNonNull(features);
+    <span class="keyword">this</span>.numApartments = numApartments;
+    <span class="keyword">this</span>.numTenants = numTenants;
+  }
+
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">boolean</span> equals(Object aThat) {
+    <span class="comment">//a standard implementation pattern
+</span>    <span class="comment">//only the type 'ApartmentComplex' changes
+</span>    <span class="keyword">if</span> (<span class="keyword">this</span> == aThat) <span class="keyword">return</span> <span class="keyword">true</span>;
+    <span class="keyword">if</span> (!(aThat <span class="keyword">instanceof</span> ApartmentComplex)) <span class="keyword">return</span> <span class="keyword">false</span>;
+    ApartmentComplex that = (ApartmentComplex)aThat;
+    <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="literal">0</span>; i &lt; <span class="keyword">this</span>.getSigFields().length; ++i){
+      <span class="keyword">if</span> (!Objects.equals(<span class="keyword">this</span>.getSigFields()[i], that.getSigFields()[i])){
+        <span class="keyword">return</span> <span class="keyword">false</span>;
+      }
+    }
+    <span class="keyword">return</span> <span class="keyword">true</span>;
+  }
+
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">int</span> hashCode() {
+    <span class="comment">//simple one-line implementation
+</span>    <span class="keyword">return</span> Objects.hash(getSigFields());
+  }
+  
+  <span class="comment">/** For debugging only. */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> String toString(){
+    <span class="keyword">return</span> <span class="literal">"'"</span> + name + <span class="literal">"'"</span>;
+  }
+
+  <span class="comment">//..elided..
+</span>
+  <span class="comment">// PRIVATE
+</span>
+  <span class="comment">//no primitives, and no arrays!
+</span>  <span class="keyword">private</span> String name; 
+  <span class="keyword">private</span> Boolean isDecrepit; 
+  <span class="keyword">private</span> Set&lt;String&gt; options; 
+  <span class="keyword">private</span> List&lt;LocalDate&gt; maintenanceChecks; 
+  <span class="keyword">private</span> Set&lt;Feature&gt; features;
+  <span class="keyword">private</span> Integer numApartments; 
+  <span class="keyword">private</span> Long numTenants;
+
+  <span class="comment">/** 
+   Must be called by BOTH equals and hashCode.
+   'sig' as in 'significant'.
+   
+   It helps a bit to put the most significant items first, such that 
+   the equals method can return as soon as possible, by finding 
+   unequal items rapidly. 
+  */</span>
+  <span class="keyword">private</span> Object[] getSigFields(){
+    Object[] result = {
+      name, isDecrepit, options, maintenanceChecks, 
+      features, numApartments, numTenants
+    };
+    <span class="keyword">return</span> result;
+  }
+} 
+</pre>
+
+
+
+<p></p><p><b>Example 2</b>
+
+</p><p>If you're using primitive or array fields, then you need an alternate implementation.
+The policies mentioned above can be collected in a utility class:
+<br></p><pre>
+<span class="comment">/**
+* Collected methods which allow easy implementation of &lt;code&gt;equals&lt;/code&gt;.
+*
+* Example use case in a class called Car:
+* &lt;pre&gt;
+public boolean equals(Object aThat){
+  if ( this == aThat ) return true;
+  if ( !(aThat instanceof Car) ) return false;
+  Car that = (Car)aThat;
+  return
+    EqualsUtil.areEqual(this.name, that.name) &amp;&amp;
+    EqualsUtil.areEqual(this.numDoors, that.numDoors) &amp;&amp;
+    EqualsUtil.areEqual(this.gasMileage, that.gasMileage) &amp;&amp;
+    EqualsUtil.areEqual(this.color, that.color) &amp;&amp;
+    Arrays.equals(this.maintenanceChecks, that.maintenanceChecks); //array!
+}
+* &lt;/pre&gt;
+*
+* &lt;em&gt;Arrays are not handled by this class&lt;/em&gt;.
+* This is because the &lt;code&gt;Arrays.equals&lt;/code&gt; methods should be used for
+* array fields.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> EqualsUtil {
+
+  <span class="keyword">static</span> <span class="keyword">public</span> <span class="keyword">boolean</span> areEqual(<span class="keyword">boolean</span> a, <span class="keyword">boolean</span> b){
+    <span class="comment">//System.out.println("boolean");
+</span>    <span class="keyword">return</span> a == b;
+  }
+
+  <span class="keyword">static</span> <span class="keyword">public</span> <span class="keyword">boolean</span> areEqual(<span class="keyword">char</span> a, <span class="keyword">char</span> b){
+    <span class="comment">//System.out.println("char");
+</span>    <span class="keyword">return</span> a == b;
+  }
+
+  <span class="keyword">static</span> <span class="keyword">public</span> <span class="keyword">boolean</span> areEqual(<span class="keyword">long</span> a, <span class="keyword">long</span> b){
+    <span class="comment">/*
+    * Implementation Note
+    * Note that byte, short, and int are handled by this method, through
+    * implicit conversion.
+    */</span>
+    <span class="comment">//System.out.println("long");
+</span>    <span class="keyword">return</span> a == b;
+  }
+
+  <span class="keyword">static</span> <span class="keyword">public</span> <span class="keyword">boolean</span> areEqual(<span class="keyword">float</span> a, <span class="keyword">float</span> b){
+    <span class="comment">//System.out.println("float");
+</span>    <span class="keyword">return</span> Float.floatToIntBits(a) == Float.floatToIntBits(b);
+  }
+
+  <span class="keyword">static</span> <span class="keyword">public</span> <span class="keyword">boolean</span> areEqual(<span class="keyword">double</span> a, <span class="keyword">double</span> b){
+    <span class="comment">//System.out.println("double");
+</span>    <span class="keyword">return</span> Double.doubleToLongBits(a) == Double.doubleToLongBits(b);
+  }
+
+  <span class="comment">/**
+  * Possibly-null object field.
+  *
+  * Includes type-safe enumerations and collections, but does not include
+  * arrays. See class comment.
+  */</span>
+  <span class="keyword">static</span> <span class="keyword">public</span> <span class="keyword">boolean</span> areEqual(Object a, Object b){
+    <span class="comment">//System.out.println("Object");
+</span>    <span class="keyword">return</span> a == <span class="keyword">null</span> ? b == <span class="keyword">null</span> : a.equals(b);
+  }
+}
+  
+</pre>
+
+<br><code>Car</code> is a class which uses <code>EqualsUtil</code> to implement
+its <code>equals</code> method:
+<br><pre>
+<span class="keyword">import</span> java.util.*;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Car {
+
+  <span class="keyword">public</span> Car (
+    String name, <span class="keyword">int</span> numDoors, List&lt;String&gt; options,
+    <span class="keyword">double</span> gasMileage, String color, Date[] maintenanceChecks
+  ){
+    <span class="keyword">this</span>.name = name;
+    <span class="keyword">this</span>.numDoors = numDoors;
+    <span class="keyword">this</span>.options = <span class="keyword">new</span> ArrayList&lt;&gt;(options);
+    <span class="keyword">this</span>.gasMileage = gasMileage;
+    <span class="keyword">this</span>.color = color;
+    <span class="keyword">this</span>.maintenanceChecks = <span class="keyword">new</span> Date[maintenanceChecks.length];
+    <span class="keyword">for</span> (<span class="keyword">int</span> idx=<span class="literal">0</span>; idx &lt; maintenanceChecks.length; ++idx) {
+      <span class="keyword">this</span>.maintenanceChecks[idx] = <span class="keyword">new</span> Date(maintenanceChecks[idx].getTime() );
+    }
+  }
+
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">boolean</span> equals(Object aThat) {
+    <span class="comment">//check for self-comparison
+</span>    <span class="keyword">if</span> ( <span class="keyword">this</span> == aThat ) <span class="keyword">return</span> <span class="keyword">true</span>;
+
+    <span class="comment">//use instanceof instead of getClass here for two reasons
+</span>    <span class="comment">//1. if need be, it can match any supertype, and not just one class;
+</span>    <span class="comment">//2. it renders an explict check for "that == null" redundant, since
+</span>    <span class="comment">//it does the check for null already - "null instanceof [type]" always
+</span>    <span class="comment">//returns false. (See Effective Java by Joshua Bloch.)
+</span>    <span class="keyword">if</span> ( !(aThat <span class="keyword">instanceof</span> Car) ) <span class="keyword">return</span> <span class="keyword">false</span>;
+    <span class="comment">//Alternative to the above line :
+</span>    <span class="comment">//if ( aThat == null || aThat.getClass() != this.getClass() ) return false;
+</span>
+    <span class="comment">//cast to native object is now safe
+</span>    Car that = (Car)aThat;
+
+    <span class="comment">//now a proper field-by-field evaluation can be made
+</span>    <span class="keyword">return</span>
+      EqualsUtil.areEqual(<span class="keyword">this</span>.name, that.name) &amp;&amp;
+      EqualsUtil.areEqual(<span class="keyword">this</span>.numDoors, that.numDoors) &amp;&amp;
+      EqualsUtil.areEqual(<span class="keyword">this</span>.options, that.options) &amp;&amp;
+      EqualsUtil.areEqual(<span class="keyword">this</span>.gasMileage, that.gasMileage) &amp;&amp;
+      EqualsUtil.areEqual(<span class="keyword">this</span>.color, that.color) &amp;&amp;
+      Arrays.equals(<span class="keyword">this</span>.maintenanceChecks, that.maintenanceChecks);
+  }
+
+  <span class="comment">//..other methods elided
+</span>
+  <span class="comment">// PRIVATE
+</span>
+  <span class="comment">/**
+  * The types of these fields are chosen to exercise most of the different
+  * cases.
+  */</span>
+  <span class="keyword">private</span> String name;
+  <span class="keyword">private</span> <span class="keyword">int</span> numDoors;
+  <span class="keyword">private</span> List&lt;String&gt; options;
+  <span class="keyword">private</span> <span class="keyword">double</span> gasMileage;
+  <span class="keyword">private</span> String color; <span class="comment">//treat as possibly-null
+</span>  <span class="comment">/** New code should use LocalDate! */</span>
+  <span class="keyword">private</span> Date[] maintenanceChecks;
+
+  <span class="comment">/**
+  * Exercise the equals method.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main (String args) {
+    List&lt;String&gt; options = <span class="keyword">new</span> ArrayList&lt;String&gt;();
+    options.add(<span class="literal">"sunroof"</span>);
+    Date[] dates = <span class="keyword">new</span> Date[<span class="literal">1</span>];
+    dates[<span class="literal">0</span>] = <span class="keyword">new</span> Date();
+
+    <span class="comment">//Create a bunch of Cars; only one and two should be equal
+</span>    Car one = <span class="keyword">new</span> Car(<span class="literal">"Nissan"</span>, <span class="literal">2</span>, options, <span class="literal">46.3</span>, <span class="literal">"Green"</span>, dates);
+
+    <span class="comment">//two is equal to one
+</span>    Car two = <span class="keyword">new</span> Car(<span class="literal">"Nissan"</span>, <span class="literal">2</span>, options, <span class="literal">46.3</span>, <span class="literal">"Green"</span>, dates);
+
+    <span class="comment">//three has a differs in fName only
+</span>    Car three = <span class="keyword">new</span> Car(<span class="literal">"Pontiac"</span>, <span class="literal">2</span>, options, <span class="literal">46.3</span>, <span class="literal">"Green"</span>, dates);
+
+    <span class="comment">//four differs in fNumDoors only
+</span>    Car four = <span class="keyword">new</span> Car(<span class="literal">"Nissan"</span>, <span class="literal">4</span>, options, <span class="literal">46.3</span>, <span class="literal">"Green"</span>, dates);
+
+    <span class="comment">//five differs in fOptions only
+</span>    List&lt;String&gt; optionsTwo = <span class="keyword">new</span> ArrayList&lt;String&gt;();
+    optionsTwo.add(<span class="literal">"air conditioning"</span>);
+    Car five = <span class="keyword">new</span> Car(<span class="literal">"Nissan"</span>, <span class="literal">2</span>, optionsTwo, <span class="literal">46.3</span>, <span class="literal">"Green"</span>, dates);
+
+    <span class="comment">//six differs in fGasMileage only
+</span>    Car six = <span class="keyword">new</span> Car(<span class="literal">"Nissan"</span>, <span class="literal">2</span>, options, <span class="literal">22.1</span>, <span class="literal">"Green"</span>, dates);
+
+    <span class="comment">//seven differs in fColor only
+</span>    Car seven = <span class="keyword">new</span> Car(<span class="literal">"Nissan"</span>, <span class="literal">2</span>, options, <span class="literal">46.3</span>, <span class="literal">"Fuchsia"</span>, dates);
+
+    <span class="comment">//eight differs in fMaintenanceChecks only
+</span>    Date[] datesTwo = <span class="keyword">new</span> Date[<span class="literal">1</span>];
+    datesTwo[<span class="literal">0</span>] = <span class="keyword">new</span> Date(<span class="literal">1000000</span>);
+    Car eight = <span class="keyword">new</span> Car(<span class="literal">"Nissan"</span>, <span class="literal">2</span>, options, <span class="literal">46.3</span>, <span class="literal">"Green"</span>, datesTwo);
+
+    log(<span class="literal">"one = one: "</span> + one.equals(one));
+    log(<span class="literal">"one = two: "</span> + one.equals(two));
+    log(<span class="literal">"two = one: "</span> + two.equals(one));
+    log(<span class="literal">"one = three: "</span> + one.equals(three));
+    log(<span class="literal">"one = four: "</span> + one.equals(four));
+    log(<span class="literal">"one = five: "</span> + one.equals(five));
+    log(<span class="literal">"one = six: "</span> + one.equals(six));
+    log(<span class="literal">"one = seven: "</span> + one.equals(seven));
+    log(<span class="literal">"one = eight: "</span> + one.equals(eight));
+    log(<span class="literal">"one = null: "</span> + one.equals(<span class="keyword">null</span>));
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(String text) {
+    System.out.println(text);
+  }
+} 
+</pre>
+
+<br>An example run of this class demonstrates that only objects <code>one</code>
+and <code>two</code> are equal:
+<br><code>one = one: true</code>
+<br><code>one = two: true</code>
+<br><code>two = one: true</code>
+<br><code>one = three: false</code>
+<br><code>one = four: false</code>
+<br><code>one = five: false</code>
+<br><code>one = six: false</code>
+<br><code>one = seven: false</code>
+<br><code>one = eight: false</code>
+<br><code>one = null: false</code>
+
+<p></p><p><b>Example 3</b>
+</p><p>The <a href="TopicAction5f31.html?Id=188">WEB4J</a> tool has a utility class for implementing <code>equals</code>. 
+The following is an 
+example of a Model Object implemented with WEB4J. 
+
+</p><p>Items to note regarding this <code>equals</code> method:
+</p><ul>
+<li>it reads at a slightly higher level
+</li><li>it's easier to remember, and easier to write
+</li><li>it does not use <a href="TopicActione309.html?Id=114">multiple return statements</a>
+</li><li>the fields used in <code>equals</code> and <code>hashCode</code> are clearly 'in sync' (as they must be), 
+since they both call the same method named <code>getSignificantFields()</code>
+</li></ul>
+<br><pre>
+<span class="keyword">package</span> hirondelle.fish.main.discussion; 
+
+<span class="keyword">import</span> java.util.*;
+<span class="keyword">import</span> hirondelle.web4j.model.ModelCtorException;
+<span class="keyword">import</span> hirondelle.web4j.model.ModelUtil;
+<span class="keyword">import</span> hirondelle.web4j.model.Check;
+<span class="keyword">import</span> hirondelle.web4j.security.SafeText;
+<span class="keyword">import</span> <span class="keyword">static</span> hirondelle.web4j.util.Consts.FAILS;
+
+<span class="comment">/** 
+ Comment posted by a possibly-anonymous user.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Comment { 
+
+  <span class="comment">/**
+   Constructor. 
+     
+   @param aUserName identifies the logged in user posting the comment. 
+   @param aBody the comment, must have content.
+   @param aDate date and time when the message was posted.
+  */</span>
+  <span class="keyword">public</span> Comment (
+    SafeText aUserName, SafeText aBody, Date aDate
+  ) <span class="keyword">throws</span> ModelCtorException {
+    fUserName = aUserName;
+    fBody = aBody;
+    fDate = aDate.getTime();
+    validateState();
+  }
+
+  <span class="comment">/** Return the logged in user name passed to the constructor. */</span>
+  <span class="keyword">public</span> SafeText getUserName() {
+    <span class="keyword">return</span> fUserName;
+  }
+
+  <span class="comment">/** Return the body of the message passed to the constructor.  */</span>
+  <span class="keyword">public</span> SafeText getBody() {
+    <span class="keyword">return</span> fBody;
+  }
+
+  <span class="comment">/**
+   Return a &lt;a href="http://www.javapractices.com/Topic15.cjp"&gt;defensive copy&lt;/a&gt; 
+   of the date passed to the constructor.
+   
+   &lt;P&gt;The caller may change the state of the returned value, without affecting 
+   the internals of this &lt;tt&gt;Comment&lt;/tt&gt;. Such copying is needed since 
+   a {@link Date} is a mutable object.
+  */</span>
+  <span class="keyword">public</span> Date getDate() {
+    <span class="comment">// the returned object is independent of fDate
+</span>    <span class="keyword">return</span> <span class="keyword">new</span> Date(fDate);
+  }
+
+  <span class="comment">/** Intended for debugging only. */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> String toString() {
+    <span class="keyword">return</span> ModelUtil.toStringFor(<span class="keyword">this</span>);
+  }
+
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">boolean</span> equals( Object aThat ) {
+    Boolean result = ModelUtil.quickEquals(<span class="keyword">this</span>, aThat);
+    <span class="keyword">if</span> ( result == <span class="keyword">null</span> ){
+      Comment that = (Comment) aThat;
+      result = ModelUtil.equalsFor(
+        <span class="keyword">this</span>.getSignificantFields(), that.getSignificantFields()
+      );
+    }
+    <span class="keyword">return</span> result;    
+  }
+
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">int</span> hashCode() {
+    <span class="keyword">if</span> ( fHashCode == <span class="literal">0</span> ) {
+      fHashCode = ModelUtil.hashCodeFor(getSignificantFields());
+    }
+    <span class="keyword">return</span> fHashCode;
+  }
+
+  <span class="comment">// PRIVATE // 
+</span>  <span class="keyword">private</span> <span class="keyword">final</span> SafeText fUserName;
+  <span class="keyword">private</span> <span class="keyword">final</span> SafeText fBody;
+  <span class="comment">/** Long is used here instead of Date in order to ensure immutability.*/</span>
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">long</span> fDate;
+  <span class="keyword">private</span> <span class="keyword">int</span> fHashCode;
+  
+  <span class="keyword">private</span> Object[] getSignificantFields(){
+    <span class="keyword">return</span> <span class="keyword">new</span> Object[] {fUserName, fBody, <span class="keyword">new</span> Date(fDate)};
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">void</span> validateState() <span class="keyword">throws</span> ModelCtorException {
+    ModelCtorException ex = <span class="keyword">new</span> ModelCtorException();
+    <span class="keyword">if</span>( FAILS ==  Check.required(fUserName) ) {
+      ex.add(<span class="literal">"User name must have content."</span>);
+    }
+    <span class="keyword">if</span> ( FAILS == Check.required(fBody) ) {
+      ex.add(<span class="literal">"Comment body must have content."</span>);
+    }
+    <span class="keyword">if</span> ( ! ex.isEmpty() ) <span class="keyword">throw</span> ex;
+  }
+}
+ 
+</pre>
+
+
+<p><b>Extends</b>
+</p><p>What happens when you extend a <em>concrete</em> class, and add a new significant field?
+According to <a href="http://www.amazon.com/exec/obidos/ASIN/0134685997/ref=nosim/javapractices-20">Effective Java</a> by Joshua Bloch, 
+it's not possible to write a perfectly correct <code>equals</code> method for the new class.
+Instead, you should use composition instead of inheritance.
+
+</p><p>But, according to <a href="http://www.artima.com/lejava/articles/equality.html">this article</a> (Odersky, Spoon, and Venners), there's a simple technique for this case. 
+It uses a new method <code>canEqual</code>, which defines, for the subclasses, what types should be considered as part of the <code>equals</code> method.
+
+</p><p><b>Example 4</b>
+<br></p><pre>
+<span class="keyword">import</span> java.math.BigDecimal;
+
+<span class="keyword">public</span> <span class="keyword">class</span> Star {
+
+  <span class="keyword">public</span> Star(String name, BigDecimal radius){
+    <span class="keyword">this</span>.name = name;
+    <span class="keyword">this</span>.radius = radius;
+  }
+  
+  <span class="keyword">public</span> <span class="keyword">final</span> String getName(){<span class="keyword">return</span> name;}
+  <span class="keyword">public</span> <span class="keyword">final</span> BigDecimal getRadius() {<span class="keyword">return</span> radius;}
+  
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">boolean</span> equals(Object aThat){
+    <span class="keyword">if</span> (<span class="keyword">this</span> == aThat) <span class="keyword">return</span> <span class="keyword">true</span>;
+    <span class="keyword">if</span> ( !(aThat <span class="keyword">instanceof</span> Star) ) <span class="keyword">return</span> <span class="keyword">false</span>;
+    Star that = (Star)aThat;
+    <span class="keyword">return</span>
+      that.canEqual(<span class="keyword">this</span>) &amp;&amp;
+      EqualsUtil.areEqual(<span class="keyword">this</span>.name, that.name) &amp;&amp;
+      EqualsUtil.areEqual(<span class="keyword">this</span>.radius, that.radius)
+    ;
+  }
+  
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">int</span> hashCode(){
+    <span class="comment">//this style of lazy initialization is 
+</span>    <span class="comment">//suitable only if the object is immutable
+</span>    <span class="keyword">if</span> (hashCode == <span class="literal">0</span>) {
+      <span class="keyword">int</span> result = HashCodeUtil.SEED;
+      result = HashCodeUtil.hash(result, name);
+      result = HashCodeUtil.hash(result, radius);
+      hashCode = result;
+    }
+    <span class="keyword">return</span> hashCode;    
+  }
+  
+  <span class="comment">/** This method is overridable. */</span>
+  <span class="keyword">public</span> <span class="keyword">boolean</span> canEqual(Object that) {
+      <span class="keyword">return</span> (that <span class="keyword">instanceof</span> Star);
+  }  
+  
+  <span class="comment">// PRIVATE
+</span>  <span class="keyword">private</span> String name;
+  <span class="keyword">private</span> BigDecimal radius;
+  <span class="keyword">private</span> <span class="keyword">int</span> hashCode;
+}
+ 
+</pre>
+
+<br><pre>
+<span class="keyword">import</span> java.math.BigDecimal;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Pulsar <span class="keyword">extends</span> Star {
+  
+  <span class="keyword">public</span> Pulsar(String name, BigDecimal radius, BigDecimal radioPeak){
+    <span class="keyword">super</span>(name, radius);
+    peakRadioFreq = radioPeak;
+  }
+  
+  <span class="keyword">public</span> <span class="keyword">final</span> BigDecimal getPeakRadioFrequency(){
+    <span class="keyword">return</span> peakRadioFreq;
+  }
+
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">boolean</span> equals(Object aThat){
+    <span class="keyword">if</span> (<span class="keyword">this</span> == aThat) <span class="keyword">return</span> <span class="keyword">true</span>;
+    <span class="keyword">if</span> ( !(aThat <span class="keyword">instanceof</span> Pulsar) ) <span class="keyword">return</span> <span class="keyword">false</span>;
+    Pulsar that = (Pulsar)aThat;
+    <span class="keyword">return</span>
+      that.canEqual(<span class="keyword">this</span>) &amp;&amp;
+      EqualsUtil.areEqual(<span class="keyword">this</span>.peakRadioFreq, that.peakRadioFreq) &amp;&amp;
+      <span class="keyword">super</span>.equals(that)
+    ;
+  }
+  
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">int</span> hashCode(){
+    <span class="comment">//this style of lazy initialization is 
+</span>    <span class="comment">//suitable only if the object is immutable
+</span>    <span class="keyword">if</span> (hashCode == <span class="literal">0</span>) {
+      <span class="keyword">int</span> result = HashCodeUtil.SEED;
+      result = HashCodeUtil.hash(result, peakRadioFreq);
+      result = HashCodeUtil.hash(result, <span class="keyword">super</span>.hashCode());
+      hashCode = result;
+    }
+    <span class="keyword">return</span> hashCode;    
+  }
+  
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">boolean</span> canEqual(Object that){
+    <span class="keyword">return</span> (that <span class="keyword">instanceof</span> Pulsar);
+  }
+
+  <span class="comment">// PRIVATE 
+</span>  
+  <span class="comment">/** Peak radio frequency, in Hertz. */</span>
+  <span class="keyword">private</span> BigDecimal peakRadioFreq;
+  <span class="keyword">private</span> <span class="keyword">int</span> hashCode;
+}
+ 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction3eed.html?Id=10">Implementing compareTo</a> <br>
+  <a href="TopicAction78db.html?Id=28">Implementing hashCode</a> <br>
+  <a href="TopicAction3d83.html?Id=31">Beware of instanceof operator</a> <br>
+  <a href="TopicActione309.html?Id=114">Multiple return statements</a> <br>
+  <a href="TopicActionf6e8.html?Id=197">Use boxing with care</a> <br>
+  <a href="TopicAction55c9.html?Id=39">Prefer Collections over older classes</a> <br>
+  <a href="TopicActiondfce.html?Id=199">Consider wrapper classes for optional data</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=17 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+</html>

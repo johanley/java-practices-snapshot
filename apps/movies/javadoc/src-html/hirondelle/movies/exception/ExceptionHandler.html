@@ -1,0 +1,65 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/movies/javadoc/src-html/hirondelle/movies/exception/ExceptionHandler.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:31 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+ExceptionHandler.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.movies.exception;<a name=line.1></a>
+<a name=line.2></a>
+<span class='keyword'>import</span> hirondelle.movies.util.Util;<a name=line.3></a>
+<span class='keyword'>import</span> hirondelle.movies.util.ui.UiUtil;<a name=line.4></a>
+<a name=line.5></a>
+<span class='keyword'>import</span> java.io.PrintWriter;<a name=line.6></a>
+<span class='keyword'>import</span> java.io.StringWriter;<a name=line.7></a>
+<span class='keyword'>import</span> java.io.Writer;<a name=line.8></a>
+<span class='keyword'>import</span> java.util.logging.Logger;<a name=line.9></a>
+<a name=line.10></a>
+<span class='keyword'>import</span> javax.swing.JOptionPane;<a name=line.11></a>
+<a name=line.12></a>
+<span class='comment'>/**<a name=line.13></a>
+ Custom handler for any uncaught exceptions.<a name=line.14></a>
+ <a name=line.15></a>
+ &lt;P&gt;By default, a Swing app will handle uncaught exceptions simply by <a name=line.16></a>
+  printing a stack trace to {@link System#err}. However, the end user will <a name=line.17></a>
+  not usually see that, and if they do, they will not likely understand it. <a name=line.18></a>
+  This class addresses that problem, by showing the end user a <a name=line.19></a>
+  simple error message in a modal dialog. (The dialog's owner is the <a name=line.20></a>
+  currently active frame.)<a name=line.21></a>
+*/</span><a name=line.22></a>
+<span class='keyword'>public</span> <span class='keyword'>final</span> <span class='keyword'>class</span> ExceptionHandler <span class='keyword'>implements</span> Thread.UncaughtExceptionHandler {<a name=line.23></a>
+<a name=line.24></a>
+  <span class='comment'>/** <a name=line.25></a>
+  Custom handler for uncaught exceptions.<a name=line.26></a>
+  <a name=line.27></a>
+  &lt;P&gt;Displays a simple model dialog to the user, showing that an error has<a name=line.28></a>
+   occured. The text of the error includes {@link Throwable#toString()}. <a name=line.29></a>
+   The stack trace is logged at a SEVERE level.<a name=line.30></a>
+ */</span><a name=line.31></a>
+  <span class='keyword'>@Override</span>  <span class='keyword'>public</span> <span class='keyword'>void</span> uncaughtException(Thread aThread, Throwable aThrowable) {<a name=line.32></a>
+    fLogger.severe(getStackTrace(aThrowable));<a name=line.33></a>
+    JOptionPane.showMessageDialog(<a name=line.34></a>
+      UiUtil.getActiveFrame(), <span class='literal'>"Error: "</span> + aThrowable.toString(), <a name=line.35></a>
+      <span class='literal'>"Error"</span>, JOptionPane.ERROR_MESSAGE<a name=line.36></a>
+    );<a name=line.37></a>
+  }<a name=line.38></a>
+  <a name=line.39></a>
+  <span class='comment'>// PRIVATE <a name=line.40></a>
+</span>  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> Logger fLogger = Util.getLogger(ExceptionHandler.<span class='keyword'>class</span>);<a name=line.41></a>
+  <a name=line.42></a>
+  <span class='keyword'>private</span> String getStackTrace(Throwable aThrowable) {<a name=line.43></a>
+    <span class='keyword'>final</span> Writer result = <span class='keyword'>new</span> StringWriter();<a name=line.44></a>
+    <span class='keyword'>final</span> PrintWriter printWriter = <span class='keyword'>new</span> PrintWriter(result);<a name=line.45></a>
+    aThrowable.printStackTrace(printWriter);<a name=line.46></a>
+    <span class='keyword'>return</span> result.toString();<a name=line.47></a>
+  }<a name=line.48></a>
+}<a name=line.49></a>
+ <a name=line.50></a>
+</PRE><a name=line.51></a>
+ </BODY><a name=line.52></a>
+<HTML><a name=line.53></a>

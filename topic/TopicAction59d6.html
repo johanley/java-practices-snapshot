@@ -1,0 +1,127 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=74 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Construct classes from the outside in</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Construct classes from the outside in</div>
+
+<br>When experimenting with the design of a new class, it's very helpful
+to approach the task from the point of view of the <i>caller</i>:
+<ul>
+<li>
+the quality of the final design will be higher, since there is more feedback
+from use cases</li>
+
+<li>
+the class is often constructed <i>significantly</i> faster, since discovery
+of poor design decisions usually happens much earlier</li>
+</ul>
+Much of design is summed up simply as:
+<ul>
+<li>
+make your best guess</li>
+
+<li>
+find and fix the errors</li>
+
+<li>
+repeat</li>
+</ul>
+The critical step seems to be the second. <i>The best techniques are those
+which discover the errors the fastest</i>. Coding "from the outside in"
+seems to perform very well in this regard.
+
+<p>Constructing a non-private method from the outside in might involve
+these steps:
+</p><ul>
+<li>
+write some code from the point of view of the caller</li>
+
+<li>
+<i>make the code compile by providing a simple stub implementation of the
+method you are designing</i>. For a <code>void</code> method, such a stub is
+simply an empty method. For a method which has a return value, such a stub
+might simply return <code>null</code>, <code>0</code>, <code>false</code>, or an empty
+<code>String</code>.</li>
+
+<li>
+experimenting with different designs is simple at this point, since
+the amount of calling code is minimal, and the implementations are toys</li>
+
+<li>
+correctness of method name and return type are determined by the needs
+of the caller</li>
+
+<li>
+correctness of arguments seems to be determined more by the needs of the
+implementation, not the caller</li>
+
+<li>
+<i>is the return type correct</i>? This is an important item, since changes
+in return type will often have large ripple effects in the caller.</li>
+
+<li>
+is the method intelligible at the point of call?</li>
+
+<li>
+when the design is more or less stable, write the javadoc of the method as
+the formal specification of the <a href="TopicAction63b6.html?Id=194">contract</a> between
+the method and its callers. Often, this will also help clarify details
+and border cases.</li>
+
+<li>
+finally, replace the stub implementation with a real implementation, and
+<a href="TopicActiond5a5.html?Id=33">test</a> it</li>
+</ul>
+<span class="highlight">In effect, such techniques use the programming language itself as a design tool.</span>
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActiond5a5.html?Id=33">Use a testing framework (JUnit)</a> <br>
+  <a href="TopicActionebc1.html?Id=60">Use javadoc liberally</a> <br>
+  <a href="TopicAction311e.html?Id=136">Separate public and private members</a> <br>
+  <a href="TopicAction63b6.html?Id=194">Design by Contract</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=74 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

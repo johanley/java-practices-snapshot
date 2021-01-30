@@ -1,0 +1,120 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/main/Launcher.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:37 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+Launcher.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.stocks.main;<a name=line.1></a>
+<a name=line.2></a>
+<span class='keyword'>import</span> java.util.logging.*;<a name=line.3></a>
+<span class='keyword'>import</span> java.awt.EventQueue;<a name=line.4></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Util;<a name=line.5></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Consts;<a name=line.6></a>
+<a name=line.7></a>
+<span class='comment'>/**<a name=line.8></a>
+* Launch the application using an older version of a splash screen.<a name=line.9></a>
+*<a name=line.10></a>
+*&lt;P&gt;Perform tasks in this order :<a name=line.11></a>
+*&lt;ul&gt;<a name=line.12></a>
+* &lt;li&gt;log basic system information <a name=line.13></a>
+* &lt;li&gt;promptly show a splash screen upon startup<a name=line.14></a>
+* &lt;li&gt;show the main screen<a name=line.15></a>
+* &lt;li&gt;remove the splash screen once the main screen is shown<a name=line.16></a>
+*&lt;/ul&gt;<a name=line.17></a>
+*<a name=line.18></a>
+* These tasks are performed in a thread-safe manner.<a name=line.19></a>
+*/</span><a name=line.20></a>
+<span class='keyword'>public</span> <span class='keyword'>final</span> <span class='keyword'>class</span> Launcher { <a name=line.21></a>
+<a name=line.22></a>
+  <span class='comment'>/**<a name=line.23></a>
+  * Launch the application and display the main window.<a name=line.24></a>
+  *<a name=line.25></a>
+  * @param aArgs are ignored by this application, and may take any value.<a name=line.26></a>
+  */</span><a name=line.27></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>void</span> main (String... aArgs) {<a name=line.28></a>
+    <a name=line.29></a>
+    <span class='comment'>/*<a name=line.30></a>
+    * Implementation Note:<a name=line.31></a>
+    *<a name=line.32></a>
+    * Note that the launch thread of any GUI application is in effect an initial <a name=line.33></a>
+    * worker thread - it is not the event dispatch thread, where the bulk of processing<a name=line.34></a>
+    * takes place. Thus, once the launch thread realizes a window, then the launch <a name=line.35></a>
+    * thread should almost always manipulate such a window through <a name=line.36></a>
+    * EventQueue.invokeLater. (This is done for closing the splash <a name=line.37></a>
+    * screen, for example.)<a name=line.38></a>
+    */</span><a name=line.39></a>
+    <a name=line.40></a>
+    <span class='comment'>//verifies that assertions are on:<a name=line.41></a>
+</span>    <span class='comment'>//  assert(false) : "Test";<a name=line.42></a>
+</span>    <a name=line.43></a>
+    logBasicSystemInfo();<a name=line.44></a>
+    showSplashScreen();<a name=line.45></a>
+    showMainWindow();<a name=line.46></a>
+    EventQueue.invokeLater(<span class='keyword'>new</span> SplashScreenCloser());<a name=line.47></a>
+    fLogger.info(<span class='literal'>"Launch thread now exiting..."</span>);<a name=line.48></a>
+  }<a name=line.49></a>
+<a name=line.50></a>
+  <span class='comment'>// PRIVATE <a name=line.51></a>
+</span>  <a name=line.52></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> SplashScreen fSplashScreen;<a name=line.53></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> Logger fLogger = Util.getLogger(Launcher.<span class='keyword'>class</span>);<a name=line.54></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String SPLASH_IMAGE = <span class='literal'>"StocksMonitor.gif"</span>;<a name=line.55></a>
+<a name=line.56></a>
+  <span class='comment'>/**<a name=line.57></a>
+  * Show a simple graphical splash screen, as a quick preliminary to the main screen.<a name=line.58></a>
+  */</span><a name=line.59></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>void</span> showSplashScreen(){<a name=line.60></a>
+    fLogger.info(<span class='literal'>"Showing the splash screen."</span>);<a name=line.61></a>
+    fSplashScreen = <span class='keyword'>new</span> SplashScreen(SPLASH_IMAGE);<a name=line.62></a>
+    fSplashScreen.splash();<a name=line.63></a>
+  }<a name=line.64></a>
+  <a name=line.65></a>
+  <span class='comment'>/**<a name=line.66></a>
+  * Display the main window of the application to the user.<a name=line.67></a>
+  */</span><a name=line.68></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>void</span> showMainWindow(){<a name=line.69></a>
+    fLogger.info(<span class='literal'>"Showing the main window."</span>);<a name=line.70></a>
+    StocksMonitorMainWindow mainWindow = <span class='keyword'>new</span> StocksMonitorMainWindow();<a name=line.71></a>
+  }<a name=line.72></a>
+<a name=line.73></a>
+  <span class='comment'>/** <a name=line.74></a>
+  * Removes the splash screen. <a name=line.75></a>
+  *<a name=line.76></a>
+  * Invoke this &lt;tt&gt;Runnable&lt;/tt&gt; using <a name=line.77></a>
+  * &lt;tt&gt;EventQueue.invokeLater&lt;/tt&gt;, in order to remove the splash screen<a name=line.78></a>
+  * in a thread-safe manner.<a name=line.79></a>
+  */</span><a name=line.80></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> <span class='keyword'>class</span> SplashScreenCloser <span class='keyword'>implements</span> Runnable {<a name=line.81></a>
+    <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> run(){<a name=line.82></a>
+      fLogger.fine(<span class='literal'>"Closing the splash screen.'"</span>);<a name=line.83></a>
+      fSplashScreen.dispose();<a name=line.84></a>
+    }<a name=line.85></a>
+  }<a name=line.86></a>
+  <a name=line.87></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>void</span> logBasicSystemInfo() {<a name=line.88></a>
+    fLogger.info(<span class='literal'>"Launching the application..."</span>);<a name=line.89></a>
+    fLogger.config(<a name=line.90></a>
+      <span class='literal'>"Operating System: "</span> + System.getProperty(<span class='literal'>"os.name"</span>) + <span class='literal'>" "</span> + <a name=line.91></a>
+      System.getProperty(<span class='literal'>"os.version"</span>)<a name=line.92></a>
+    );<a name=line.93></a>
+    fLogger.config(<span class='literal'>"JRE: "</span> + System.getProperty(<span class='literal'>"java.version"</span>));<a name=line.94></a>
+    fLogger.info(<span class='literal'>"Java Launched From: "</span> + System.getProperty(<span class='literal'>"java.home"</span>));<a name=line.95></a>
+    fLogger.config(<span class='literal'>"Class Path: "</span> + System.getProperty(<span class='literal'>"java.class.path"</span>));<a name=line.96></a>
+    fLogger.config(<span class='literal'>"Library Path: "</span> + System.getProperty(<span class='literal'>"java.library.path"</span>));<a name=line.97></a>
+    fLogger.config(<span class='literal'>"Application Name: "</span> + Consts.APP_NAME + <span class='literal'>"/"</span> + Consts.APP_VERSION);<a name=line.98></a>
+    fLogger.config(<span class='literal'>"User Home Directory: "</span> + System.getProperty(<span class='literal'>"user.home"</span>));<a name=line.99></a>
+    fLogger.config(<span class='literal'>"User Working Directory: "</span> + System.getProperty(<span class='literal'>"user.dir"</span>));<a name=line.100></a>
+    fLogger.info(<span class='literal'>"Test INFO logging."</span>);<a name=line.101></a>
+    fLogger.fine(<span class='literal'>"Test FINE logging."</span>);<a name=line.102></a>
+    fLogger.finest(<span class='literal'>"Test FINEST logging."</span>);<a name=line.103></a>
+  }<a name=line.104></a>
+} <a name=line.105></a>
+</PRE><a name=line.106></a>
+ </BODY><a name=line.107></a>
+<HTML><a name=line.108></a>

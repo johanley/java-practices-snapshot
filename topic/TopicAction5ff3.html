@@ -1,0 +1,346 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=129 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="checked,exception,unchecked,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Checked versus unchecked exceptions</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Checked versus unchecked exceptions</div>
+
+<br>Unchecked exceptions:
+<ul>
+<li>
+represent <span class="highlight">defects in the program (bugs)</span> - often invalid arguments passed to a non-private method.
+To quote from <em>The Java Programming Language</em>, by Gosling, 
+Arnold, and Holmes: "Unchecked runtime exceptions represent conditions that, 
+generally speaking, reflect errors in your program's logic and cannot be reasonably 
+recovered from at run time."
+</li>
+
+<li>
+are subclasses of <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/RuntimeException.html">RuntimeException</a></code>,
+and are usually implemented using 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/IllegalArgumentException.html">IllegalArgumentException</a></code>, 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/NullPointerException.html">NullPointerException</a></code>,
+or <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/IllegalStateException.html">IllegalStateException</a></code></li>
+
+<li>
+a method is <i>not</i> obliged to establish a policy for the unchecked
+exceptions thrown by its implementation (and they almost always do not do so)</li>
+</ul>
+
+Checked exceptions:
+<ul>
+<li>
+represent <span class="highlight">invalid conditions in areas outside the immediate control
+of the program</span> (invalid user input, database problems, network outages,
+absent files)</li>
+
+<li>
+are subclasses of <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Exception.html">Exception</a></code></li>
+
+<li>
+a method is <i>obliged</i> to establish a policy for all checked exceptions
+thrown by its implementation (either pass the checked exception further
+up the stack, or handle it somehow)</li>
+</ul>
+
+
+It's somewhat confusing, but note as well that <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/RuntimeException.html">RuntimeException</a></code>
+(unchecked) is itself a subclass of <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Exception.html">Exception</a></code>
+(checked).
+<p><b>Example 1</b>
+</p><p><a href="TopicActiond08d.html?Id=187">Model Objects</a> are the data-centric classes
+used to represent items in a particular domain. Model Object constructors
+need to handle both arbitrary user input, and input from underlying database
+<code>ResultSet</code>s.
+</p><p>Model Object constructors should throw checked exceptions:
+</p><ul>
+<li>
+the program may have no direct control over user input. This is particularly
+true in web applications. It seems safest for a Model Object to treat user
+input as having arbitrary, unvalidated content.</li>
+
+<li>
+it's not safe for an application to make any assumptions about the state
+of the database. The database is an independent entity, and its data may
+be changed by various means, outside of any particular application. For
+example, data load tools are commonly used to create an initial state for
+a new database. Such data can easily violate the constraints built into
+a calling application. Thus, the safest assumption is to treat database
+<code>ResultSet</code>s
+as having arbitrary, unvalidated content.</li>
+</ul>
+Here is an example Model Object, taken from the <a href="TopicAction5f31.html?Id=188">WEB4J</a>
+example application. Its constructor throws <code>ModelCtorException</code>
+(a checked exception) :
+<br><pre>
+<span class="keyword">package</span> hirondelle.fish.main.resto;
+
+<span class="keyword">import</span> hirondelle.web4j.model.ModelCtorException;
+<span class="keyword">import</span> hirondelle.web4j.model.ModelUtil;
+<span class="keyword">import</span> hirondelle.web4j.model.Id;
+<span class="keyword">import</span> hirondelle.web4j.security.SafeText;
+<span class="keyword">import</span> hirondelle.web4j.model.Decimal;
+<span class="keyword">import</span> <span class="keyword">static</span> hirondelle.web4j.model.Decimal.ZERO;
+<span class="keyword">import</span> hirondelle.web4j.model.Check;
+<span class="keyword">import</span> hirondelle.web4j.model.Validator;
+<span class="keyword">import</span> <span class="keyword">static</span> hirondelle.web4j.util.Consts.FAILS;
+
+<span class="comment">/** Model Object for a Restaurant. */</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Resto {
+
+  <span class="comment">/**
+   Full constructor.
+    
+   @param aId underlying database internal identifier (optional) 1..50 characters
+   @param aName of the restaurant (required), 2..50 characters
+   @param aLocation street address of the restaurant (optional), 2..50 characters
+   @param aPrice of the fish and chips meal (optional) $0.00..$100.00
+   @param aComment on the restaurant in general (optional) 2..50 characters
+  */</span>
+  <span class="keyword">public</span> Resto(
+    Id aId, SafeText aName, SafeText aLocation, Decimal aPrice, SafeText aComment
+  ) <span class="keyword">throws</span> ModelCtorException {
+    fId = aId;
+    fName = aName;
+    fLocation = aLocation;
+    fPrice = aPrice;
+    fComment = aComment;
+    validateState();
+  }
+  
+  <span class="keyword">public</span> Id getId() { <span class="keyword">return</span> fId; }
+  <span class="keyword">public</span> SafeText getName() {  <span class="keyword">return</span> fName; }
+  <span class="keyword">public</span> SafeText getLocation() {  <span class="keyword">return</span> fLocation;  }
+  <span class="keyword">public</span> Decimal getPrice() { <span class="keyword">return</span> fPrice; }
+  <span class="keyword">public</span> SafeText getComment() {  <span class="keyword">return</span> fComment; }
+
+  <span class="keyword">@Override</span> <span class="keyword">public</span> String toString(){
+    <span class="keyword">return</span> ModelUtil.toStringFor(<span class="keyword">this</span>);
+  }
+  
+  <span class="keyword">@Override</span> <span class="keyword">public</span>  <span class="keyword">boolean</span> equals(Object aThat){
+    Boolean result = ModelUtil.quickEquals(<span class="keyword">this</span>, aThat);
+    <span class="keyword">if</span> (result ==  <span class="keyword">null</span>) {
+      Resto that = (Resto) aThat;
+      result = ModelUtil.equalsFor(
+        <span class="keyword">this</span>.getSignificantFields(), that.getSignificantFields()
+      );
+    }
+    <span class="keyword">return</span> result;
+  }
+  
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">int</span> hashCode(){
+    <span class="keyword">if</span> (fHashCode == <span class="literal">0</span>){
+      fHashCode = ModelUtil.hashCodeFor(getSignificantFields());
+    }
+    <span class="keyword">return</span> fHashCode;
+  }
+  
+  <span class="comment">// PRIVATE 
+</span>  <span class="keyword">private</span> <span class="keyword">final</span> Id fId;
+  <span class="keyword">private</span> <span class="keyword">final</span> SafeText fName;
+  <span class="keyword">private</span> <span class="keyword">final</span> SafeText fLocation;
+  <span class="keyword">private</span> <span class="keyword">final</span> Decimal fPrice;
+  <span class="keyword">private</span> <span class="keyword">final</span> SafeText fComment;
+  <span class="keyword">private</span> <span class="keyword">int</span> fHashCode;
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Decimal HUNDRED = Decimal.from(<span class="literal">"100"</span>);
+
+  <span class="keyword">private</span> <span class="keyword">void</span> validateState() <span class="keyword">throws</span> ModelCtorException {
+    ModelCtorException ex = <span class="keyword">new</span> ModelCtorException();
+    <span class="keyword">if</span> (FAILS == Check.optional(fId, Check.range(<span class="literal">1</span>,<span class="literal">50</span>))) {
+      ex.add(<span class="literal">"Id is optional, 1..50 chars."</span>);
+    }
+    <span class="keyword">if</span> (FAILS == Check.required(fName, Check.range(<span class="literal">2</span>,<span class="literal">50</span>))) {
+      ex.add(<span class="literal">"Restaurant Name is required, 2..50 chars."</span>);
+    }
+    <span class="keyword">if</span> (FAILS == Check.optional(fLocation, Check.range(<span class="literal">2</span>,<span class="literal">50</span>))) {
+      ex.add(<span class="literal">"Location is optional, 2..50 chars."</span>);
+    }
+    Validator[] priceChecks = {Check.range(ZERO, HUNDRED), Check.numDecimalsAlways(<span class="literal">2</span>)};
+    <span class="keyword">if</span> (FAILS == Check.optional(fPrice, priceChecks)) {
+      ex.add(<span class="literal">"Price is optional, 0.00 to 100.00."</span>);
+    }
+    <span class="keyword">if</span> (FAILS == Check.optional(fComment, Check.range(<span class="literal">2</span>,<span class="literal">50</span>))) {
+      ex.add(<span class="literal">"Comment is optional, 2..50 chars."</span>);
+    }
+    <span class="keyword">if</span> ( ! ex.isEmpty() ) <span class="keyword">throw</span> ex;
+  }
+  
+  <span class="keyword">private</span> Object[] getSignificantFields(){
+    <span class="keyword">return</span> <span class="keyword">new</span> Object[] {fName, fLocation, fPrice, fComment};
+  }
+}
+ 
+</pre>
+
+<br><b>Example 2</b>
+<p></p><p><code>Args</code> is a convenient utility class. It performs common validations
+on method arguments. If a validation fails, then it throws an unchecked
+exception. It is suitable for checking the internal consistency of program,
+but not for checking arbitrary user input.
+<br></p><pre>
+<span class="keyword">package</span> hirondelle.web4j.util;
+
+<span class="keyword">import</span> java.util.regex.*;
+
+<span class="comment">/**
+ Utility methods for common argument validations.
+
+&lt;P&gt;Replaces &lt;tt&gt;if&lt;/tt&gt; statements at the start of a method with 
+ more compact method calls.
+ 
+ &lt;P&gt;Example use case.
+ &lt;P&gt;Instead of :
+ &lt;PRE&gt;
+ public void doThis(String aText){
+   if (!Util.textHasContent(aText)){
+     throw new IllegalArgumentException();
+   }
+   //..main body elided
+ }
+ &lt;/PRE&gt;
+ &lt;P&gt;One may instead write :
+ &lt;PRE&gt;
+ public void doThis(String aText){
+   Args.checkForContent(aText);
+   //..main body elided
+ }
+ &lt;/PRE&gt;
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Args {
+  
+  <span class="comment">/**
+   If &lt;code&gt;aText&lt;/code&gt; does not satisfy {@link Util#textHasContent}, then 
+   throw an &lt;code&gt;IllegalArgumentException&lt;/code&gt;.
+  
+   &lt;P&gt;Most text used in an application is meaningful only if it has visible content.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> checkForContent(String aText){
+    <span class="keyword">if</span>( ! Util.textHasContent(aText) ){
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="literal">"Text has no visible content"</span>);
+    }
+  }
+
+  <span class="comment">/**
+   If {@link Util#isInRange} returns &lt;code&gt;false&lt;/code&gt;, then 
+   throw an &lt;code&gt;IllegalArgumentException&lt;/code&gt;. 
+  
+   @param aLow is less than or equal to &lt;code&gt;aHigh&lt;/code&gt;.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> checkForRange(<span class="keyword">int</span> aNumber, <span class="keyword">int</span> aLow, <span class="keyword">int</span> aHigh) {
+    <span class="keyword">if</span> ( ! Util.isInRange(aNumber, aLow, aHigh) ) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(aNumber + <span class="literal">" not in range "</span> + aLow + <span class="literal">".."</span> + aHigh);
+    }
+  }
+
+  <span class="comment">/**
+   If &lt;tt&gt;aNumber&lt;/tt&gt; is less than &lt;tt&gt;1&lt;/tt&gt;, then throw an 
+   &lt;tt&gt;IllegalArgumentException&lt;/tt&gt;.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> checkForPositive(<span class="keyword">int</span> aNumber) {
+    <span class="keyword">if</span> (aNumber &lt; <span class="literal">1</span>) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(aNumber + <span class="literal">" is less than 1"</span>);
+    }
+  }
+
+  <span class="comment">/**
+   If {@link Util#matches} returns &lt;tt&gt;false&lt;/tt&gt;, then 
+   throw an &lt;code&gt;IllegalArgumentException&lt;/code&gt;. 
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> checkForMatch(Pattern aPattern, String aText){
+    <span class="keyword">if</span> (! Util.matches(aPattern, aText)){
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(
+        <span class="literal">"Text "</span> + Util.quote(aText) + <span class="literal">" does not match '"</span> +aPattern.pattern()+ <span class="literal">"'"</span>
+      );
+    }
+  }
+  
+  <span class="comment">/**
+   If &lt;code&gt;aObject&lt;/code&gt; is null, then throw a &lt;code&gt;NullPointerException&lt;/code&gt;.
+  
+   &lt;P&gt;Use cases :
+  &lt;pre&gt;
+   doSomething( Football aBall ){
+     //1. call some method on the argument : 
+     //if aBall is null, then exception is automatically thrown, so 
+     //there is no need for an explicit check for null.
+     aBall.inflate();
+    
+     //2. assign to a corresponding field (common in constructors): 
+     //if aBall is null, no exception is immediately thrown, so 
+     //an explicit check for null may be useful here
+     Args.checkForNull( aBall );
+     fBall = aBall;
+     
+     //3. pass on to some other method as parameter : 
+     //it may or may not be appropriate to have an explicit check 
+     //for null here, according the needs of the problem
+     Args.checkForNull( aBall ); //??
+     fReferee.verify( aBall );
+   }
+   &lt;/pre&gt;
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> checkForNull(Object aObject) {
+    <span class="keyword">if</span> (aObject == <span class="keyword">null</span>) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException();
+    }
+  }
+  
+  <span class="comment">// PRIVATE 
+</span>  <span class="keyword">private</span> Args(){
+    <span class="comment">//empty - prevent construction
+</span>  }
+}
+ 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActiond08d.html?Id=187">Model Objects</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=129 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+</html>

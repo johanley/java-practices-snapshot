@@ -1,0 +1,130 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=50 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="thread,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Launch thread is just another user thread</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Launch thread is just another user thread</div>
+
+<br>Java programs always begin with a <code>main</code> method, called in a <em>user thread</em>.
+
+<p>There are two kinds of threads in Java. They are distinguished soley by how they 
+affect program termination:
+</p><ul>
+ <li><em>user threads</em>, which prevent a program from terminating.
+ </li><li><em>daemon threads</em>, which <b>don't</b> prevent a program from terminating.
+</li></ul>
+
+A program terminates when there are no more <em>user threads</em> left to execute.
+
+<p>In addition, all user threads are created equal. In particular, the first user thread
+created upon launch of a program <em>has no special status</em>, and its termination
+does not necessarily imply that the entire program will terminate.
+
+</p><p><b>Example</b>
+
+</p><p>The <code>FlightSimulator</code> class exists only to launch two other (user) threads.
+The thread which launches <code>FlightSimulator</code> itself quickly ends, but
+the program still continues, since there are two other user threads still
+running.
+</p><p>Output from a sample run of <code>FlightSimulator</code>:
+</p><p><code>Running Flight Simulator.</code>
+<br><b><code>Terminating the original user thread.</code></b>
+<br><code>Running Charles de Gaulle Airport.</code>
+<br><code>Charles de Gaulle Has Available Runway: false</code>
+<br><code>Flight 8875: waiting for runway...</code>
+<br><code>Charles de Gaulle Has Available Runway: true</code>
+<br><code>Flight 8875: taking off now...</code>
+<br><code>Flight 8875: flying now...</code>
+<br><code>Charles de Gaulle Has Available Runway: false</code>
+<br><code>Charles de Gaulle Has Available Runway: true</code>
+<br><code>Charles de Gaulle Has Available Runway: false</code>
+<br><code>Charles de Gaulle Has Available Runway: true</code>
+<br><code>Charles de Gaulle Has Available Runway: false</code>
+<br><code>Charles de Gaulle Has Available Runway: true</code>
+<br><code>Charles de Gaulle Has Available Runway: false</code>
+<br><code>Charles de Gaulle Has Available Runway: true</code>
+<br><code>Charles de Gaulle Has Available Runway: false</code>
+<br><code>Flight 8875: waiting for runway...</code>
+<br><code>Charles de Gaulle Has Available Runway: true</code>
+<br><code>Flight 8875: landing now...</code>
+<br><code>Charles de Gaulle Has Available Runway: false</code>
+<br><code>Charles de Gaulle Has Available Runway: true</code>
+<br></p><pre>
+<span class="comment">/** 
+ Builds and starts threads for Airport and Airplanes.  
+ (Using raw Thread objects is discouraged in favour of the
+ more modern java.util.concurrent package.)
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> FlightSimulator {
+
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... arguments) {
+    System.out.println(<span class="literal">"Running Flight Simulator."</span>);
+
+    <span class="comment">//build an airport and start it running
+</span>    Airport charlesDeGaulle = <span class="keyword">new</span> Airport(<span class="literal">"Charles de Gaulle"</span>);
+    Thread airport = <span class="keyword">new</span> Thread(charlesDeGaulle);
+    airport.start();
+
+    <span class="comment">//build a plane and start it running
+</span>    Thread planeOne = <span class="keyword">new</span> Thread(<span class="keyword">new</span> Airplane(charlesDeGaulle, <span class="literal">"Flight 8875"</span>));
+    planeOne.start();
+
+    <span class="comment">//notice that this user thread now ends, but the program itself does
+</span>    <span class="comment">//NOT end since the threads created above are also user
+</span>    <span class="comment">//threads. All user threads have equal status, and there
+</span>    <span class="comment">//is nothing special about the thread which launches a program.
+</span>    System.out.println(<span class="literal">"Terminating the original user thread."</span>);
+  }
+} 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction7721.html?Id=51">Objects communicating across threads</a> <br>
+  <a href="TopicActionc88a.html?Id=86">Use System.exit with care</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=50 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

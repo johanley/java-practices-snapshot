@@ -1,0 +1,146 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=186 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Use enums to restrict arguments</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Use enums to restrict arguments</div>
+
+<br><a href="TopicAction2161.html?Id=1">Type-safe enumerations</a> are useful for constraining
+arguments which must take a small set of values, such as a <code>boolean</code>
+or a restricted set of <code>String</code>s or <code>int</code>s.
+<p>As an example from the servlet API, recall this method for the creation
+of an <code>HttpSession</code>:
+</p><p><code>aRequest.getSession(true);</code>
+</p><p>Any reader who is not familiar with the specification of this method
+will be <i>forced</i> to look up the meaning of the <code>boolean</code> literal
+before they can understand the method call. An alternative style is to
+define a well-named variable which explains the intent:
+</p><p><code>boolean CREATE_IF_ABSENT = true;</code>
+<br><code>aRequest.getSession(CREATE_IF_ABSENT);</code>
+</p><p>However, the caller is not <i>compelled</i> to use such a style. If
+a type-safe enumeration is used for the argument, then the caller is indeed
+forced into a style which has greater clarity.
+</p><p><code>aRequest.getSession(HttpServletRequest.CreateIfAbsent.YES);</code>
+</p><p>Here, <code>CreateIfAbsent</code> would be a static nested type-safe enumeration
+with two elements, <code>YES</code> and <code>NO</code>. This style has these advantages:
+</p><ul>
+<li>
+the method is forced to be more intelligible at the point of call</li>
+
+<li>
+the need to look up the specification is greatly reduced</li>
+
+<li>
+it serves as a reminder to those who are already familiar with the specification</li>
+
+<li>
+it has compile-time safety (not an issue with a <code>boolean</code> argument,
+but important if the argument is a <code>String</code> or <code>int</code>)</li>
+</ul>
+
+This style can be a bit verbose. It might be one of those rare occasions where
+a <a href="TopicActionda46.html?Id=195">static import</a> of the enum class is appropriate, 
+to avoid using fully qualified names.
+
+<p><b>Example 1</b>
+</p><p>Here's a stub class illustrating an alternate form of <code>createSession</code>:
+<br></p><pre>
+<span class="keyword">import</span> javax.servlet.http.HttpSession;
+
+<span class="comment">/** Clarify method call with enum argument.  */</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> HttpRequestWithEnum {
+
+  <span class="comment">/**
+  * Example of calling the method with an enum arg.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args){
+     HttpRequestWithEnum request = <span class="keyword">new</span> HttpRequestWithEnum();
+     HttpSession session = request.createSession(CreateIfAbsent.YES);
+  }
+  
+  <span class="keyword">public</span> HttpSession createSession(CreateIfAbsent createIfNeeded){
+    <span class="keyword">return</span> <span class="keyword">null</span>; <span class="comment">//stubbed out
+</span>  }
+  
+  <span class="comment">/** The enumeration itself.  */</span>
+  <span class="keyword">public</span> <span class="keyword">enum</span> CreateIfAbsent {YES, NO};
+}
+ 
+</pre>
+
+<b>Example 2</b>
+<p></p><p>Here's a second example that uses an enum instead of a boolean literal.
+<br></p><pre>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> LawnMower {
+
+  <span class="keyword">enum</span> Power{ON, OFF};
+
+  <span class="keyword">void</span> switchPower(Power power){
+     <span class="keyword">if</span> (Power.ON == power){ 
+       <span class="comment">//elided..
+</span>     }
+     <span class="keyword">else</span> <span class="keyword">if</span> (Power.OFF == power){
+       <span class="comment">//elided..
+</span>     }
+  }
+
+  <span class="comment">//..elided
+</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args){
+    LawnMower mower = <span class="keyword">new</span> LawnMower();
+    <span class="comment">//this is clearer than passing a boolean literal:
+</span>    mower.switchPower(Power.ON);
+  }
+
+} 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction2161.html?Id=1">Type Safe Enumerations</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=186 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

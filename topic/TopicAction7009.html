@@ -1,0 +1,308 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=154 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:40 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="preferences,swing,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Preferences dialogs</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Preferences dialogs</div>
+
+<br>Settings for user preferences are used in most graphical applications.
+These settings control the operation and appearance of a program, and need
+to be available to many classes. On the other hand, the dialogs for user
+preferences are usually quite extensive, and can take a long time to build
+and display to the user.
+<p>An advantageous design would allow quick programmatic access to preferences,
+but construct GUIs only if necessary.
+
+</p><p><b>Example</b>
+
+</p><p>A common style is to use a <code>JTabbedPane</code>, with each pane corresponding
+to a set of related preferences:
+</p><p><img SRC="../images/EditPreferences2.gif" height="353" width="499" ALT="Typical Preferences Dialog" border="0">
+</p><p>Here, each pane is defined as an implementation of an interface - <code>PreferencesEditor</code>:
+<br></p><pre>
+<span class="keyword">package</span> hirondelle.stocks.preferences;
+
+<span class="keyword">import</span> javax.swing.JComponent;
+
+<span class="comment">/**
+* Allows editing of a set of related user preferences.
+*
+* &lt;P&gt;Implementations of this interface do not define a "stand-alone" GUI, 
+* but rather a component (usually a &lt;tt&gt;JPanel&lt;/tt&gt;) which can be used by the 
+* caller in any way they want. Typically, a set of &lt;tt&gt;PreferencesEditor&lt;/tt&gt; 
+* objects are placed in a &lt;tt&gt;JTabbedPane&lt;/tt&gt;, one per pane.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">interface</span> PreferencesEditor { 
+
+  <span class="comment">/**
+  * Return a GUI component which allows the user to edit this set of related 
+  * preferences.
+  */</span>  
+  JComponent getUI();
+
+  <span class="comment">/**
+  * The name of the tab in which this &lt;tt&gt;PreferencesEditor&lt;/tt&gt;
+  * will be placed. 
+  */</span>
+  String getTitle();
+
+  <span class="comment">/**
+  * The mnemonic to appear in the tab name.
+  *
+  * &lt;P&gt;Must match a letter appearing in {@link #getTitle}.
+  * Use constants defined in &lt;tt&gt;KeyEvent&lt;/tt&gt;, for example &lt;tt&gt;KeyEvent.VK_A&lt;/tt&gt;.
+  */</span>
+  <span class="keyword">int</span> getMnemonic();
+  
+  <span class="comment">/**
+  * Store the related preferences as they are currently displayed, overwriting
+  * all corresponding settings.
+  */</span>
+  <span class="keyword">void</span> savePreferences();
+
+  <span class="comment">/**
+  * Reset the related preferences to their default values, but only as 
+  * presented in the GUI, without affecting stored preference values.
+  *
+  * &lt;P&gt;This method may not apply in all cases. For example, if the item 
+  * represents a config which has no meaningful default value (such as a mail server 
+  * name), the desired behavior may be to only allow a manual change. In such a 
+  * case, the implementation of this method must be a no-operation. 
+  */</span>
+  <span class="keyword">void</span> matchGuiToDefaultPreferences();
+}
+ 
+</pre>
+
+<br>The <code>getUI</code> method of this interface defines the graphical aspect
+of a <code>PreferencesEditor</code> - implementations do not <em>extend</em> a <code>JComponent</code>,
+but rather <em>return</em> a <code>JComponent</code> from the <code>getUI</code> method.
+This allows callers to access preference values from implementations of
+<code>PreferencesEditor</code>
+without necessarily constructing a GUI.
+<p></p><p>Here's an example implementation for the preferences shown above. Note
+the addition of these methods, specific to this class, which allow programmatic, read-only access
+to <em>stored</em> preference values (and <i>not</i> the preference values as currently displayed in the GUI):
+</p><ul>
+ <li><code>hasShowToolBar</code></li>
+ <li><code>hasLargeIcons</code></li>
+ <li><code>getTheme</code></li>
+</ul>
+This implementation extends <code>Observable</code>, such that interested classes
+may register their interest in changes to this set of preferences:
+<br><pre>
+<span class="keyword">package</span> hirondelle.stocks.preferences;
+
+<span class="keyword">import</span> java.util.*;
+<span class="keyword">import</span> java.util.logging.*;
+<span class="keyword">import</span> java.awt.*;
+<span class="keyword">import</span> java.awt.event.*;
+<span class="keyword">import</span> javax.swing.*;
+<span class="keyword">import</span> java.util.prefs.*;
+<span class="keyword">import</span> javax.swing.plaf.metal.MetalTheme;
+
+<span class="keyword">import</span> hirondelle.stocks.util.ui.Theme;
+<span class="keyword">import</span> hirondelle.stocks.util.ui.UiConsts;
+<span class="keyword">import</span> hirondelle.stocks.util.ui.UiUtil;
+<span class="keyword">import</span> hirondelle.stocks.util.Util;
+
+<span class="comment">/**
+* Allows editing of user preferences related to the general 
+* appearance of the application, such as font size, toolbar icon size, theme, 
+* and the like.
+*
+* &lt;P&gt;Also allows programmatic read-only access to the current stored preferences 
+* for these items.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> GeneralLookPreferencesEditor <span class="keyword">extends</span> Observable 
+  <span class="keyword">implements</span> PreferencesEditor {
+
+  <span class="keyword">@Override</span> <span class="keyword">public</span> JComponent getUI(){
+    JPanel content = <span class="keyword">new</span> JPanel();
+    GridBagLayout gridbag = <span class="keyword">new</span> GridBagLayout();
+    content.setLayout(gridbag);
+    addShowToolbarAndLargeIcons(content);
+    addTheme(content);
+    addRestoreDefaults(content);
+    UiUtil.addVerticalGridGlue(content, <span class="literal">4</span>);
+    matchGuiToStoredPrefs();
+    <span class="keyword">return</span> content;
+  }
+  
+  <span class="keyword">@Override</span> <span class="keyword">public</span> String getTitle() {
+    <span class="keyword">return</span> TITLE;
+  }
+  
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">int</span> getMnemonic() {
+    <span class="keyword">return</span> MNEMONIC;
+  }
+
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> savePreferences(){
+    fLogger.fine(<span class="literal">"Updating general preferences."</span>);
+    fPrefs.putBoolean(SHOW_TOOL_BAR_KEY, fShowToolBar.isSelected());
+    fPrefs.putBoolean(USE_LARGE_ICONS, fLargeIcons.isSelected());
+    fPrefs.put(THEME_NAME_KEY, fThemes.getSelectedItem().toString());
+    setChanged();
+    notifyObservers();
+  }
+
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> matchGuiToDefaultPreferences(){
+    fShowToolBar.setSelected(SHOW_TOOLBAR_DEFAULT);
+    fLargeIcons.setSelected(USE_LARGE_ICONS_DEFAULT);
+    fThemes.setSelectedItem(Theme.valueOf(THEME_NAME_DEFAULT));
+  }
+
+  <span class="comment">/**
+  * Return the stored user preference for hiding or showing the toolbar.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">boolean</span> hasShowToolBar(){
+    <span class="keyword">return</span> fPrefs.getBoolean(SHOW_TOOL_BAR_KEY, SHOW_TOOLBAR_DEFAULT);
+  }
+  
+  <span class="comment">/**
+  * Return the stored user preference for using large icons.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">boolean</span> hasLargeIcons(){
+    <span class="keyword">return</span> fPrefs.getBoolean(USE_LARGE_ICONS, USE_LARGE_ICONS_DEFAULT);
+  }
+  
+  <span class="comment">/**
+  * Return the stored user preference for the theme to be applied to the Java 
+  * look-and-feel.
+  */</span>
+  <span class="keyword">public</span> MetalTheme getTheme(){
+    String themeName = fPrefs.get(THEME_NAME_KEY, THEME_NAME_DEFAULT);
+    <span class="keyword">return</span> Theme.valueOf(themeName);
+  }
+  
+  <span class="comment">// PRIVATE
+</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String GENERAL_LOOK_NODE = <span class="literal">"stocksmonitor/ui/prefs/GeneralLook"</span>;
+  <span class="keyword">private</span> Preferences fPrefs = Preferences.userRoot().node(GENERAL_LOOK_NODE);
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String TITLE = <span class="literal">"General Look"</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> MNEMONIC = KeyEvent.VK_G;
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">boolean</span> SHOW_TOOLBAR_DEFAULT = <span class="keyword">true</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String SHOW_TOOL_BAR_KEY = <span class="literal">"ShowToolbar"</span>;
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">boolean</span> USE_LARGE_ICONS_DEFAULT = <span class="keyword">false</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String USE_LARGE_ICONS = <span class="literal">"UseLargeIcons"</span>;
+
+  <span class="comment">//Theme name is mapped to Theme using Theme.valueOf
+</span>  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String THEME_NAME_DEFAULT = <span class="literal">"Default"</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String THEME_NAME_KEY = <span class="literal">"ThemeName"</span>;
+
+  <span class="keyword">private</span> JCheckBox fShowToolBar;
+  <span class="keyword">private</span> JCheckBox fLargeIcons;
+  <span class="keyword">private</span> JComboBox&lt;MetalTheme&gt; fThemes;
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Logger fLogger = Util.getLogger(GeneralLookPreferencesEditor.<span class="keyword">class</span>);
+  
+  <span class="keyword">private</span> <span class="keyword">void</span> matchGuiToStoredPrefs(){
+    fShowToolBar.setSelected(hasShowToolBar());
+    fLargeIcons.setSelected(hasLargeIcons());
+    fThemes.setSelectedItem(getTheme());
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">void</span> addShowToolbarAndLargeIcons(JPanel aContent){
+    JLabel toolbar = <span class="keyword">new</span> JLabel(<span class="literal">"Show:"</span>);
+    aContent.add(toolbar, getConstraints(<span class="literal">0</span>,<span class="literal">0</span>));
+    
+    fShowToolBar = <span class="keyword">new</span> JCheckBox(<span class="literal">"Toolbar"</span>);
+    fShowToolBar.setMnemonic(KeyEvent.VK_O);
+    aContent.add(fShowToolBar, getConstraints(<span class="literal">0</span>,<span class="literal">1</span>));
+    
+    JLabel iconSize = <span class="keyword">new</span> JLabel(<span class="literal">"Icon Size:"</span>);
+    aContent.add(iconSize, getConstraints(<span class="literal">1</span>,<span class="literal">0</span>));
+
+    fLargeIcons = <span class="keyword">new</span> JCheckBox(<span class="literal">"Use Large Icons"</span>);
+    fLargeIcons.setMnemonic(KeyEvent.VK_U);
+    iconSize.setLabelFor(fLargeIcons);
+    aContent.add(fLargeIcons, getConstraints(<span class="literal">1</span>,<span class="literal">1</span>));
+  }
+
+  <span class="keyword">private</span> <span class="keyword">void</span> addTheme(JPanel aContent) {
+    JLabel theme = <span class="keyword">new</span> JLabel(<span class="literal">"Theme:"</span>);
+    theme.setDisplayedMnemonic(KeyEvent.VK_T);
+    aContent.add(theme, getConstraints(<span class="literal">2</span>,<span class="literal">0</span>));
+    
+    DefaultComboBoxModel&lt;MetalTheme&gt; themesModel = <span class="keyword">new</span> DefaultComboBoxModel&lt;MetalTheme&gt;(
+      Theme.VALUES.toArray(<span class="keyword">new</span> MetalTheme[<span class="literal">0</span>])
+    );
+    fThemes = <span class="keyword">new</span> JComboBox&lt;MetalTheme&gt;(themesModel);
+    theme.setLabelFor(fThemes);
+    aContent.add(fThemes, getConstraints(<span class="literal">2</span>,<span class="literal">1</span>));
+  }
+
+  <span class="keyword">private</span> <span class="keyword">void</span> addRestoreDefaults(JPanel aContent) {
+    JButton restore = <span class="keyword">new</span> JButton(<span class="literal">"Restore Defaults"</span>);
+    restore.setMnemonic(KeyEvent.VK_D);
+    restore.addActionListener( <span class="keyword">new</span> ActionListener() {
+      <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> actionPerformed(ActionEvent event) {
+        matchGuiToDefaultPreferences();
+      }
+    });
+    GridBagConstraints constraints = UiUtil.getConstraints(<span class="literal">3</span>,<span class="literal">1</span>);
+    constraints.insets = <span class="keyword">new</span> Insets(UiConsts.ONE_SPACE, <span class="literal">0</span>,<span class="literal">0</span>,<span class="literal">0</span>);
+    aContent.add( restore, constraints );
+  }
+  
+  <span class="keyword">private</span> GridBagConstraints getConstraints(<span class="keyword">int</span> aY, <span class="keyword">int</span> aX){
+    GridBagConstraints result = UiUtil.getConstraints(aY, aX);
+    result.insets = <span class="keyword">new</span> Insets(<span class="literal">0</span>, <span class="literal">0</span>, UiConsts.ONE_SPACE, UiConsts.ONE_SPACE);
+    <span class="keyword">return</span> result;
+  }
+}
+ 
+</pre>
+
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction7910.html?Id=150">Standardized dialogs</a> <br>
+  <a href="TopicAction54be.html?Id=155">Using preferences</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=154 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:40 GMT -->
+</html>

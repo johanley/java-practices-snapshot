@@ -1,0 +1,261 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=139 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="Command,JSP,servlet,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Command objects</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Command objects</div>
+
+<br>It's a common practice to define an interface for processing a user's
+request at a high level of abstraction. This corresponds roughly to the
+Command pattern described in <i>Design Patterns</i>.
+
+<h4>Example</h4>
+This example is in the context of a web application.
+<a href="http://www.web4j.com/web4j/javadoc/hirondelle/web4j/action/Action.html"><code>Action</code></a>
+is an interface which:
+<ul>
+<li>executes a business operation (validates input, interacts with the datastore,
+and places appropriate model objects in request scope or session scope)</li>
+<li>sets the identity of the resource which will render the model objects (typically
+a JSP)</li>
+<li>controls when a redirect should be sent to the browser</li>
+</ul>
+
+<br><pre>
+<span class="keyword">package</span> hirondelle.web4j.action;
+
+<span class="keyword">import</span> hirondelle.web4j.model.AppException;
+
+<span class="comment">/**
+ &lt;span class="highlight"&gt;
+ Process an HTTP request, and return a {@link ResponsePage}.
+ &lt;/span&gt;
+
+ &lt;P&gt;&lt;b&gt;This interface is likely the most important 
+ abstraction in WEB4J.&lt;/b&gt; Almost every feature implemented by the programmer will 
+ need an implementation of this interface. 
+ 
+ &lt;P&gt;Typically, one of the &lt;em&gt;ActionXXX&lt;/em&gt; abstract base classes are used to 
+ build implementations of this interface.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">interface</span> Action {
+  
+  <span class="comment">/**
+  Execute desired operation.
+   
+  &lt;P&gt;Typical operations include : 
+  &lt;ul&gt;
+  &lt;li&gt;validate user input
+  &lt;li&gt;interact with the database 
+  &lt;li&gt;place required objects in the appropriate scope
+  &lt;li&gt;set the appropriate {@link ResponsePage}.
+  &lt;/ul&gt;
+  
+  &lt;P&gt;Returns an identifier for the resource (for example a JSP) which 
+  will display the end result of this &lt;tt&gt;Action&lt;/tt&gt; (using either a 
+  forward or a redirect).
+  */</span>
+  ResponsePage execute() <span class="keyword">throws</span> AppException;
+  
+}
+ 
+</pre>
+
+<p><code>Action</code> implementations perform similar tasks. These
+tasks should be placed in an Abstract Base Class (ABC), which will simplify
+concrete implementations. The WEB4J tool defines several such ABC's:
+</p><ul>
+<li><code><a href="http://www.web4j.com/web4j/javadoc/hirondelle/web4j/action/ActionImpl.html">ActionImpl</a></code> - 
+collects various <code>protected final</code> utility methods needed by many <code>Action</code> classes. <code>ActionImpl</code> in 
+turn forms a base class for the <code>ActionTemplateXXX</code> classes.
+</li><li><code><a href="http://www.web4j.com/web4j/javadoc/hirondelle/web4j/action/ActionTemplateListAndEdit.html">ActionTemplateListAndEdit</a></code> - 
+shows a listing, and a form to edit items in the listing
+</li><li><code><a href="http://www.web4j.com/web4j/javadoc/hirondelle/web4j/action/ActionTemplateShowAndApply.html">ActionTemplateShowAndApply</a></code> - 
+shows a form for editing a single item
+</li><li><code><a href="http://www.web4j.com/web4j/javadoc/hirondelle/web4j/action/ActionTemplateSearch.html">ActionTemplateSearch</a></code> - 
+shows a form for entering search criteria
+</li></ul>
+
+The various <code>ActionTemplateXXX</code> classes implement the <a href="TopicActione01b.html?Id=164">template method</a> design pattern.
+The application programmer chooses a particular template based in the desired style of user interface. 
+
+<p>Here's an example of a concrete <code>Action</code>, which subclasses the
+<code><a href="http://www.web4j.com/web4j/javadoc/hirondelle/web4j/action/ActionTemplateShowAndApply.html">ActionTemplateShowAndApply</a></code> 
+class mentioned above. It provides implementations for three methods: 
+<code>show</code>, <code>validateUserInput</code>, and <code>apply</code>.
+
+<br></p><pre>
+<span class="keyword">package</span> hirondelle.fish.main.discussion;
+
+<span class="keyword">import</span> hirondelle.web4j.BuildImpl;
+<span class="keyword">import</span> hirondelle.web4j.action.ActionTemplateShowAndApply;
+<span class="keyword">import</span> hirondelle.web4j.action.ResponsePage;
+<span class="keyword">import</span> hirondelle.web4j.database.DAOException;
+<span class="keyword">import</span> hirondelle.web4j.database.Db;
+<span class="keyword">import</span> hirondelle.web4j.database.SqlId;
+<span class="keyword">import</span> hirondelle.web4j.model.AppException;
+<span class="keyword">import</span> hirondelle.web4j.model.ModelCtorException;
+<span class="keyword">import</span> hirondelle.web4j.model.ModelFromRequest;
+<span class="keyword">import</span> hirondelle.web4j.request.RequestParameter;
+<span class="keyword">import</span> hirondelle.web4j.request.RequestParser;
+
+<span class="keyword">import</span> java.util.Date;
+<span class="keyword">import</span> java.util.List;
+<span class="keyword">import</span> java.util.regex.Pattern;
+
+<span class="comment">/**
+ List comments, and add new ones.
+ 
+ &lt;P&gt;Comments are listed, along with a paging mechanism.
+ 
+ @sql statements.sql
+ @view view.jsp
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> CommentAction <span class="keyword">extends</span> ActionTemplateShowAndApply {
+  
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> SqlId FETCH_RECENT_COMMENTS =  <span class="keyword">new</span> SqlId(<span class="literal">"FETCH_RECENT_COMMENTS"</span>);
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> SqlId ADD_COMMENT =  <span class="keyword">new</span> SqlId(<span class="literal">"ADD_COMMENT"</span>);
+  
+  <span class="comment">/** Constructor. */</span>
+  <span class="keyword">public</span> CommentAction(RequestParser aRequestParser){
+    <span class="keyword">super</span>(FORWARD, REDIRECT, aRequestParser);
+  }
+  
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> RequestParameter COMMENT_BODY = RequestParameter.withLengthCheck(
+    <span class="literal">"Comment Body"</span>
+   );
+
+  <span class="comment">/** Used for the paging mechanism. */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> RequestParameter PAGE_SIZE = RequestParameter.withRegexCheck(
+    <span class="literal">"PageSize"</span>, Pattern.compile(<span class="literal">"(\\d){1,4}"</span>)
+   );
+  <span class="comment">/** Used for the paging mechanism. */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> RequestParameter PAGE_INDEX = RequestParameter.withRegexCheck(
+    <span class="literal">"PageIndex"</span>, Pattern.compile(<span class="literal">"(\\d){1,4}"</span>)
+  );
+  
+  <span class="comment">/** Show the listing of comments, and a form for adding new messages. */</span>
+  <span class="keyword">protected</span> <span class="keyword">void</span> show() <span class="keyword">throws</span> AppException {
+    addToRequest(ITEMS_FOR_LISTING, fetchRecentComments());
+  }
+  
+  <span class="comment">/** Ensure user input can build a new {@link Comment}.  */</span>
+  <span class="keyword">protected</span> <span class="keyword">void</span> validateUserInput() <span class="keyword">throws</span> AppException {
+    <span class="keyword">try</span> {
+      ModelFromRequest builder = <span class="keyword">new</span> ModelFromRequest(getRequestParser());
+      <span class="comment">/*
+        This is an example of using a time which, for testing purposes,
+        can be made independent of the true system time. The value of 
+        the 'now' variable depends on the implementation of TimeSource.
+       */</span>
+      <span class="keyword">long</span> now = BuildImpl.forTimeSource().currentTimeMillis();
+      fComment = builder.build(
+        Comment.<span class="keyword">class</span>, getLoggedInUserName(), COMMENT_BODY, <span class="keyword">new</span> Date(now)
+      );
+    }
+    <span class="keyword">catch</span> (ModelCtorException ex){
+      addError(ex);
+    }
+  }
+  
+  <span class="comment">/** Add a new {@link Comment} to the database. */</span>
+  <span class="keyword">protected</span> <span class="keyword">void</span> apply() <span class="keyword">throws</span> AppException {
+    <span class="comment">//no possibility of a duplicate error.
+</span>    addNew(fComment);
+  }
+  
+  <span class="comment">// PRIVATE //
+</span>  <span class="keyword">private</span> Comment fComment;
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> ResponsePage FORWARD = <span class="keyword">new</span> ResponsePage(
+    <span class="literal">"Discussion"</span>, <span class="literal">"view.jsp"</span>, CommentAction.<span class="keyword">class</span>
+  );
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> ResponsePage REDIRECT =  <span class="keyword">new</span> ResponsePage(
+    <span class="literal">"CommentAction.show?PageIndex=1&amp;PageSize=10"</span>
+  );
+  
+  <span class="comment">/*
+   Here, the DAO methods are not in a separate class, but simply regular methods of 
+   this Action. This reasonable since the methods are short, and they do not make 
+   this Action class significantly more complex. 
+  */</span>
+  
+  <span class="comment">/**
+   Return an immutable {@link List} of recent {@link Comment} objects.
+  
+   &lt;P&gt;The definition of what constitutes "recent" is left deliberately vague, to 
+   allow various versions of "recent" - last 5 messages, messages entered over 
+   the last N days, etc.
+  */</span>
+  <span class="keyword">private</span> List&lt;Comment&gt; fetchRecentComments() <span class="keyword">throws</span> DAOException {
+    <span class="keyword">return</span> Db.list(Comment.<span class="keyword">class</span>, FETCH_RECENT_COMMENTS);
+  }
+
+  <span class="comment">/**
+   Add &lt;tt&gt;aNewComment&lt;/tt&gt; to the database. No duplicates are possible.
+  
+   @param aNewComment to be added to the datastore.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">void</span> addNew(Comment aNewComment) <span class="keyword">throws</span> DAOException {
+    Object[] params = { 
+      aNewComment.getUserName(), aNewComment.getBody(), aNewComment.getDate() 
+    };
+    Db.edit(ADD_COMMENT, params);
+  }
+}
+ 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction0df2.html?Id=107">Refactor large Controllers </a> <br>
+  <a href="TopicAction703a.html?Id=138">Parse parameters into domain objects</a> <br>
+  <a href="TopicActione01b.html?Id=164">Template method</a> <br>
+  <a href="TopicAction8130.html?Id=181">Forward versus redirect</a> <br>
+  <a href="TopicAction5f31.html?Id=188">A Web App Framework   WEB4J</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=139 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

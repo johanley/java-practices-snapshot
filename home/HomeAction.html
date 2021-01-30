@@ -1,0 +1,902 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/home/HomeAction.do by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:50:46 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Java programming practices and techniques.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Home</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+
+ <div class="page-title" id="page-title">Java Practices</div>
+ <div class="home-page-section">
+  <b>javapractices.com</b> offers concise presentations of Java practices, tasks, and designs,
+   illustrated with syntax-highlighted code examples. 
+   Some general-purpose <a href="../references/ReferencesAction.html">references</a> are provided, 
+   along with some <a href="../source/SourceAction.html">source code</a>.
+   See below for <a href="#comments">user comments</a> on the site.
+    
+   <p class="quotation">
+    <b>Simplicity does not precede complexity, but follows it.</b>
+     - Alan Perlis, <em>Epigrams In Programming</em> 
+   </p>
+   
+  <nav class="chapters" id="chapters">
+      <a href="#Generalities">Generalities</a> |
+    <a href="#Constructors">Constructors</a> |
+    <a href="#Overriding_Object_Methods">Overriding Object Methods</a> |
+    <a href="#Inheritance">Inheritance</a> |
+    <a href="#Collections">Collections</a> |
+    <a href="#Exceptions">Exceptions</a> |
+    <a href="#Functional_Programming">Functional Programming</a> |
+    <a href="#Files">Files</a> |
+    <a href="#Threads">Threads</a> |
+    <a href="#Common_Design_Patterns">Common Design Patterns</a> |
+    <a href="#Practices">Practices</a> |
+    <a href="#Tasks">Tasks</a> |
+    <a href="#Servlets_and_JSPs">Servlets and JSPs</a> |
+    <a href="#Serialization">Serialization</a> |
+    <a href="#Assertions">Assertions</a> |
+    <a href="#Databases">Databases</a> |
+    <a href="#Swing">Swing</a> |
+    <a href="#Tools">Tools</a> |
+</nav>
+ </div> <!-- end home-page-section -->
+ 
+  <div id="table-of-contents">  
+      <div class="page-section" id="Generalities">Generalities</div>
+    <table class="table-of-contents">
+     <colgroup><col style="width:50%"><col style="width:50%"></colgroup>
+     <tbody><tr>
+      <td><a href="../topic/TopicActionb533.html?Id=115">Coding conventions</a>
+
+      </td><td><a href="../topic/TopicAction23a3.html?Id=123">Minimize ripple effects</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction56bf.html?Id=227">Avoid basic style errors</a>
+
+      </td><td><a href="../topic/TopicAction8374.html?Id=259">Wisdom, not rules</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction8e3f.html?Id=285">Modularity and deletion</a> <img src="../images/new.gif" class="no-margin" alt="New" style="border:1px solid">
+
+      </td><td><a href="../topic/TopicActionbbd2.html?Id=286">Copy paste is dangerous</a> <img src="../images/new.gif" class="no-margin" alt="New" style="border:1px solid">
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActiona166.html?Id=287">Know the common sources of complexity</a> <img src="../images/new.gif" class="no-margin" alt="New" style="border:1px solid">
+
+     </td><td>&nbsp;
+    </td></tr></tbody></table>
+
+    <div class="page-section" id="Constructors">Constructors</div>
+    <table class="table-of-contents">
+     <colgroup><col style="width:50%"><col style="width:50%"></colgroup>
+     <tbody><tr>
+      <td><a href="../topic/TopicAction19ff.html?Id=11">Constructors in general</a>
+
+      </td><td><a href="../topic/TopicActionddc6.html?Id=113">Construct Object using class name</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction6f4f.html?Id=12">Copy constructors</a>
+
+      </td><td><a href="../topic/TopicAction9b86.html?Id=14">Initializing fields to 0 false null is redundant</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction9f39.html?Id=142">Beware of mistaken field redeclares</a>
+
+      </td><td><a href="../topic/TopicAction6581.html?Id=215">Constructors shouldn't call overridables</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction019a.html?Id=252">Don't pass 'this' out of a constructor</a>
+
+      </td><td><a href="../topic/TopicAction3898.html?Id=254">Constructors shouldn't start threads</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActionfbbc.html?Id=84">Avoid JavaBeans style of construction</a>
+
+     </td><td>&nbsp;
+    </td></tr></tbody></table>
+
+    <div class="page-section" id="Overriding_Object_Methods">Overriding Object Methods</div>
+    <table class="table-of-contents">
+     <colgroup><col style="width:50%"><col style="width:50%"></colgroup>
+     <tbody><tr>
+      <td><a href="../topic/TopicAction3eed.html?Id=10">Implementing compareTo</a> <img src="../images/update.gif" class="no-margin" alt="Update" style="border:1px solid">
+
+      </td><td><a href="../topic/TopicAction1deb.html?Id=17">Implementing equals</a> <img src="../images/update.gif" class="no-margin" alt="Update" style="border:1px solid">
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction691e.html?Id=24">Never rely on finalize</a>
+
+      </td><td><a href="../topic/TopicAction78db.html?Id=28">Implementing hashCode</a> <img src="../images/update.gif" class="no-margin" alt="Update" style="border:1px solid">
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActionc3b3.html?Id=55">Implementing toString</a>
+
+      </td><td><a href="../topic/TopicActioned8c.html?Id=71">Avoid clone</a>
+
+    </td></tr></tbody></table>
+
+    <div class="page-section" id="Inheritance">Inheritance</div>
+    <table class="table-of-contents">
+     <colgroup><col style="width:50%"><col style="width:50%"></colgroup>
+     <tbody><tr>
+      <td><a href="../topic/TopicActionaf17.html?Id=69">Designing for subclassing</a>
+
+      </td><td><a href="../topic/TopicActionc791.html?Id=72">Consider composition instead of subclassing</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction18c3.html?Id=89">Overridable methods need special care</a>
+
+      </td><td><a href="../topic/TopicAction5368.html?Id=90">Remember styles of inheritance</a>
+
+    </td></tr></tbody></table>
+
+    <div class="page-section" id="Collections">Collections</div>
+    <table class="table-of-contents">
+     <colgroup><col style="width:50%"><col style="width:50%"></colgroup>
+     <tbody><tr>
+      <td><a href="../topic/TopicAction852c.html?Id=125">Ways of iterating</a> <img src="../images/update.gif" class="no-margin" alt="Update" style="border:1px solid">
+
+      </td><td><a href="../topic/TopicActione066.html?Id=173">Encapsulate collections</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction23e0.html?Id=196">Use for each liberally</a>
+
+      </td><td><a href="../topic/TopicAction921b.html?Id=26">Use interface references to Collections</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActionc99c.html?Id=282">Remove from a collection</a> <img src="../images/new.gif" class="no-margin" alt="New" style="border:1px solid">
+
+      </td><td><a href="../topic/TopicAction55c9.html?Id=39">Prefer Collections over older classes</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActionc6f5.html?Id=65">Choosing the right Collection</a>
+
+      </td><td><a href="../topic/TopicAction5e5f.html?Id=88">Iterate without an index</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction830f.html?Id=9">Use standard Collections</a>
+
+     </td><td>&nbsp;
+    </td></tr></tbody></table>
+
+    <div class="page-section" id="Exceptions">Exceptions</div>
+    <table class="table-of-contents">
+     <colgroup><col style="width:50%"><col style="width:50%"></colgroup>
+     <tbody><tr>
+      <td><a href="../topic/TopicAction62d0.html?Id=120">Exception translation</a>
+
+      </td><td><a href="../topic/TopicAction5ff3.html?Id=129">Checked versus unchecked exceptions</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction3af3.html?Id=130">Pass all pertinent data to exceptions</a>
+
+      </td><td><a href="../topic/TopicActionc388.html?Id=16">Avoid empty catch blocks</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActioncd9b.html?Id=171">Avoid @throws in javadoc</a>
+
+      </td><td><a href="../topic/TopicAction49be.html?Id=19">Exceptions and control flow</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction69dc.html?Id=190">Use template for repeated try catch</a>
+
+      </td><td><a href="../topic/TopicAction5ee8.html?Id=235">Beware of unknown root causes</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActione028.html?Id=25">Finally and catch</a>
+
+      </td><td><a href="../topic/TopicActionb002.html?Id=27">Be specific in throws clause</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActionf005.html?Id=44">Javadoc all exceptions</a>
+
+      </td><td><a href="../topic/TopicAction5ab4.html?Id=78">Stack trace as String</a>
+
+    </td></tr></tbody></table>
+
+    <div class="page-section" id="Functional_Programming">Functional Programming</div>
+    <table class="table-of-contents">
+     <colgroup><col style="width:50%"><col style="width:50%"></colgroup>
+     <tbody><tr>
+      <td><a href="../topic/TopicAction2af5.html?Id=273">Lambdas only for simple cases</a> <img src="../images/new.gif" class="no-margin" alt="New" style="border:1px solid">
+
+      </td><td><a href="../topic/TopicAction5267.html?Id=274">Understand the functional style</a> <img src="../images/new.gif" class="no-margin" alt="New" style="border:1px solid">
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActione9a0.html?Id=275">Static import of Collectors</a> <img src="../images/new.gif" class="no-margin" alt="New" style="border:1px solid">
+
+      </td><td><a href="../topic/TopicAction7f07.html?Id=276">Annotate functional interfaces</a> <img src="../images/new.gif" class="no-margin" alt="New" style="border:1px solid">
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActioncd1a.html?Id=277">Prefer standard functional interfaces</a> <img src="../images/new.gif" class="no-margin" alt="New" style="border:1px solid">
+
+      </td><td><a href="../topic/TopicAction6a80.html?Id=278">Beware forEach terminals</a> <img src="../images/new.gif" class="no-margin" alt="New" style="border:1px solid">
+
+    </td></tr></tbody></table>
+
+    <div class="page-section" id="Files">Files</div>
+    <table class="table-of-contents">
+     <colgroup><col style="width:50%"><col style="width:50%"></colgroup>
+     <tbody><tr>
+      <td><a href="../topic/TopicActiona3d0.html?Id=122">Buffering usually appropriate</a>
+
+      </td><td><a href="../topic/TopicAction21b1.html?Id=245">Reading and writing binary files</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActiondf79.html?Id=246">Copy a file</a>
+
+      </td><td><a href="../topic/TopicActiona359.html?Id=260">Open file in native directory</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction8a77.html?Id=271">Delete a directory tree</a> <img src="../images/new.gif" class="no-margin" alt="New" style="border:1px solid">
+
+      </td><td><a href="../topic/TopicActionedb0.html?Id=272">Copy a directory tree</a> <img src="../images/new.gif" class="no-margin" alt="New" style="border:1px solid">
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction12d8.html?Id=42">Reading and writing text files</a>
+
+      </td><td><a href="../topic/TopicAction848c.html?Id=57">Reading and writing Serializable objects</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction7a51.html?Id=68">Recursive file listing</a>
+
+      </td><td><a href="../topic/TopicAction83bb.html?Id=79">Console input</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActiona0d7.html?Id=8">Always close streams</a>
+
+     </td><td>&nbsp;
+    </td></tr></tbody></table>
+
+    <div class="page-section" id="Threads">Threads</div>
+    <table class="table-of-contents">
+     <colgroup><col style="width:50%"><col style="width:50%"></colgroup>
+     <tbody><tr>
+      <td><a href="../topic/TopicActiond2c3.html?Id=117">Data integrity first</a>
+
+      </td><td><a href="../topic/TopicAction400e.html?Id=118">Read write locks</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActionaf2f.html?Id=247">Perform N tasks in parallel</a>
+
+      </td><td><a href="../topic/TopicAction4ab6.html?Id=248">Prefer modern libraries for concurrency</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction5dc5.html?Id=249">Query host for the number of processors</a>
+
+      </td><td><a href="../topic/TopicActionbbc4.html?Id=250">Always shut down an ExecutorService</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActionea2c.html?Id=251">Handle InterruptedException</a>
+
+      </td><td><a href="../topic/TopicAction9616.html?Id=253">Use finally to unlock</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction7941.html?Id=255">Dump thread information</a>
+
+      </td><td><a href="../topic/TopicAction5ade.html?Id=35">Remember the types of intrinsic lock</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction0170.html?Id=47">Stop threads through cooperation</a>
+
+      </td><td><a href="../topic/TopicAction234f.html?Id=48">Document thread safety</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction2ae3.html?Id=49">Synchronize access to mutable fields</a>
+
+      </td><td><a href="../topic/TopicAction4826.html?Id=50">Launch thread is just another user thread</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction7721.html?Id=51">Objects communicating across threads</a>
+
+      </td><td><a href="../topic/TopicActione69c.html?Id=52">Avoid ThreadGroup</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction8b10.html?Id=53">Thread priorities are not portable</a>
+
+      </td><td><a href="../topic/TopicActionc150.html?Id=54">Schedule periodic tasks </a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActiona6f3.html?Id=67">Synchronized is implementation detail</a>
+
+     </td><td>&nbsp;
+    </td></tr></tbody></table>
+
+    <div class="page-section" id="Common_Design_Patterns">Common Design Patterns</div>
+    <table class="table-of-contents">
+     <colgroup><col style="width:50%"><col style="width:50%"></colgroup>
+     <tbody><tr>
+      <td><a href="../topic/TopicAction2161.html?Id=1">Type Safe Enumerations</a>
+
+      </td><td><a href="../topic/TopicAction8aa5.html?Id=128">Abstract Factory</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActionae2d.html?Id=139">Command objects</a>
+
+      </td><td><a href="../topic/TopicActione01b.html?Id=164">Template method</a> <img src="../images/update.gif" class="no-margin" alt="Update" style="border:1px solid">
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActiond08d.html?Id=187">Model Objects</a> <img src="../images/update.gif" class="no-margin" alt="Update" style="border:1px solid">
+
+      </td><td><a href="../topic/TopicAction8d16.html?Id=21">Factory methods</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction5a93.html?Id=237">Plugin Factory</a> <img src="../images/update.gif" class="no-margin" alt="Update" style="border:1px solid">
+
+      </td><td><a href="../topic/TopicAction67a8.html?Id=258">Wrapper (Decorator)</a> <img src="../images/update.gif" class="no-margin" alt="Update" style="border:1px solid">
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActiond838.html?Id=29">Immutable objects</a>
+
+      </td><td><a href="../topic/TopicAction79e9.html?Id=40">Private constructor</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction4934.html?Id=46">Singleton</a>
+
+     </td><td>&nbsp;
+    </td></tr></tbody></table>
+
+    <div class="page-section" id="Practices">Practices</div>
+    <table class="table-of-contents">
+     <colgroup><col style="width:50%"><col style="width:50%"></colgroup>
+     <tbody><tr>
+      <td><a href="../topic/TopicActionb2b7.html?Id=104">Compile regular expressions once</a>
+
+      </td><td><a href="../topic/TopicActione309.html?Id=114">Multiple return statements</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction5f93.html?Id=119">Overloading can be tricky</a>
+
+      </td><td><a href="../topic/TopicAction620e.html?Id=126">Don't declare local variables before use</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction85d5.html?Id=132">Consider code generators</a>
+
+      </td><td><a href="../topic/TopicAction772f.html?Id=134">Avoid null if possible</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction311e.html?Id=136">Separate public and private members</a>
+
+      </td><td><a href="../topic/TopicAction79f1.html?Id=15">Defensive copying</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction0450.html?Id=174">Test using main method</a>
+
+      </td><td><a href="../topic/TopicAction37c7.html?Id=186">Use enums to restrict arguments</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction63b6.html?Id=194">Design by Contract</a>
+
+      </td><td><a href="../topic/TopicActionda46.html?Id=195">Use static imports rarely</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActionf6e8.html?Id=197">Use boxing with care</a>
+
+      </td><td><a href="../topic/TopicAction03b1.html?Id=2">Class for constants</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction66f0.html?Id=20">Extra space in argument list</a>
+
+      </td><td><a href="../topic/TopicAction9706.html?Id=204">Quote dynamic text when logging</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActionfc56.html?Id=205">Package by feature, not layer</a>
+
+      </td><td><a href="../topic/TopicAction7ee5.html?Id=208">Try alternatives to ResourceBundle</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction0ec8.html?Id=209">Validation belongs in a Model Object</a>
+
+      </td><td><a href="../topic/TopicAction47e0.html?Id=210">Beware of DecimalFormat</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActionb0f5.html?Id=213">Beware of floating point numbers</a>
+
+      </td><td><a href="../topic/TopicAction01e5.html?Id=214">Include 'from', exclude 'to'</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActionf2d7.html?Id=216">Passwords never in clear text</a>
+
+      </td><td><a href="../topic/TopicAction5e53.html?Id=22">Fields should usually be private</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction4b04.html?Id=223">Use @Override liberally</a>
+
+      </td><td><a href="../topic/TopicActionb2d5.html?Id=224">Avoid raw types</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction50dc.html?Id=23">Use final liberally</a>
+
+      </td><td><a href="../topic/TopicActionec62.html?Id=234">Use a fake system clock</a> <img src="../images/update.gif" class="no-margin" alt="Update" style="border:1px solid">
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction7ce2.html?Id=240">Tag or marker interfaces</a>
+
+      </td><td><a href="../topic/TopicActioncdb0.html?Id=244">Don't use tab characters</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction2e3a.html?Id=256">Structs are occasionally useful</a>
+
+      </td><td><a href="../topic/TopicActionaf43.html?Id=257">Beware of Byte Order Marks</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction470f.html?Id=261">Nest classes with care</a>
+
+      </td><td><a href="../topic/TopicAction286f.html?Id=264">Prefer modern date classes</a> <img src="../images/new.gif" class="no-margin" alt="New" style="border:1px solid">
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction819f.html?Id=265">Short public methods</a> <img src="../images/new.gif" class="no-margin" alt="New" style="border:1px solid">
+
+      </td><td><a href="../topic/TopicAction8db7.html?Id=279">Return Optional not null</a> <img src="../images/new.gif" class="no-margin" alt="New" style="border:1px solid">
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction9aa6.html?Id=280">Varargs for 1 to N</a> <img src="../images/new.gif" class="no-margin" alt="New" style="border:1px solid">
+
+      </td><td><a href="../topic/TopicActionc93a.html?Id=284">Don't let var hide essential info</a> <img src="../images/new.gif" class="no-margin" alt="New" style="border:1px solid">
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActionb3ca.html?Id=30">Uncommon classes need explicit imports</a>
+
+      </td><td><a href="../topic/TopicAction3d83.html?Id=31">Beware of instanceof operator</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActiona166-2.html?Id=32">Interface for constants</a>
+
+      </td><td><a href="../topic/TopicActiond5a5.html?Id=33">Use a testing framework (JUnit)</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction88f9.html?Id=34">Lazy initialization</a>
+
+      </td><td><a href="../topic/TopicAction6a39.html?Id=37">Output parameters</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction7844.html?Id=38">Do not break portability</a>
+
+      </td><td><a href="../topic/TopicAction851d.html?Id=4">String concatenation does not scale</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActionc857.html?Id=41">Know the core libraries</a>
+
+      </td><td><a href="../topic/TopicAction5d11.html?Id=5">Validate method arguments</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction8105.html?Id=56">Generating unique IDs</a>
+
+      </td><td><a href="../topic/TopicActionff16.html?Id=58">Naming conventions</a> <img src="../images/update.gif" class="no-margin" alt="Update" style="border:1px solid">
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActiona124.html?Id=59">Prefer empty items to null ones</a>
+
+      </td><td><a href="../topic/TopicAction0d31.html?Id=6">Validate state with class invariants</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActionebc1.html?Id=60">Use javadoc liberally</a>
+
+      </td><td><a href="../topic/TopicAction4d0e.html?Id=63">Conventional name for return value</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActionc981.html?Id=64">Conditional compile</a>
+
+      </td><td><a href="../topic/TopicAction59d6.html?Id=74">Construct classes from the outside in</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction967f.html?Id=81">Consider immutable forms for dates</a>
+
+      </td><td><a href="../topic/TopicActionc88a.html?Id=86">Use System.exit with care</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActionb2ab.html?Id=91">Clarifying method</a>
+
+      </td><td><a href="../topic/TopicAction3d35.html?Id=92">Self encapsulate fields</a>
+
+    </td></tr></tbody></table>
+
+    <div class="page-section" id="Tasks">Tasks</div>
+    <table class="table-of-contents">
+     <colgroup><col style="width:50%"><col style="width:50%"></colgroup>
+     <tbody><tr>
+      <td><a href="../topic/TopicAction3c83.html?Id=103">Pattern match lines of a file</a>
+
+      </td><td><a href="../topic/TopicAction583d.html?Id=13">Representing money</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActiond1f0.html?Id=131">Arrays as String </a>
+
+      </td><td><a href="../topic/TopicAction2316.html?Id=143">Logging messages</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction895b.html?Id=144">Send an email</a>
+
+      </td><td><a href="../topic/TopicAction145a.html?Id=146">Examine bytecode</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction32bb.html?Id=147">Fetch text from the web</a>
+
+      </td><td><a href="../topic/TopicAction95c3.html?Id=18">Determine if Strings are equal</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActionb213.html?Id=207">Compare and sort Strings</a>
+
+      </td><td><a href="../topic/TopicActionaa3f.html?Id=225">Modernize old code</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActionc92c.html?Id=238">Read jar version information</a>
+
+      </td><td><a href="../topic/TopicAction7d07.html?Id=239">Implement code tables</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction5f47.html?Id=243">Command line operations</a>
+
+      </td><td><a href="../topic/TopicActionedb1.html?Id=262">Run in debug mode</a> <img src="../images/new.gif" class="no-margin" alt="New" style="border:1px solid">
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActionf459.html?Id=263">Memory stats</a> <img src="../images/new.gif" class="no-margin" alt="New" style="border:1px solid">
+
+      </td><td><a href="../topic/TopicAction078f.html?Id=281">Define app name once</a> <img src="../images/new.gif" class="no-margin" alt="New" style="border:1px solid">
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActionb30e.html?Id=3">Copy an array </a>
+
+      </td><td><a href="../topic/TopicAction8240.html?Id=36">Measure application performance</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction693b.html?Id=43">Recovering resources</a>
+
+      </td><td><a href="../topic/TopicActiond084.html?Id=62">Generate random numbers</a> <img src="../images/update.gif" class="no-margin" alt="Update" style="border:1px solid">
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActionb69d.html?Id=73">Internationalization</a>
+
+      </td><td><a href="../topic/TopicAction18a7.html?Id=80">Replace a substring</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction255b.html?Id=82">Clipboard copy and paste</a>
+
+      </td><td><a href="../topic/TopicActione704.html?Id=83">Get size of object in memory</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActiondd78.html?Id=85">Time execution speed</a>
+
+      </td><td><a href="../topic/TopicActioncc40.html?Id=87">Parse text</a>
+
+    </td></tr></tbody></table>
+
+    <div class="page-section" id="Servlets_and_JSPs">Servlets and JSPs</div>
+    <table class="table-of-contents">
+     <colgroup><col style="width:50%"><col style="width:50%"></colgroup>
+     <tbody><tr>
+      <td><a href="../topic/TopicAction0df2.html?Id=107">Refactor large Controllers </a> <img src="../images/update.gif" class="no-margin" alt="Update" style="border:1px solid">
+
+      </td><td><a href="../topic/TopicActiona7f6.html?Id=108">Use Model View Controller framework</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction1c49.html?Id=109">Always maintain HttpSessions </a>
+
+      </td><td><a href="../topic/TopicAction1c75.html?Id=110">Session scope objects often Serializable</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction17e9.html?Id=111">Do not synchronize doGet, doPost</a>
+
+      </td><td><a href="../topic/TopicAction42fc.html?Id=112">JSPs should contain only presentation logic</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction9f4f.html?Id=116">Beware of custom cookies</a>
+
+      </td><td><a href="../topic/TopicAction2615.html?Id=137">Repel invalid requests</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction703a.html?Id=138">Parse parameters into domain objects</a>
+
+      </td><td><a href="../topic/TopicAction0b8f.html?Id=140">Thread safety in web apps</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActionb638.html?Id=141">Loss of data during restart</a>
+
+      </td><td><a href="../topic/TopicAction159e.html?Id=175">Prefer JSTL tags</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActionad3c.html?Id=176">Use templates to standardize layout</a>
+
+      </td><td><a href="../topic/TopicAction9b6b.html?Id=177">Pre populate forms</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActiond18f.html?Id=178">Prevent self linking</a>
+
+      </td><td><a href="../topic/TopicActionc3f2.html?Id=179">Send trouble ticket emails</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActiond957.html?Id=180">Validate email addresses</a>
+
+      </td><td><a href="../topic/TopicAction8130.html?Id=181">Forward versus redirect</a> <img src="../images/update.gif" class="no-margin" alt="Update" style="border:1px solid">
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction5f31.html?Id=188">A Web App Framework   WEB4J</a>
+
+      </td><td><a href="../topic/TopicAction542c.html?Id=191">Manage sessions closely</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction795f.html?Id=193">Struts seems mediocre</a>
+
+      </td><td><a href="../topic/TopicAction3987.html?Id=198">Choose form validation style carefully</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction2c82.html?Id=201">Beware of doubly escaped ampersands</a>
+
+      </td><td><a href="../topic/TopicAction3612.html?Id=202">Use Cascading Style Sheets</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActionfbe8.html?Id=203">Beware multilingual submit buttons</a>
+
+      </td><td><a href="../topic/TopicAction24f9.html?Id=206">Prefer UTF 8 in all layers</a> <img src="../images/update.gif" class="no-margin" alt="Update" style="border:1px solid">
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction85b1.html?Id=217">Beware of common hacks</a>
+
+      </td><td><a href="../topic/TopicAction5422.html?Id=218">Understand details of FORM tags</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction00cb.html?Id=219">Consider Controllers for redirects</a>
+
+      </td><td><a href="../topic/TopicActioncd29.html?Id=220">Reuse login page for errors</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction4762.html?Id=221">Wrap file upload requests</a>
+
+      </td><td><a href="../topic/TopicAction4378.html?Id=222">Use extensions for fine grained security</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction0836.html?Id=226">Beware of URL rewriting</a>
+
+      </td><td><a href="../topic/TopicAction2651.html?Id=232">Serve binary content</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActionf224.html?Id=266">Version links to CSS and JS</a> <img src="../images/new.gif" class="no-margin" alt="New" style="border:1px solid">
+
+      </td><td><a href="../topic/TopicAction4506.html?Id=267">Hide .html and .jsp</a> <img src="../images/new.gif" class="no-margin" alt="New" style="border:1px solid">
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction2969.html?Id=270">Sessions shared across tabs</a> <img src="../images/new.gif" class="no-margin" alt="New" style="border:1px solid">
+
+      </td><td><a href="../topic/TopicActionb2b0.html?Id=283">Apply correct redirect code</a> <img src="../images/new.gif" class="no-margin" alt="New" style="border:1px solid">
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction11d9.html?Id=93">Minimize site response time</a>
+
+      </td><td><a href="../topic/TopicActiond8aa.html?Id=94">Web usability guidelines</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction37f1.html?Id=95">Emit flexible URLs</a>
+
+      </td><td><a href="../topic/TopicActionba81.html?Id=96">Escape special characters</a> <img src="../images/update.gif" class="no-margin" alt="Update" style="border:1px solid">
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActiona6de.html?Id=97">Validate generated HTML</a>
+
+      </td><td><a href="../topic/TopicActioncfcd.html?Id=98">Measure web app performance</a>
+
+    </td></tr></tbody></table>
+
+    <div class="page-section" id="Serialization">Serialization</div>
+    <table class="table-of-contents">
+     <colgroup><col style="width:50%"><col style="width:50%"></colgroup>
+     <tbody><tr>
+      <td><a href="../topic/TopicActionbf99.html?Id=121">Some classes need readResolve</a>
+
+      </td><td><a href="../topic/TopicActionb750.html?Id=45">Implementing Serializable</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActione102.html?Id=70">Serialization and subclassing</a>
+
+     </td><td>&nbsp;
+    </td></tr></tbody></table>
+
+    <div class="page-section" id="Assertions">Assertions</div>
+    <table class="table-of-contents">
+     <colgroup><col style="width:50%"><col style="width:50%"></colgroup>
+     <tbody><tr>
+      <td><a href="../topic/TopicActionbf65.html?Id=100">Assert is for private arguments only</a>
+
+      </td><td><a href="../topic/TopicAction45c1.html?Id=101">Assertions in general</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActionfbf8.html?Id=102">Assert use cases</a>
+
+      </td><td><a href="../topic/TopicAction8d5e.html?Id=99">Force enabling of assertions</a>
+
+    </td></tr></tbody></table>
+
+    <div class="page-section" id="Databases">Databases</div>
+    <table class="table-of-contents">
+     <colgroup><col style="width:50%"><col style="width:50%"></colgroup>
+     <tbody><tr>
+      <td><a href="../topic/TopicActione914.html?Id=105">Keep SQL out of code</a>
+
+      </td><td><a href="../topic/TopicAction7bff.html?Id=106">Don't perform basic SQL tasks in code </a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction1a25.html?Id=124">Consider data layer tools</a>
+
+      </td><td><a href="../topic/TopicAction799b.html?Id=127">Get database connection</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActionb57d.html?Id=172">Consider using standard SQL</a>
+
+      </td><td><a href="../topic/TopicActionf9c8.html?Id=183">Encapsulate connections</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction2dbf.html?Id=184">Simplify database operations</a>
+
+      </td><td><a href="../topic/TopicAction3b51.html?Id=189">Use template for transactions</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActiona3f5.html?Id=192">Business identifiers as String</a>
+
+      </td><td><a href="../topic/TopicActiondfce.html?Id=199">Consider wrapper classes for optional data</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction9e16.html?Id=200">Try pseudo persistence for mock ups</a>
+
+      </td><td><a href="../topic/TopicAction0faa.html?Id=211">Data is king</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActiona657.html?Id=212">Prefer PreparedStatement</a>
+
+      </td><td><a href="../topic/TopicAction2b10.html?Id=61">Remember the basics of database design</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction564b.html?Id=66">Data access objects</a>
+
+      </td><td><a href="../topic/TopicAction12eb.html?Id=75">Connection pools</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction0d22.html?Id=76">Reduce database code duplication</a>
+
+      </td><td><a href="../topic/TopicActionf6c1.html?Id=77">Data exception wrapping</a>
+
+    </td></tr></tbody></table>
+
+    <div class="page-section" id="Swing">Swing</div>
+    <table class="table-of-contents">
+     <colgroup><col style="width:50%"><col style="width:50%"></colgroup>
+     <tbody><tr>
+      <td><a href="../topic/TopicAction992c.html?Id=148">Look and Feel guidelines</a>
+
+      </td><td><a href="../topic/TopicAction028c.html?Id=149">Splash screen</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction7910.html?Id=150">Standardized dialogs</a>
+
+      </td><td><a href="../topic/TopicActioncded.html?Id=151">Verify input with regular expressions</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction2994.html?Id=152">Swing utility tasks</a>
+
+      </td><td><a href="../topic/TopicAction3abb.html?Id=153">Swing threads</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction7009.html?Id=154">Preferences dialogs</a>
+
+      </td><td><a href="../topic/TopicAction54be.html?Id=155">Using preferences</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActiond357.html?Id=156">Observers and listeners</a>
+
+      </td><td><a href="../topic/TopicAction26c0.html?Id=157">Using JavaHelp</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction06a5.html?Id=158">Change theme</a>
+
+      </td><td><a href="../topic/TopicActionb4fd.html?Id=159">Actions</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction6407.html?Id=160">Timers</a>
+
+      </td><td><a href="../topic/TopicActiond0e1.html?Id=162">Sort table rows</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction167e.html?Id=163">Filter table rows</a>
+
+      </td><td><a href="../topic/TopicAction0e99.html?Id=165">Swing in general</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActionff7e.html?Id=166">Layout Managers</a>
+
+      </td><td><a href="../topic/TopicAction11fc.html?Id=167">Input dialogs</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActione43f.html?Id=168">Render table cells</a>
+
+      </td><td><a href="../topic/TopicAction5c4c.html?Id=169">Align menu items</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction60fc.html?Id=170">A Swing App   StocksMonitor</a>
+
+      </td><td><a href="../topic/TopicAction5982.html?Id=228">Don't subclass JDialog or JFrame</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicActione4c6.html?Id=229">Provide an uncaught exception handler</a>
+
+      </td><td><a href="../topic/TopicAction6ca2.html?Id=230">Don't bury dialogs</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction8210.html?Id=231">Minimal Swing application</a>
+
+      </td><td><a href="../topic/TopicActiond281.html?Id=233">Verify input with Model Objects</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction08d2.html?Id=236">Consider JGoodies Forms for layouts</a>
+
+      </td><td><a href="../topic/TopicAction9163.html?Id=242">Launch other applications</a>
+
+    </td></tr></tbody></table>
+
+    <div class="page-section" id="Tools">Tools</div>
+    <table class="table-of-contents">
+     <colgroup><col style="width:50%"><col style="width:50%"></colgroup>
+     <tbody><tr>
+      <td><a href="../topic/TopicAction55f0.html?Id=135">Using Ant for build scripts</a>
+
+      </td><td><a href="../topic/TopicAction5438.html?Id=241">Use Version Control tools</a>
+
+     </td></tr><tr>
+      <td><a href="../topic/TopicAction18d6.html?Id=268">Using Tomcat for servlets</a> <img src="../images/new.gif" class="no-margin" alt="New" style="border:1px solid">
+
+      </td><td><a href="../topic/TopicActione3e1.html?Id=269">Using Maven for builds</a> <img src="../images/new.gif" class="no-margin" alt="New" style="border:1px solid">
+
+    </td></tr></tbody></table>
+
+</div> <!-- table-of-contents -->
+  
+ <table>
+  <tbody><tr><td class="page-section" style="text-align:center;"><b><span id="comments" style="font-size:large;">User Comments</span></b>
+  </td></tr><tr><td><code>"I just wanted to take a second to say that this site is really useful. It's not all that often that I come across a site that has some good design information without a bunch of boring fluff.  It reminds me of reading <a href="https://www.amazon.com/exec/obidos/ASIN/0134685997/ref=nosim/javapractices-20"><em>Effective Java</em></a>, which I would consider to be one of the best books I've ever picked up."</code>
+  </td></tr><tr><td><code>"I love this site. It's one of the best laid out and most useful sites that I've ever used. Thank you very much."</code>
+  </td></tr><tr><td><code>"First I have to say, what a great site. We were thinking about starting something similar inside the company, but what better news than to hear that someone has done it for us. Keep up the great work."</code>
+  </td></tr><tr><td><code>"I do think this site is excellent. Keep it up."</code>
+  </td></tr><tr><td><code>"Awesome for a beginner like me!"</code>
+  </td></tr><tr><td><code>"A Great Site!!! I refer to it often. I really enjoy your common sense and straight forward, flexible approach to these issues. Thanks!"</code>
+  </td></tr><tr><td><code>"Thanks for a great site, it really stands out from the crowd. Keep up the good work!"</code>
+ </td></tr></tbody></table>
+ 
+
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/home/HomeAction.do by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:32 GMT -->
+</html>

@@ -1,0 +1,142 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=26 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="collection,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Use interface references to Collections</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Use interface references to Collections</div>
+
+<br>In general, references to objects should be as generic as possible.
+The user of such a reference will be protected from possible changes to
+the underlying implementation class. The ripple effects of such a change
+are limited to the single line of code which creates the object, and will
+not propagate any further.
+<p>In the case of collections, this means habitually referring to collection objects using 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/List.html">List</a></code>,
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Map.html">Map</a></code>,
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Set.html">Set</a></code>,
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Queue.html">Queue</a></code>,
+and <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Deque.html">Deque</a></code>
+interface references. 
+
+</p><p>Note as well that all of these except <code>Map</code>
+can be referred to using the even more generic 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Collection.html">Collection</a></code>.
+
+</p><p><b>Example</b>
+<br></p><pre>
+<span class="keyword">import</span> java.util.*;
+
+<span class="keyword">public</span> <span class="keyword">class</span> Nucleus {
+
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main (String... args) {
+    Nucleus lithium = <span class="keyword">new</span> Nucleus (<span class="literal">3</span>,<span class="literal">4</span>);
+    <span class="comment">//note the generic Map reference is used here, not LinkedHashMap
+</span>    Map&lt;String, Integer&gt; quarks = lithium.getQuarkSummary();
+    log(<span class="literal">"Number of up quarks in lithium nucleus: "</span> + quarks.get(<span class="literal">"Up"</span>));
+    log(<span class="literal">"Number of down quarks in lithium nucleus: "</span> + quarks.get(<span class="literal">"Down"</span>));
+  }
+
+  <span class="keyword">public</span> Nucleus(<span class="keyword">int</span> numProtons, <span class="keyword">int</span> numNeutrons) {
+    <span class="keyword">this</span>.numProtons = numProtons;
+    <span class="keyword">this</span>.numNeutrons = numNeutrons;
+  }
+
+  <span class="comment">/** Note this get method is final. */</span>
+  <span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">int</span> getNumProtons() {
+     <span class="keyword">return</span> numProtons;
+  }
+
+  <span class="comment">/** Note this get method is final. */</span>
+  <span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">int</span> getNumNeutrons() {
+     <span class="keyword">return</span> numNeutrons;
+  }
+
+  <span class="comment">/**
+  * This method returns a Map which summarizes how many quarks of each
+  * flavour are in the nucleus.
+  *
+  * @return a generic Map reference, instead of a LinkedHashMap; the
+  * user will be protected from the detail of what implementation of Map
+  * has been selected here.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">final</span> Map&lt;String, Integer&gt; getQuarkSummary() {
+    LinkedHashMap&lt;String, Integer&gt; result = <span class="keyword">new</span> LinkedHashMap&lt;&gt;();
+    <span class="keyword">int</span> numUp =
+      numProtons * UP_QUARKS_PER_PROTON +
+      numNeutrons * UP_QUARKS_PER_NEUTRON
+    ;
+    <span class="keyword">int</span> numDown =
+      numProtons * DOWN_QUARKS_PER_PROTON +
+      numNeutrons * DOWN_QUARKS_PER_NEUTRON
+    ;
+    <span class="comment">//this makes use of auto-boxing of ints into Integers:
+</span>    result.put(<span class="literal">"Up"</span>, numUp);
+    result.put(<span class="literal">"Down"</span>, numDown);
+    <span class="keyword">return</span> result;
+  }
+
+  <span class="comment">//PRIVATE 
+</span>  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">int</span> numProtons;
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">int</span> numNeutrons;
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> UP_QUARKS_PER_PROTON = <span class="literal">2</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> DOWN_QUARKS_PER_PROTON = <span class="literal">1</span>;
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> UP_QUARKS_PER_NEUTRON = <span class="literal">1</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> DOWN_QUARKS_PER_NEUTRON = <span class="literal">2</span>;
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(String aMessage){
+    System.out.println(aMessage);
+  }
+} 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction23a3.html?Id=123">Minimize ripple effects</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=26 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+</html>

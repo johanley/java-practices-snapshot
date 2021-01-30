@@ -1,0 +1,210 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=65 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="collection,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Choosing the right Collection</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Choosing the right Collection</div>
+
+<br>Here's a guide for selecting the proper implementation of a 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Set.html">Set</a>,
+<a href="https://docs.oracle.com/javase/10/docs/api/java/util/List.html">List</a></code>, 
+or <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Map.html">Map</a></code>. 
+It was compiled for Java 1.4. Many additions 
+have been made to the <a href="http://docs.oracle.com/javase/8/docs/technotes/guides/collections/index.html">Collections Framework</a> since then (notably the 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Queue.html">Queue</a></code> and 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Deque.html">Deque</a></code> 
+interfaces, and various items in <code>java.util.concurrent</code>).
+These later additions have been omitted here, since this briefer summary should suffice for most cases.
+
+<p><span class="highlight">The best general purpose or 'primary' implementations are likely <code>ArrayList</code>, <code>LinkedHashMap</code>, and
+<code>LinkedHashSet</code></span>. Their overall performance is better, and you should use them
+unless you need a special feature provided by another implementation. That
+special feature is usually ordering or sorting.
+
+</p><p>For convenience, "ordering" will here refer to the order of items returned by an <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Iterator.html">Iterator</a></code>,
+and "sorting" will here refer to sorting items according to <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Comparable.html">Comparable</a></code>
+or <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Comparator.html">Comparator</a></code>.
+<br>&nbsp;
+</p><table border cellspacing="0" width="100%">
+<tbody><tr>
+<td>Interface</td>
+
+<td>HasDuplicates?</td>
+
+<td align="CENTER" colspan="5">Implementations</td>
+
+<td>Historical</td>
+</tr>
+
+<tr>
+<td><code>Set</code></td>
+
+<td>no</td>
+
+<td><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/HashSet.html">HashSet</a></code></td>
+
+<td align="CENTER">...</td>
+
+<td><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/LinkedHashSet.html"><b>LinkedHashSet</b></a></code></td>
+
+<td align="CENTER">...</td>
+
+<td><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/TreeSet.html">TreeSet</a></code></td>
+
+<td>
+<center>...</center>
+</td>
+</tr>
+
+<tr>
+<td><code>List</code></td>
+
+<td>yes</td>
+
+<td align="CENTER">...</td>
+
+<td><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/ArrayList.html"><b>ArrayList</b></a></code></td>
+
+<td align="CENTER">...</td>
+
+<td><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/LinkedList.html">LinkedList</a></code></td>
+
+<td>
+<center>...</center>
+</td>
+
+<td><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Vector.html">Vector</a>,
+<a href="https://docs.oracle.com/javase/10/docs/api/java/util/Stack.html">Stack</a></code></td>
+</tr>
+
+<tr>
+<td><code>Map</code></td>
+
+<td>no duplicate keys&nbsp;</td>
+
+<td><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/HashMap.html">HashMap</a></code></td>
+
+<td align="CENTER">...</td>
+
+<td><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/LinkedHashMap.html"><b>LinkedHashMap</b></a></code></td>
+
+<td align="CENTER">...</td>
+
+<td><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/TreeMap.html">TreeMap</a></code></td>
+
+<td><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Hashtable.html">Hashtable</a>,
+<a href="https://docs.oracle.com/javase/10/docs/api/java/util/Properties.html">Properties</a></code></td>
+</tr>
+</tbody></table>
+
+<p>Principal features of non-primary implementations:
+</p><ul>
+<li><code>HashMap</code> has slightly better performance than <code>LinkedHashMap</code>, but its iteration order is 
+<em>undefined</em>
+</li>
+
+<li><code>HashSet</code> has slightly better performance than <code>LinkedHashSet</code>, but its iteration 
+order is <em>undefined</em> </li>
+
+<li>
+<code>TreeSet</code> is ordered and sorted, but slower</li>
+
+<li>
+<code>TreeMap</code> is ordered and sorted, but slower</li>
+
+<li>
+<code>LinkedList</code> has fast adding to the start of the list, and fast
+deletion from the interior via iteration</li>
+</ul>
+
+Iteration order for above implementations:
+<ul>
+<li><code>HashSet</code> - <em>undefined</em></li>
+<li><code>HashMap</code> - <em>undefined</em></li>
+<li><code>LinkedHashSet</code> - insertion order</li>
+<li><code>LinkedHashMap</code> - insertion order of keys (by default), or 'access order'</li>
+<li><code>ArrayList</code> - insertion order</li>
+<li><code>LinkedList</code> - insertion order</li>
+<li><code>TreeSet</code> - ascending order, according to <code>Comparable</code> / <code>Comparator</code></li>
+<li><code>TreeMap</code> - ascending order of keys, according to <code>Comparable</code> / <code>Comparator</code></li>
+</ul>
+
+For <code>LinkedHashSet</code> and <code>LinkedHashMap</code>, the re-insertion
+of an item does not affect insertion order.
+<p>For <code>LinkedHashMap</code>, 'access order' is from the least recent access
+to the most recent access. In this context, only calls to <code>get</code>,
+<code>put</code>,
+and <code>putAll</code> constitute an access, and only calls to these methods
+affect access order.
+</p><p>While being used in a <code>Map</code> or <code>Set</code>, these items must
+not change state (hence, it's recommended that these items be immutable
+objects):
+</p><ul>
+<li>
+keys of a <code>Map</code></li>
+
+<li>
+items in a <code>Set</code></li>
+</ul>
+Sorting requires either that:
+<ul>
+<li>
+the stored items implement <a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Comparable.html"><code>Comparable</code></a></li>
+
+<li>
+a <a href="https://docs.oracle.com/javase/10/docs/api/java/util/Comparator.html"><code>Comparator</code></a> 
+for the stored objects be defined</li>
+</ul>
+To retain the order of a <code>ResultSet</code> as specified in an ORDER BY
+clause, insert the records into a <code>List</code> or a <code>LinkedHashMap</code>.
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction830f.html?Id=9">Use standard Collections</a> <br>
+  <a href="TopicAction3eed.html?Id=10">Implementing compareTo</a> <br>
+  <a href="TopicActiond838.html?Id=29">Immutable objects</a> <br>
+  <a href="TopicAction55c9.html?Id=39">Prefer Collections over older classes</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=65 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+</html>

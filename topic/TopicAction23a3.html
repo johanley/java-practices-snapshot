@@ -1,0 +1,94 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=123 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Minimize ripple effects</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Minimize ripple effects</div>
+
+<br>Much of object programming is centered on minimizing the ripple effects
+caused by changes to a program. This is done simply by keeping details
+secret (<i>information hiding </i>or<i> encapsulation</i>).
+<p>The principal ways of doing this are:
+</p><ul>
+<li>
+<b>indirection</b> - named constants replacing "magic numbers", for example</li>
+
+<li>
+<b>minimizing visibility</b> - private fields, package-private classes,
+for example</li>
+
+<li>
+<b>generic<i> </i>references</b> (polymorphism) - using high level references
+(interfaces or abstract classes) instead of low level references (concrete
+classes)</li>
+</ul>
+All of these techniques accomplish the same thing - they confine knowledge
+of implementation details to the smallest possible part of a program. That
+is, <i>they keep a secret of some sort</i>.
+<p>Constant and liberal use of the above techniques is recommended.
+</p><p>An interesting quote from chapter one of <i>Design Patterns</i>, regarding
+the use of generic references:
+</p><p>"<i>This so greatly reduces implementation dependencies between subsystems
+that it leads to the following principle of reusable object-oriented design
+:</i>
+</p><p><i>Program to an interface, not an implementation.</i>
+</p><p><i>Don't declare variables to be instances of particular concrete classes.
+Instead, commit only to an interface defined by an abstract class. You
+will find this to be a common theme of the design patterns in this book.</i>"
+</p><p>(They state a second general principle as well: "<i>Favor object composition
+over class inheritance.</i>")
+<br>
+</p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction5e53.html?Id=22">Fields should usually be private</a> <br>
+  <a href="TopicAction921b.html?Id=26">Use interface references to Collections</a> <br>
+  <a href="TopicAction12d8.html?Id=42">Reading and writing text files</a> <br>
+  <a href="TopicAction564b.html?Id=66">Data access objects</a> <br>
+  <a href="TopicActionc791.html?Id=72">Consider composition instead of subclassing</a> <br>
+  <a href="TopicAction8aa5.html?Id=128">Abstract Factory</a> <br>
+  <a href="TopicAction703a.html?Id=138">Parse parameters into domain objects</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=123 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+</html>

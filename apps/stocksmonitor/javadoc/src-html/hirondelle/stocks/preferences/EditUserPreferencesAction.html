@@ -1,0 +1,139 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/preferences/EditUserPreferencesAction.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+EditUserPreferencesAction.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.stocks.preferences;<a name=line.1></a>
+<a name=line.2></a>
+<span class='keyword'>import</span> java.awt.event.*;<a name=line.3></a>
+<span class='keyword'>import</span> javax.swing.*;<a name=line.4></a>
+<span class='keyword'>import</span> java.util.*;<a name=line.5></a>
+<span class='keyword'>import</span> java.util.logging.*;<a name=line.6></a>
+<a name=line.7></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Args;<a name=line.8></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.ui.StandardEditor;<a name=line.9></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.ui.UiUtil;<a name=line.10></a>
+<span class='keyword'>import</span> hirondelle.stocks.preferences.PreferencesEditor;<a name=line.11></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Util;<a name=line.12></a>
+<a name=line.13></a>
+<span class='comment'>/**<a name=line.14></a>
+* Present dialog to allow update of user preferences.<a name=line.15></a>
+*<a name=line.16></a>
+* &lt;P&gt;Related preferences are grouped together and placed in <a name=line.17></a>
+* a single pane of a &lt;tt&gt;JTabbedPane&lt;/tt&gt;, which corresponds to an <a name=line.18></a>
+* implementation of {@link PreferencesEditor}. Values are pre-populated with <a name=line.19></a>
+* current values for preferences.<a name=line.20></a>
+*<a name=line.21></a>
+*&lt;P&gt;Most preferences have default values. If so, a  <a name=line.22></a>
+* &lt;tt&gt;Restore Defaults&lt;/tt&gt; button is provided for that set of related <a name=line.23></a>
+* preferences.<a name=line.24></a>
+*<a name=line.25></a>
+*&lt;P&gt;Preferences are not changed until the &lt;tt&gt;OK&lt;/tt&gt; button is pressed. <a name=line.26></a>
+* Exception: the logging preferences take effect immediately, without the need <a name=line.27></a>
+* for hitting &lt;tt&gt;OK&lt;/tt&gt;.<a name=line.28></a>
+*/</span><a name=line.29></a>
+<span class='keyword'>public</span> <span class='keyword'>final</span> <span class='keyword'>class</span> EditUserPreferencesAction <span class='keyword'>extends</span> AbstractAction {<a name=line.30></a>
+<a name=line.31></a>
+  <span class='comment'>/**<a name=line.32></a>
+  * Constructor.<a name=line.33></a>
+  *  <a name=line.34></a>
+  * @param aFrame parent window to which this dialog is attached.<a name=line.35></a>
+  * @param aPrefEditors contains implementations of {@link PreferencesEditor}, <a name=line.36></a>
+  * each of which is placed in a pane of a &lt;tt&gt;JTabbedPane&lt;/tt&gt;.<a name=line.37></a>
+  */</span><a name=line.38></a>
+  <span class='keyword'>public</span> EditUserPreferencesAction (JFrame aFrame, List&lt;PreferencesEditor&gt; aPrefEditors) {<a name=line.39></a>
+    <span class='keyword'>super</span>(<span class='literal'>"Preferences..."</span>, UiUtil.getEmptyIcon()); <a name=line.40></a>
+    Args.checkForNull(aFrame);<a name=line.41></a>
+    Args.checkForNull(aPrefEditors);<a name=line.42></a>
+    fFrame = aFrame;<a name=line.43></a>
+    putValue(SHORT_DESCRIPTION, <span class='literal'>"Update user preferences"</span>);<a name=line.44></a>
+    putValue(LONG_DESCRIPTION, <span class='literal'>"Allows user input of preferences."</span>);<a name=line.45></a>
+    putValue(MNEMONIC_KEY, <span class='keyword'>new</span> Integer(KeyEvent.VK_P));    <a name=line.46></a>
+    fPrefEditors = aPrefEditors;<a name=line.47></a>
+  }<a name=line.48></a>
+<a name=line.49></a>
+  <span class='comment'>/** Display the user preferences dialog.  */</span><a name=line.50></a>
+  <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> actionPerformed(ActionEvent event) {<a name=line.51></a>
+    fLogger.info(<span class='literal'>"Showing user preferences dialog."</span>);<a name=line.52></a>
+    <span class='comment'>//lazy construction: fEditor is created only once, when this action <a name=line.53></a>
+</span>    <span class='comment'>//is explicitly invoked<a name=line.54></a>
+</span>    <span class='keyword'>if</span> (fEditor == <span class='keyword'>null</span>) {<a name=line.55></a>
+      fEditor = <span class='keyword'>new</span> Editor(<span class='literal'>"Edit Preferences"</span>, fFrame);<a name=line.56></a>
+    }<a name=line.57></a>
+    fEditor.showDialog();<a name=line.58></a>
+  }<a name=line.59></a>
+  <a name=line.60></a>
+  <span class='comment'>// PRIVATE <a name=line.61></a>
+</span>  <span class='keyword'>private</span> JFrame fFrame;<a name=line.62></a>
+  <span class='keyword'>private</span> java.util.List&lt;PreferencesEditor&gt; fPrefEditors;<a name=line.63></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> Logger fLogger = Util.getLogger(EditUserPreferencesAction.<span class='keyword'>class</span>);  <a name=line.64></a>
+  <a name=line.65></a>
+  <span class='comment'>/**<a name=line.66></a>
+  * Specifying this as a field allows for "lazy" creation and use of the GUI, which is <a name=line.67></a>
+  * of particular importance for a preferences dialog, since they are usually heavyweight, <a name=line.68></a>
+  * and have a large number of components.<a name=line.69></a>
+  */</span><a name=line.70></a>
+  <span class='keyword'>private</span> Editor fEditor;<a name=line.71></a>
+  <a name=line.72></a>
+  <span class='comment'>/**<a name=line.73></a>
+  * Return GUI for editing all preferences, pre-populated with current <a name=line.74></a>
+  * values.<a name=line.75></a>
+  */</span><a name=line.76></a>
+  <span class='keyword'>private</span> JComponent getPrefEditors(){<a name=line.77></a>
+    JTabbedPane content = <span class='keyword'>new</span> JTabbedPane();<a name=line.78></a>
+    content.setTabPlacement(JTabbedPane.LEFT);<a name=line.79></a>
+    <span class='keyword'>int</span> idx = <span class='literal'>0</span>;<a name=line.80></a>
+    <span class='keyword'>for</span>(PreferencesEditor prefEditor: fPrefEditors) {<a name=line.81></a>
+      JComponent editorGui = prefEditor.getUI();<a name=line.82></a>
+      editorGui.setBorder(UiUtil.getStandardBorder());<a name=line.83></a>
+      content.addTab(prefEditor.getTitle() , editorGui);<a name=line.84></a>
+      content.setMnemonicAt(idx, prefEditor.getMnemonic());<a name=line.85></a>
+      ++idx;<a name=line.86></a>
+    }<a name=line.87></a>
+    <span class='keyword'>return</span> content;<a name=line.88></a>
+  }<a name=line.89></a>
+  <a name=line.90></a>
+  <span class='comment'>/** Called only when the user hits the OK button.  */</span><a name=line.91></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> saveSettings(){<a name=line.92></a>
+    fLogger.fine(<span class='literal'>"User selected OK. Updating table preferences."</span>);<a name=line.93></a>
+    <span class='keyword'>for</span>(PreferencesEditor prefEditor: fPrefEditors) {<a name=line.94></a>
+      prefEditor.savePreferences();<a name=line.95></a>
+    }<a name=line.96></a>
+  }<a name=line.97></a>
+  <a name=line.98></a>
+  <span class='comment'>/**<a name=line.99></a>
+  * An example of a nested class which is nested because it is attached only <a name=line.100></a>
+  * to the enclosing class, and it cannot act as superclass since multiple <a name=line.101></a>
+  * inheritance of implementation is not possible. <a name=line.102></a>
+  * <a name=line.103></a>
+  * The implementation of this nested class is kept short by calling methods <a name=line.104></a>
+  * of the enclosing class.<a name=line.105></a>
+  */</span><a name=line.106></a>
+  <span class='keyword'>private</span> <span class='keyword'>final</span> <span class='keyword'>class</span> Editor <span class='keyword'>extends</span> StandardEditor { <a name=line.107></a>
+    Editor(String aTitle, JFrame aParent){<a name=line.108></a>
+      <span class='keyword'>super</span>(aTitle, aParent, StandardEditor.CloseAction.HIDE);<a name=line.109></a>
+    }<a name=line.110></a>
+    <span class='keyword'>@Override</span> <span class='keyword'>public</span> JComponent getEditorUI () {<a name=line.111></a>
+      JPanel content = <span class='keyword'>new</span> JPanel();<a name=line.112></a>
+      content.setLayout(<span class='keyword'>new</span> BoxLayout(content, BoxLayout.Y_AXIS));<a name=line.113></a>
+      content.add(getPrefEditors());<a name=line.114></a>
+      <span class='comment'>//content.setMinimumSize(new Dimension(300,300));<a name=line.115></a>
+</span>      <span class='keyword'>return</span> content;<a name=line.116></a>
+    }<a name=line.117></a>
+    <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> okAction() {<a name=line.118></a>
+      saveSettings();<a name=line.119></a>
+      dispose();<a name=line.120></a>
+    }<a name=line.121></a>
+  }  <a name=line.122></a>
+}<a name=line.123></a>
+ <a name=line.124></a>
+</PRE><a name=line.125></a>
+ </BODY><a name=line.126></a>
+<HTML><a name=line.127></a>

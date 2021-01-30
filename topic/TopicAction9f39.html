@@ -1,0 +1,106 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=142 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Beware of mistaken field redeclares</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Beware of mistaken field redeclares</div>
+
+<br>Beware of this simple mistake, which can be hard to track down: if
+a field is mistakenly redeclared within the body of a method, then the
+field is not being referenced, but rather a temporary local variable with
+the same name.
+
+<p>A common symptom of this problem is that a stack trace indicates that a
+field is <code>null</code>, but a cursory examination of the code makes it
+seem as if the field has been correctly initialized.
+
+</p><p><a href="TopicActionff16.html?Id=58">Naming conventions</a> can reduce the frequency
+of this error, but they cannot eliminate it.
+
+</p><p><b>Example</b>
+<br></p><pre>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> MistakenRedeclare {
+
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... aArgs) {
+    MistakenRedeclare mistake = <span class="keyword">new</span> MistakenRedeclare(<span class="literal">"blah"</span>);
+    <span class="comment">//Throws NullPointerException, since the return value of
+</span>    <span class="comment">//getName is null.
+</span>    System.out.println(<span class="literal">"Length of name: "</span> + mistake.getName().length());
+  }
+
+  <span class="keyword">public</span> MistakenRedeclare(String aName) {
+    <span class="comment">//Oops! Setting a local variable, not the field!
+</span>    String fName = aName;
+    <span class="comment">//should really be:
+</span>    <span class="comment">//fName = aName; 
+</span>    <span class="comment">//
+</span>    <span class="comment">//if you qualify references with the 'this' keyword, 
+</span>    <span class="comment">//then you don't need a conventional 'f' and 'a' 
+</span>    <span class="comment">//prefixes (to distinguish field versus argument)
+</span>    <span class="comment">//this.name = name;
+</span>  }
+
+  <span class="keyword">public</span> String getName(){
+    <span class="keyword">return</span> fName;
+  }
+
+  <span class="comment">//..elided
+</span>
+  <span class="comment">// PRIVATE
+</span>  <span class="keyword">private</span> String fName;
+} 
+</pre>
+
+<br>Example run of this class:
+<p></p><p><code>&gt;java -cp . MistakenRedeclare</code>
+<br><code>Exception in thread "main" java.lang.NullPointerException</code>
+<br><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; at MistakenRedeclare.main(MistakenRedeclare.java:7)</code>
+<br>
+</p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActionff16.html?Id=58">Naming conventions</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=142 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+</html>

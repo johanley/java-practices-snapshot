@@ -1,0 +1,333 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=221 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Wrap file upload requests</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Wrap file upload requests</div>
+
+<br>
+Support for file uploads was added relatively late to the Servlet Specification, starting with version 3.0.
+Earlier versions of the spec have poor support for file uploads. 
+The following applies to such earlier versions.
+
+<p>If a form contains one or more <a href="https://www.w3.org/TR/html5/forms.html#file-upload-state-(type=file)">file upload</a> controls, the format of the underlying HTTP request changes dramatically. 
+Unless special steps are taken, it's likely that <code>request.<a href="https://docs.oracle.com/javaee/7/api/javax/servlet/ServletRequest.html#getParameter-java.lang.String-">getParameter</a>(String)</code> will return <code>null</code>
+for <em>all</em> parameters (both regular parameters and file upload parameters).
+
+</p><p>Reminder - if a form includes a file upload control, then it must have:
+</p><ul>
+<li><code>method='POST'</code>
+</li><li><code>enctype='multipart/form-data'</code>
+</li></ul>
+
+<p>One technique for handling file upload requests uses a <em>wrapper</em> for the underlying request, such that 
+<code>request.getParameter(String)</code> and related methods may be used in the usual way.
+
+</p><p><b>Example</b>
+</p><p>The following wrapper uses the Apache Commons <a href="http://commons.apache.org/fileupload/">FileUpload</a>
+tool to parse the request into both regular parameters and file upload parameters. 
+An action class may use this class as it would any request, with one exception: to access the methods related specifically to files, a cast is necessary.
+<br></p><pre>
+<span class="keyword">import</span> java.util.*;
+<span class="keyword">import</span> java.io.*;
+<span class="keyword">import</span> javax.servlet.http.HttpServletRequestWrapper;
+<span class="keyword">import</span> javax.servlet.http.HttpServletRequest;
+<span class="keyword">import</span> org.apache.commons.fileupload.FileUploadException;
+<span class="keyword">import</span> org.apache.commons.fileupload.servlet.ServletFileUpload;
+<span class="keyword">import</span> org.apache.commons.fileupload.disk.DiskFileItemFactory;
+<span class="keyword">import</span> org.apache.commons.fileupload.FileItem;
+
+<span class="comment">/**
+* Wrapper for a file upload request (before Servlet 3.0).
+* 
+* &lt;P&gt;This class uses the Apache Commons 
+* &lt;a href='http://commons.apache.org/fileupload/'&gt;File Upload tool&lt;/a&gt;.
+* The generous Apache License will very likely allow you to use it in your 
+* applications as well. 
+*/</span>
+<span class="keyword">public</span> <span class="keyword">class</span> FileUploadWrapper <span class="keyword">extends</span> HttpServletRequestWrapper {
+  
+  <span class="comment">/** Constructor.  */</span>
+  <span class="keyword">public</span> FileUploadWrapper(HttpServletRequest aRequest) <span class="keyword">throws</span> IOException {
+    <span class="keyword">super</span>(aRequest);
+    ServletFileUpload upload = <span class="keyword">new</span> ServletFileUpload( <span class="keyword">new</span> DiskFileItemFactory());
+    <span class="keyword">try</span> {
+      List&lt;FileItem&gt; fileItems = upload.parseRequest(aRequest);
+      convertToMaps(fileItems);
+    }
+    <span class="keyword">catch</span>(FileUploadException ex){
+      <span class="keyword">throw</span> <span class="keyword">new</span> IOException(<span class="literal">"Cannot parse underlying request: "</span> + ex.toString());
+    }
+  }
+  
+  <span class="comment">/**
+  * Return all request parameter names, for both regular controls and file upload 
+  * controls.
+  */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> Enumeration&lt;String&gt; getParameterNames() {
+    Set&lt;String&gt; allNames = <span class="keyword">new</span> LinkedHashSet&lt;&gt;();
+    allNames.addAll(fRegularParams.keySet());
+    allNames.addAll(fFileParams.keySet());
+    <span class="keyword">return</span> Collections.enumeration(allNames);
+  }
+  
+  <span class="comment">/**
+  * Return the parameter value. Applies only to regular parameters, not to 
+  * file upload parameters. 
+  * 
+  * &lt;P&gt;If the parameter is not present in the underlying request, 
+  * then &lt;tt&gt;null&lt;/tt&gt; is returned.
+  * &lt;P&gt;If the parameter is present, but has no  associated value, 
+  * then an empty string is returned.
+  * &lt;P&gt;If the parameter is multivalued, return the first value that 
+  * appears in the request.  
+  */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> String getParameter(String aName) {
+    String result = <span class="keyword">null</span>;
+    List&lt;String&gt; values = fRegularParams.get(aName);
+    <span class="keyword">if</span>(values == <span class="keyword">null</span>){
+      <span class="comment">//you might try the wrappee, to see if it has a value 
+</span>    }
+    <span class="keyword">else</span> <span class="keyword">if</span> (values.isEmpty()) {
+      <span class="comment">//param name known, but no values present
+</span>      result = <span class="literal">""</span>;
+    }
+    <span class="keyword">else</span> {
+      <span class="comment">//return first value in list
+</span>      result = values.get(FIRST_VALUE);
+    }
+    <span class="keyword">return</span> result;
+  }
+  
+  <span class="comment">/**
+  * Return the parameter values. Applies only to regular parameters, 
+  * not to file upload parameters.
+  */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> String[] getParameterValues(String aName) {
+    String[] result = <span class="keyword">null</span>;
+    List&lt;String&gt; values = fRegularParams.get(aName);
+    <span class="keyword">if</span>(values != <span class="keyword">null</span>) {
+      result = values.toArray(<span class="keyword">new</span> String[values.size()]);
+    }
+    <span class="keyword">return</span> result;
+  }
+  
+  <span class="comment">/**
+  * Return a {@code Map&lt;String, List&lt;String&gt;&gt;} for all regular parameters.
+  * Does not return any file upload parameters at all. 
+  */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> Map&lt;String, List&lt;String&gt;&gt; getParameterMap() {
+    <span class="keyword">return</span> Collections.unmodifiableMap(fRegularParams);
+  }
+  
+  <span class="comment">/**
+  * Return a {@code List&lt;FileItem&gt;}, in the same order as they appear
+  *  in the underlying request.
+  */</span>
+  <span class="keyword">public</span> List&lt;FileItem&gt; getFileItems(){
+    <span class="keyword">return</span> <span class="keyword">new</span> ArrayList&lt;FileItem&gt;(fFileParams.values());
+  }
+  
+  <span class="comment">/**
+  * Return the {@link FileItem} of the given name.
+  * &lt;P&gt;If the name is unknown, then return &lt;tt&gt;null&lt;/tt&gt;.
+  */</span>
+  <span class="keyword">public</span> FileItem getFileItem(String aFieldName){
+    <span class="keyword">return</span> fFileParams.get(aFieldName);
+  }
+  
+  
+  <span class="comment">// PRIVATE
+</span>  
+  <span class="comment">/** Store regular params only. May be multivalued (hence the List).  */</span>
+  <span class="keyword">private</span> <span class="keyword">final</span> Map&lt;String, List&lt;String&gt;&gt; fRegularParams = <span class="keyword">new</span> LinkedHashMap&lt;&gt;();
+
+  <span class="comment">/** Store file params only. */</span>
+  <span class="keyword">private</span> <span class="keyword">final</span> Map&lt;String, FileItem&gt; fFileParams = <span class="keyword">new</span> LinkedHashMap&lt;&gt;();
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> FIRST_VALUE = <span class="literal">0</span>;
+  
+  <span class="keyword">private</span> <span class="keyword">void</span> convertToMaps(List&lt;FileItem&gt; aFileItems){
+    <span class="keyword">for</span>(FileItem item: aFileItems) {
+      <span class="keyword">if</span> ( isFileUploadField(item) ) {
+        fFileParams.put(item.getFieldName(), item);
+      }
+      <span class="keyword">else</span> {
+        <span class="keyword">if</span>( alreadyHasValue(item) ){
+          addMultivaluedItem(item);
+        }
+        <span class="keyword">else</span> {
+          addSingleValueItem(item);
+        }
+      }
+    }
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">boolean</span> isFileUploadField(FileItem aFileItem){
+    <span class="keyword">return</span> ! aFileItem.isFormField();
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">boolean</span> alreadyHasValue(FileItem aItem){
+    <span class="keyword">return</span> fRegularParams.get(aItem.getFieldName()) != <span class="keyword">null</span>;
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">void</span> addSingleValueItem(FileItem aItem){
+    List&lt;String&gt; list = <span class="keyword">new</span> ArrayList&lt;&gt;();
+    list.add(aItem.getString());
+    fRegularParams.put(aItem.getFieldName(), list);
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">void</span> addMultivaluedItem(FileItem aItem){
+    List&lt;String&gt; values = fRegularParams.get(aItem.getFieldName());
+    values.add(aItem.getString());
+  }
+} 
+</pre>
+
+The wrapper is in turn used by a <code>Filter</code> :
+<br><pre>
+<span class="keyword">import</span> java.io.*;
+<span class="keyword">import</span> javax.servlet.Filter;
+<span class="keyword">import</span> javax.servlet.FilterChain;
+<span class="keyword">import</span> javax.servlet.FilterConfig;
+<span class="keyword">import</span> javax.servlet.ServletException;
+<span class="keyword">import</span> javax.servlet.ServletRequest;
+<span class="keyword">import</span> javax.servlet.ServletResponse;
+<span class="keyword">import</span> javax.servlet.http.HttpServletRequest;
+
+<span class="comment">/**
+* Filter that wraps an underlying file upload request (before Servlet 3.0). 
+* 
+* &lt;P&gt;This filter should be configured only for those operations that use a 
+* file upload request.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> FileUploadFilter <span class="keyword">implements</span> Filter {
+
+  <span class="keyword">public</span> <span class="keyword">void</span> init(FilterConfig aConfig) <span class="keyword">throws</span> ServletException {
+    <span class="comment">//do nothing
+</span>  }
+  
+  <span class="keyword">public</span> <span class="keyword">void</span> destroy() {
+    <span class="comment">//do nothing
+</span>  }
+  
+  <span class="keyword">public</span> <span class="keyword">void</span> doFilter(
+   ServletRequest aRequest, ServletResponse aResponse, FilterChain aChain
+  ) <span class="keyword">throws</span> IOException, ServletException {
+    HttpServletRequest request = (HttpServletRequest) aRequest;
+    <span class="keyword">if</span> ( isFileUploadRequest(request) ) {
+      FileUploadWrapper wrapper = <span class="keyword">new</span> FileUploadWrapper(request);
+      aChain.doFilter(wrapper, aResponse);
+    }
+    <span class="keyword">else</span> {
+      aChain.doFilter(aRequest, aResponse);
+    }
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">boolean</span> isFileUploadRequest(HttpServletRequest aRequest){
+    <span class="keyword">return</span>     
+      aRequest.getMethod().equalsIgnoreCase(<span class="literal">"POST"</span>) &amp;&amp; 
+      aRequest.getContentType().startsWith(<span class="literal">"multipart/form-data"</span>)
+    ;
+  }
+}
+ 
+</pre>
+
+The <code>Filter</code> is configured in <code>web.xml</code> to handle specific URLs :
+<p></p><pre>
+&lt;web-app&gt;
+  &lt;filter&gt;
+   &lt;filter-name&gt;FileUpload&lt;/filter-name&gt;
+   &lt;display-name&gt;File Upload&lt;/display-name&gt;
+   &lt;description&gt;
+     Applied to file upload requests.
+     Wraps the request, allowing it to be used as a regular request, 
+     'as if' it were parsed by the Servlet API.
+   &lt;/description&gt;
+   &lt;filter-class&gt;com.blah.FileUploadFilter&lt;/filter-class&gt;
+  &lt;/filter&gt;
+
+  &lt;filter-mapping&gt;
+   &lt;filter-name&gt;FileUpload&lt;/filter-name&gt;
+   &lt;url-pattern&gt;/someurl/*&lt;/url-pattern&gt;
+  &lt;/filter-mapping&gt;
+
+  &lt;!-- Required by the Apache FileUpload tool. --&gt;
+  &lt;listener&gt;
+    &lt;listener-class&gt;
+     org.apache.commons.fileupload.servlet.FileCleanerCleanup
+    &lt;/listener-class&gt;
+  &lt;/listener&gt; 
+&lt;/web-app&gt;
+</pre>
+
+<p>There's a variation regarding the <code>request.<a href="https://docs.oracle.com/javaee/7/api/javax/servlet/ServletRequest.html#getParameter-java.lang.String-">getParameter</a>(String)</code> method which can be important here.
+This method takes a path argument, and that path can contain query parameters <em>not present in the original request</em>.
+Therefore, the above wrapper will not 'see' such query parameters unless special measures are taken.
+For example, <code>getParameter(String)</code> might be modified along these lines:
+</p><pre>
+@Override public String getParameter(String aName) {
+  String result = null;
+  List<string> values = fRegularParams.get(aName);
+  if(values == null){
+    //see if the 'wrappee' has a value
+    String superValue = super.getParameter(aName);
+    if(Util.textHasContent(superValue)) {
+      result = superValue;
+    }
+  }
+  ...elided...
+}
+</string></pre>
+
+<p>Finally, for a second example of a file upload request wrapper, see this
+<a href="http://www.javaworld.com/jw-06-2001/jw-0622-filters.html?page=5">article</a> by Jason Hunter.
+<br>
+</p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction5422.html?Id=218">Understand details of FORM tags</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=221 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+</html>

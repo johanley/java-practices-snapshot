@@ -1,0 +1,140 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=64 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="compile,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Conditional compile</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Conditional compile</div>
+
+<br>The conditional compilation practice is used to optionally remove chunks
+of code from the compiled version of a class. It uses the fact that compilers
+will ignore any unreachable branches of code.
+<p>To implement conditional compilation,
+</p><ul>
+<li>
+define a&nbsp; <code>static final boolean</code> value as a non-private member
+of some class</li>
+
+<li>
+place code which is to be conditionally compiled in an <code>if</code> block
+which evaluates the <code>boolean</code></li>
+
+<li>
+set the value of the <code>boolean</code> to <code>false</code> to cause the compiler
+to ignore the <code>if</code> block; otherwise, keep its value as <code>true</code></li>
+</ul>
+This practice is used mostly for implementing debugging statements, logging
+statements, and for assertions. With the advent of <code><a href="TopicAction45c1.html?Id=101">assert</a></code> and
+the <a href="TopicAction2316.html?Id=143">Logging API</a> in JDK 1.4, the utility of conditional compilation is probably
+reduced.
+<p>Example
+<br></p><pre>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Debug {
+  <span class="comment">//set to false to allow compiler to identify and eliminate
+</span>  <span class="comment">//unreachable code
+</span>  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">boolean</span> ON = <span class="keyword">true</span>;
+} 
+</pre>
+
+<br>This class uses&nbsp;<code>Debug</code> to implement conditional compilation
+:
+<br><pre>
+<span class="keyword">import</span> javax.servlet.*;
+<span class="keyword">import</span> javax.servlet.http.*;
+<span class="keyword">import</span> java.io.*;
+
+<span class="comment">/**
+* Uses conditional compilation to optionally print debugging statements.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> GenericServlet <span class="keyword">extends</span> HttpServlet {
+
+  <span class="keyword">public</span> <span class="keyword">void</span> init(ServletConfig config) <span class="keyword">throws</span> ServletException {
+    <span class="keyword">super</span>.init(config);
+
+    <span class="comment">//print out a message, but only if Debug.ON evaluates to true
+</span>    <span class="comment">//if Debug.ON evaluates to false, this entire block of code will be
+</span>    <span class="comment">//passed over by the compiler, and will not be present in output .class file
+</span>    <span class="keyword">if</span> (Debug.ON) {
+      System.out.println(<span class="literal">"**** INIT OF My Controller *****"</span>);
+    }
+  }
+
+  <span class="keyword">public</span> <span class="keyword">void</span> doGet(
+    HttpServletRequest request,
+    HttpServletResponse response
+  ) <span class="keyword">throws</span> ServletException, IOException {
+    <span class="keyword">if</span> (Debug.ON) {
+      System.out.println(<span class="literal">"Processing doGet"</span>);
+    }
+    doHttpRequest(request, response);
+  }
+
+  <span class="keyword">public</span> <span class="keyword">void</span> doPost(
+    HttpServletRequest request,
+    HttpServletResponse response
+  ) <span class="keyword">throws</span> ServletException, IOException {
+    <span class="keyword">if</span> (Debug.ON) {
+      System.out.println(<span class="literal">"Processing doPost"</span>);
+    }
+    doHttpRequest(request, response);
+  }
+
+  <span class="comment">// PRIVATE //
+</span>  <span class="keyword">private</span> <span class="keyword">void</span> doHttpRequest(
+    HttpServletRequest request,
+    HttpServletResponse response
+  ) <span class="keyword">throws</span> ServletException, IOException {
+     <span class="comment">//empty
+</span>  }
+} 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction45c1.html?Id=101">Assertions in general</a> <br>
+  <a href="TopicAction2316.html?Id=143">Logging messages</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=64 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

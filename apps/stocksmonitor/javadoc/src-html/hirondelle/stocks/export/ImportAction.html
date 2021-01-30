@@ -1,0 +1,136 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/export/ImportAction.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:37 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+ImportAction.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.stocks.export;<a name=line.1></a>
+<a name=line.2></a>
+<span class='keyword'>import</span> javax.swing.*;<a name=line.3></a>
+<span class='keyword'>import</span> java.awt.event.*;<a name=line.4></a>
+<span class='keyword'>import</span> java.io.File;<a name=line.5></a>
+<span class='keyword'>import</span> java.util.logging.*;<a name=line.6></a>
+<a name=line.7></a>
+<span class='keyword'>import</span> hirondelle.stocks.portfolio.PortfolioDAO;<a name=line.8></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Args;<a name=line.9></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.ui.UiUtil;<a name=line.10></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Util;<a name=line.11></a>
+<a name=line.12></a>
+<span class='comment'>/**<a name=line.13></a>
+* Allows user to replace the all {@link hirondelle.stocks.portfolio.Portfolio}s <a name=line.14></a>
+* used by this application with those defined in a single text file.<a name=line.15></a>
+*<a name=line.16></a>
+* &lt;P&gt;The text file must be the unaltered result of a previous {@link ExportAction}.<a name=line.17></a>
+*/</span><a name=line.18></a>
+<span class='keyword'>public</span> <span class='keyword'>final</span> <span class='keyword'>class</span> ImportAction <span class='keyword'>extends</span> AbstractAction {<a name=line.19></a>
+  <a name=line.20></a>
+  <span class='comment'>/**<a name=line.21></a>
+  * Constructor. <a name=line.22></a>
+  * @param aFrame parent window to which this action is attached.<a name=line.23></a>
+  */</span><a name=line.24></a>
+  <span class='keyword'>public</span> ImportAction(JFrame aFrame) {<a name=line.25></a>
+    <span class='keyword'>super</span>(<span class='literal'>"Import..."</span>, UiUtil.getEmptyIcon()); <a name=line.26></a>
+    Args.checkForNull(aFrame);<a name=line.27></a>
+    fFrame = aFrame;<a name=line.28></a>
+    putValue(SHORT_DESCRIPTION, <span class='literal'>"Import the result of a previous Export operation."</span>);<a name=line.29></a>
+    putValue(<a name=line.30></a>
+      LONG_DESCRIPTION, <span class='literal'>"Replace all Portfolios with those defined in a text file."</span><a name=line.31></a>
+    );<a name=line.32></a>
+    putValue(MNEMONIC_KEY, <span class='keyword'>new</span> Integer(KeyEvent.VK_I) );    <a name=line.33></a>
+  }<a name=line.34></a>
+<a name=line.35></a>
+  <span class='comment'>/**<a name=line.36></a>
+  * Allow the user to select a single file, and attempt to use its contents to replace <a name=line.37></a>
+  * all currently stored {@link hirondelle.stocks.portfolio.Portfolio} objects.<a name=line.38></a>
+  *<a name=line.39></a>
+  *&lt;P&gt;<a name=line.40></a>
+  * &lt;ul&gt;<a name=line.41></a>
+  * &lt;li&gt;If a file is not selected, then take no action.<a name=line.42></a>
+  * &lt;li&gt;If a non-existing file is selected, inform the user and ask them to select <a name=line.43></a>
+  * something else.<a name=line.44></a>
+  * &lt;li&gt;If an existing but non-readable file is selected, inform the user and ask them to <a name=line.45></a>
+  * select something else.<a name=line.46></a>
+  *&lt;/ul&gt;<a name=line.47></a>
+  *<a name=line.48></a>
+  *&lt;P&gt; If the user attempts to import a second time, present the file selection GUI using <a name=line.49></a>
+  * the directory in which they showed interest during the first import. (This will <a name=line.50></a>
+  * often decrease the navigation burden on the user.)<a name=line.51></a>
+  */</span><a name=line.52></a>
+  <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> actionPerformed (ActionEvent event) {<a name=line.53></a>
+    fLogger.info(<span class='literal'>"Importing portfolios from a text file."</span>);<a name=line.54></a>
+    JFileChooser chooser = <span class='keyword'>new</span> JFileChooser(fDirOfInterest);<a name=line.55></a>
+    chooser.setDialogTitle(<span class='literal'>"Import-Replace All Portfolios"</span>);<a name=line.56></a>
+    chooser.setApproveButtonToolTipText(<span class='literal'>"Replace all Portfolios"</span>);<a name=line.57></a>
+    <a name=line.58></a>
+    <span class='keyword'>int</span> choice = chooser.showDialog(fFrame, <span class='literal'>"Import-And-Replace"</span>);<a name=line.59></a>
+    <span class='keyword'>if</span> (choice != JFileChooser.APPROVE_OPTION) {<a name=line.60></a>
+      fLogger.fine(<span class='literal'>"No file selection made"</span>);<a name=line.61></a>
+      <span class='keyword'>return</span>;<a name=line.62></a>
+    }<a name=line.63></a>
+    <a name=line.64></a>
+    File file = chooser.getSelectedFile();<a name=line.65></a>
+    fDirOfInterest = file.getParentFile();<a name=line.66></a>
+    <a name=line.67></a>
+    <span class='keyword'>if</span> ( !file.exists() ){<a name=line.68></a>
+      fLogger.fine(<span class='literal'>"Selected file does not exist "</span> + file);<a name=line.69></a>
+      showErrorMessage(fNOT_EXIST_MESSAGE);<a name=line.70></a>
+      <span class='keyword'>return</span>;<a name=line.71></a>
+    }<a name=line.72></a>
+    <a name=line.73></a>
+    <span class='keyword'>if</span> ( file.exists() &amp;&amp; !file.canRead() ){<a name=line.74></a>
+      fLogger.fine(<span class='literal'>"File does not have read access: "</span> + file);<a name=line.75></a>
+      showErrorMessage(fNO_READ_MESSAGE);<a name=line.76></a>
+      <span class='keyword'>return</span>;<a name=line.77></a>
+    }<a name=line.78></a>
+    <a name=line.79></a>
+    fLogger.fine(<span class='literal'>"Attempting to import file"</span>);<a name=line.80></a>
+    PortfolioDAO dao = <span class='keyword'>new</span> PortfolioDAO();<a name=line.81></a>
+    dao.importXML(file);<a name=line.82></a>
+  }<a name=line.83></a>
+  <a name=line.84></a>
+  <span class='comment'>// PRIVATE <a name=line.85></a>
+</span>  <span class='keyword'>private</span> JFrame fFrame;<a name=line.86></a>
+  <a name=line.87></a>
+  <span class='comment'>/**<a name=line.88></a>
+  * The directory which the user last expressed an interest.<a name=line.89></a>
+  *<a name=line.90></a>
+  * This value is set each time the &lt;tt&gt;FileChooser&lt;/tt&gt; is closed, using the <a name=line.91></a>
+  * directory corresponding to the file selection. It is then later used upon any second <a name=line.92></a>
+  * invocation, to free the user from probably repeating the same navigation operations.<a name=line.93></a>
+  */</span><a name=line.94></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> File fDirOfInterest;<a name=line.95></a>
+  <a name=line.96></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String fINVALID_IMPORT_FILE = <span class='literal'>"Invalid Import File"</span>;<a name=line.97></a>
+  <a name=line.98></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> Object[] fNO_READ_MESSAGE = {<a name=line.99></a>
+    <span class='literal'>"File cannot be read."</span>,<a name=line.100></a>
+    <span class='literal'>"A readable file must be selected for an Import."</span>,<a name=line.101></a>
+    <span class='literal'>"Please select a different file."</span><a name=line.102></a>
+  };<a name=line.103></a>
+  <a name=line.104></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> Object[] fNOT_EXIST_MESSAGE = {<a name=line.105></a>
+    <span class='literal'>"File does not currently exist."</span>,<a name=line.106></a>
+    <span class='literal'>"An existing file must be selected for an Import."</span>,<a name=line.107></a>
+    <span class='literal'>"Please select a different file."</span><a name=line.108></a>
+  };<a name=line.109></a>
+<a name=line.110></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> Logger fLogger = Util.getLogger(ImportAction.<span class='keyword'>class</span>); <a name=line.111></a>
+  <a name=line.112></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> showErrorMessage(Object[] aMessage){<a name=line.113></a>
+    JOptionPane.showMessageDialog(<a name=line.114></a>
+      fFrame, aMessage,<a name=line.115></a>
+      UiUtil.getDialogTitle(fINVALID_IMPORT_FILE),<a name=line.116></a>
+      JOptionPane.ERROR_MESSAGE<a name=line.117></a>
+    );<a name=line.118></a>
+  }<a name=line.119></a>
+}<a name=line.120></a>
+ <a name=line.121></a>
+</PRE><a name=line.122></a>
+ </BODY><a name=line.123></a>
+<HTML><a name=line.124></a>

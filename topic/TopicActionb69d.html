@@ -1,0 +1,208 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=73 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="internationalization,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Internationalization</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Internationalization</div>
+
+<br>Some applications need to use more than one language in the user interface. 
+Changing a program to allow for this is called "internationalization", while the 
+actual translation is called "localization". Translation is usually applied only to user 
+interface elements (menus, labels, and so on), and <em>not</em> to business data stored in the database.
+
+<p>Most implementations of multilingual applications use 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/ResourceBundle.html">ResourceBundle</a></code> and 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Locale.html">Locale</a></code>. However, there 
+are some problems with this style, so one might <a href="TopicAction7ee5.html?Id=208">consider alternatives to ResourceBundle</a>.
+
+</p><p>Here's a simple illustration of the basic <code>ResourceBundle</code> mechanism:
+
+</p><p><code>BankMachine</code> is a user of a <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/ResourceBundle.html">ResourceBundle</a></code>,
+whose <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Locale.html">Locale</a></code>
+is set by the end user. This illustration uses 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/ListResourceBundle.html">ListResourceBundle</a></code>, 
+but 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/PropertyResourceBundle.html">PropertyResourceBundle</a></code> 
+is likely used more often.
+
+<br></p><pre>
+<span class="keyword">import</span> java.util.ResourceBundle;
+<span class="keyword">import</span> java.util.Locale;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> BankMachine {
+
+  <span class="comment">/**
+  * Run first a French version, then an English version.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String[] arguments) {
+    BankMachine bankMachine = <span class="keyword">new</span> BankMachine();
+    bankMachine.selectLanguage(FRENCH);
+    bankMachine.showDisplay();
+    bankMachine.selectLanguage(ENGLISH);
+    bankMachine.showDisplay();
+  }
+
+  <span class="comment">/**
+  * The user's first action is to select a language.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">void</span> selectLanguage(String language){
+    <span class="keyword">if</span> (ENGLISH.equals(language)) {
+      text = ResourceBundle.getBundle(BUNDLE_NAME, Locale.ENGLISH);
+    }
+    <span class="keyword">else</span> <span class="keyword">if</span> (FRENCH.equals(language)) {
+      text = ResourceBundle.getBundle(BUNDLE_NAME, Locale.FRENCH);
+    }
+    <span class="keyword">else</span> {
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="literal">"Unknown language"</span>);
+    }
+  }
+
+  <span class="keyword">public</span> <span class="keyword">void</span> showDisplay() {
+    <span class="comment">//use the bundle to get the proper version of a string
+</span>    <span class="comment">//note that the variable names - Text.Hello, etc -  reflect the content,
+</span>    <span class="comment">//so these method calls clearly indicate what is being displayed
+</span>    <span class="comment">//to the user
+</span>    log(text.getString(Text.Hello));
+    log(text.getString(Text.PleaseSelectAction));
+  }
+
+  <span class="comment">// PRIVATE
+</span>  <span class="keyword">private</span> <span class="keyword">static</span> String ENGLISH = Text.English;
+  <span class="keyword">private</span> <span class="keyword">static</span> String FRENCH = Text.French;
+  <span class="keyword">private</span> <span class="keyword">static</span> String BUNDLE_NAME = <span class="literal">"Text"</span>;
+
+  <span class="comment">/**
+  * Default is English.
+  * Note that this default is perfectly suitable for any initial user
+  * selection of language, since the Strings representing the languages
+  * themselves have only one representation, which are defined in the
+  * default bundle.
+  */</span>
+  <span class="keyword">private</span> ResourceBundle text = ResourceBundle.getBundle(BUNDLE_NAME, Locale.ENGLISH);
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(String msg) {
+    System.out.println(msg);
+  }
+}
+ 
+</pre>
+
+<br>An example run of <code>BankMachine</code> gives:
+<p></p><p><code>Bonjour</code>
+<br><code>Veuillez choisir une action</code>
+<br><code>Hello</code>
+<br><code>Please select an action</code>
+</p><p>The default <code>ResourceBundle</code> contains both constants and the
+default representations of all text:
+<br></p><pre>
+<span class="keyword">import</span> java.util.*;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Text <span class="keyword">extends</span> ListResourceBundle {
+
+  <span class="keyword">public</span> <span class="keyword">final</span> Object[][] getContents() {
+    <span class="keyword">return</span> contents;
+  }
+
+  <span class="comment">/**
+  * These constants are used by the caller to identify what text is
+  * needed; which version of the text is actually returned is determined
+  * by the ResourceBundle mechanism.
+  *
+  * Using variable names which reflect the content clarifies the
+  * intent of the code in the user of this class.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String Hello = <span class="literal">"Hello"</span>;
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String PleaseSelectAction = <span class="literal">"PleaseSelectAction"</span>;
+
+  <span class="comment">/**
+  * Language names presented as a list of choices to the user
+  * are special, since they are always presented in the native language.
+  * Thus, this default bundle defines the
+  * unique representations of all language names, and no other
+  * bundle provides a translation for them.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String English = <span class="literal">"English"</span>;
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String French = <span class="literal">"Francais"</span>;
+
+  <span class="comment">// PRIVATE
+</span>  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Object[][] contents = {
+    {Text.Hello, <span class="literal">"Hello"</span>},
+    {Text.PleaseSelectAction, <span class="literal">"Please select an action"</span>} ,
+    {Text.English, <span class="literal">"English"</span>},  <span class="comment">//never defined elsewhere
+</span>    {Text.French, <span class="literal">"Francais"</span>},  <span class="comment">//never defined elsewhere
+</span>  };
+}
+ 
+</pre>
+
+<p></p><p>The other <code>ResourceBundle</code> classes do not define constants, just
+the translations :
+<br></p><pre>
+<span class="keyword">import</span> java.util.*;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Text_fr <span class="keyword">extends</span> ListResourceBundle {
+
+  <span class="keyword">public</span> <span class="keyword">final</span> Object[][] getContents() {
+    <span class="keyword">return</span> contents;
+  }
+
+  <span class="comment">//No constants are defined here
+</span>
+  <span class="comment">// PRIVATE
+</span>  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Object[][] contents = {
+    {Text.Hello, <span class="literal">"Bonjour"</span>},
+    {Text.PleaseSelectAction, <span class="literal">"Veuillez choisir une action"</span>}
+  };
+}
+ 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction7ee5.html?Id=208">Try alternatives to ResourceBundle</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=73 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

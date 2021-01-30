@@ -1,0 +1,202 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=68 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="recursive,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Recursive file listing</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Recursive file listing</div>
+
+<br>
+Using JDK 7+, a 
+<a href="http://docs.oracle.com/javase/tutorial/essential/io/walk.html">recursive file listing</a> 
+is a relatively simple task.
+You can usually use 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/nio/file/SimpleFileVisitor.html">SimpleFileVisitor</a></code>.
+<br><pre>
+<span class="keyword">import</span> java.io.IOException;
+<span class="keyword">import</span> java.nio.file.FileVisitResult;
+<span class="keyword">import</span> java.nio.file.FileVisitor;
+<span class="keyword">import</span> java.nio.file.Files;
+<span class="keyword">import</span> java.nio.file.Path;
+<span class="keyword">import</span> java.nio.file.Paths;
+<span class="keyword">import</span> java.nio.file.SimpleFileVisitor;
+<span class="keyword">import</span> java.nio.file.attribute.BasicFileAttributes;
+
+<span class="comment">/** Recursive listing with SimpleFileVisitor in JDK 7. */</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> FileListingVisitor {
+  
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args) <span class="keyword">throws</span> IOException{
+    String ROOT = <span class="literal">"C:\\test"</span>;
+    FileVisitor&lt;Path&gt; fileProcessor = <span class="keyword">new</span> ProcessFile();
+    Files.walkFileTree(Paths.get(ROOT), fileProcessor);
+  }
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">class</span> ProcessFile <span class="keyword">extends</span> SimpleFileVisitor&lt;Path&gt; {
+    <span class="keyword">@Override</span> <span class="keyword">public</span> FileVisitResult visitFile(
+      Path file, BasicFileAttributes attrs
+    ) <span class="keyword">throws</span> IOException {
+      System.out.println(<span class="literal">"Processing file:"</span> + file);
+      <span class="keyword">return</span> FileVisitResult.CONTINUE;
+    }
+    
+    <span class="keyword">@Override</span>  <span class="keyword">public</span> FileVisitResult preVisitDirectory(
+      Path dir, BasicFileAttributes attrs
+    ) <span class="keyword">throws</span> IOException {
+      System.out.println(<span class="literal">"Processing directory:"</span> + dir);
+      <span class="keyword">return</span> FileVisitResult.CONTINUE;
+    }
+  }
+} 
+</pre>
+
+<b>Older style, JDK 6-</b>
+
+<p>The <code><a href="https://docs.oracle.com/javase/10/docs/api/java/io/File.html">File</a></code>
+class has methods for listing the contents of a single directory, such
+as <code>list</code> and <code>listFiles</code>, but there is no method for listing
+all files in a directory tree.
+
+</p><p>Here's a simple utility which returns a sorted <code>List</code> of <code>File</code>
+objects which reside under a given root directory. It uses recursion.
+<br></p><pre>
+<span class="keyword">import</span> java.util.*;
+<span class="keyword">import</span> java.io.*;
+
+<span class="comment">/**
+* Recursive file listing under a specified directory.
+*  
+* @author javapractices.com
+* @author Alex Wong
+* @author anonymous user
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> FileListing {
+
+  <span class="comment">/**
+  * Demonstrate use.
+  * 
+  * @param args - &lt;tt&gt;args[0]&lt;/tt&gt; is the full name of an existing 
+  * directory that can be read.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args) <span class="keyword">throws</span> FileNotFoundException {
+    File startingDirectory= <span class="keyword">new</span> File(args[<span class="literal">0</span>]);
+    FileListing listing = <span class="keyword">new</span> FileListing();
+    List&lt;File&gt; files = listing.getFileListing(startingDirectory);
+
+    <span class="comment">//print out all file names, in the the order of File.compareTo()
+</span>    <span class="keyword">for</span>(File file : files){
+      System.out.println(file);
+    }
+  }
+  
+  <span class="comment">/**
+  * Recursively walk a directory tree and return a List of all
+  * Files found; the List is sorted using File.compareTo().
+  *
+  * @param startingDir is a valid directory, which can be read.
+  */</span>
+  <span class="keyword">public</span> List&lt;File&gt; getFileListing(
+    File startingDir
+  ) <span class="keyword">throws</span> FileNotFoundException {
+    validateDirectory(startingDir);
+    List&lt;File&gt; result = getFileListingNoSort(startingDir);
+    Collections.sort(result);
+    <span class="keyword">return</span> result;
+  }
+
+  <span class="comment">// PRIVATE
+</span>
+  <span class="keyword">private</span> List&lt;File&gt; getFileListingNoSort(
+    File startingDir
+  ) <span class="keyword">throws</span> FileNotFoundException {
+    List&lt;File&gt; result = <span class="keyword">new</span> ArrayList&lt;&gt;();
+    File[] filesAndDirs = startingDir.listFiles();
+    List&lt;File&gt; filesDirs = Arrays.asList(filesAndDirs);
+    <span class="keyword">for</span>(File file : filesDirs) {
+      result.add(file); <span class="comment">//always add, even if directory
+</span>      <span class="keyword">if</span> (! file.isFile()) {
+        <span class="comment">//must be a directory
+</span>        <span class="comment">//recursive call!
+</span>        List&lt;File&gt; deeperList = getFileListingNoSort(file);
+        result.addAll(deeperList);
+      }
+    }
+    <span class="keyword">return</span> result;
+  }
+
+  <span class="comment">/**
+  * Directory is valid if it exists, does not represent a file, and can be read.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">void</span> validateDirectory (
+    File directory
+  ) <span class="keyword">throws</span> FileNotFoundException {
+    <span class="keyword">if</span> (directory == <span class="keyword">null</span>) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="literal">"Directory should not be null."</span>);
+    }
+    <span class="keyword">if</span> (!directory.exists()) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> FileNotFoundException(<span class="literal">"Directory does not exist: "</span> + directory);
+    }
+    <span class="keyword">if</span> (!directory.isDirectory()) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="literal">"Is not a directory: "</span> + directory);
+    }
+    <span class="keyword">if</span> (!directory.canRead()) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="literal">"Directory cannot be read: "</span> + directory);
+    }
+  }
+} 
+</pre>
+
+<br>Example run:
+<p></p><p>
+</p><pre>
+&gt;java -cp . FileListing "C:\\TEMP\\"
+C:\\TEMP\\Hokkaido.txt
+C:\\TEMP\\Honshu.txt
+C:\\TEMP\\mb
+C:\\TEMP\\mb\\Kyushu.txt
+C:\\TEMP\\mb\\Shikoku.txt
+</pre>
+<br>
+<p></p>
+
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=68 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

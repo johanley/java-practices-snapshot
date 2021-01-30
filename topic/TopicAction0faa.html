@@ -1,0 +1,84 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=211 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Data is king</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Data is king</div>
+
+<br>
+In most organizations, the data is significantly more important than the applications which use it - data is <em>king</em>.
+The fundamental reason is simply that data almost always <em>outlives</em> the applications that create it.
+
+Data is quasi-permanent, whereas the applications that use the data usually change over time. 
+For example, it's common for an end-user application to be completely replaced after a certain number of years, 
+using a more modern set of tools. In this case, the database may:
+<ul>
+<li>remain untouched
+</li><li>be upgraded a more modern version of the same database
+</li><li>be changed to improve its design
+</li><li>be converted into an entirely different database altogether
+</li></ul>
+
+<p><span class="highlight">Persistent data is just that - persistent - it stays around for a long, long time</span>. 
+
+</p><p>If data is king, then the most important tasks for a developer are those involving the database.
+Any effort put into improving the database, or how it's used, will have a lasting, long-term benefit. 
+In particular, the application programmer should make sure that:
+</p><ul>
+<li>the database structure is robust, well-defined and (usually) normalized. If the application programmer is 
+not experienced in database design, then they should seek help.
+</li><li>the data is always <em>validated</em> before being entered into the database (this cannot be stressed enough)
+</li><li>actions that consist of more than one SQL statement are properly encapsulated in a transaction, and rolled back 
+correctly when a failure occurs. In general, the integrity of the data should always be preserved.
+</li><li>applications should never assume that they "own" the data. Databases are independent processes, and are
+built to interact with many clients applications, not just one. 
+For example, many databases are loaded initially using a data load tool. 
+When data is loaded with a script, it bypasses all validation logic implemented in code. 
+Thus, it's incorrect for a calling application to make assumptions regarding the validity of the data.
+</li></ul>
+<br>
+<p></p>
+
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=211 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+</html>

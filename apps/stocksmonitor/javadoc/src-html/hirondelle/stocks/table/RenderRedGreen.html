@@ -1,0 +1,64 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/table/RenderRedGreen.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:38 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+RenderRedGreen.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.stocks.table;<a name=line.1></a>
+<a name=line.2></a>
+<span class='keyword'>import</span> javax.swing.table.*;<a name=line.3></a>
+<span class='keyword'>import</span> javax.swing.*;<a name=line.4></a>
+<span class='keyword'>import</span> java.awt.*;<a name=line.5></a>
+<a name=line.6></a>
+<span class='comment'>/**<a name=line.7></a>
+* Display a &lt;tt&gt;Number&lt;/tt&gt; in a table cell as either red (for negative values)<a name=line.8></a>
+* or green (for non-negative values), and aligned on the right.<a name=line.9></a>
+*<a name=line.10></a>
+* &lt;P&gt;Note that this class will work with any &lt;tt&gt;Number&lt;/tt&gt; -  <a name=line.11></a>
+* &lt;tt&gt;Double&lt;/tt&gt;, &lt;tt&gt;BigDecimal&lt;/tt&gt;, etc.<a name=line.12></a>
+*/</span><a name=line.13></a>
+<span class='keyword'>final</span> <span class='keyword'>class</span> RenderRedGreen <span class='keyword'>extends</span> DefaultTableCellRenderer {<a name=line.14></a>
+  <a name=line.15></a>
+  RenderRedGreen () {<a name=line.16></a>
+    setHorizontalAlignment(SwingConstants.RIGHT);   <a name=line.17></a>
+  }<a name=line.18></a>
+  <a name=line.19></a>
+  <span class='keyword'>@Override</span> <span class='keyword'>public</span> Component getTableCellRendererComponent(<a name=line.20></a>
+    JTable aTable, Object aNumberValue, <span class='keyword'>boolean</span> aIsSelected, <a name=line.21></a>
+    <span class='keyword'>boolean</span> aHasFocus, <span class='keyword'>int</span> aRow, <span class='keyword'>int</span> aColumn<a name=line.22></a>
+  ) {  <a name=line.23></a>
+    <span class='comment'>/* <a name=line.24></a>
+    * Implementation Note :<a name=line.25></a>
+    * It is important that no 'new' objects be present in this <a name=line.26></a>
+    * implementation (excluding exceptions):<a name=line.27></a>
+    * if the table is large, then a large number of objects would be <a name=line.28></a>
+    * created during rendering.<a name=line.29></a>
+    */</span><a name=line.30></a>
+    <span class='keyword'>if</span> (aNumberValue == <span class='keyword'>null</span>) <span class='keyword'>return</span> <span class='keyword'>this</span>;<a name=line.31></a>
+    Component renderer = <span class='keyword'>super</span>.getTableCellRendererComponent(<a name=line.32></a>
+      aTable, aNumberValue, aIsSelected, aHasFocus, aRow, aColumn<a name=line.33></a>
+    );<a name=line.34></a>
+    Number value = (Number)aNumberValue;<a name=line.35></a>
+    <span class='keyword'>if</span> (value.doubleValue() &lt; <span class='literal'>0</span>) {<a name=line.36></a>
+      renderer.setForeground(Color.red);<a name=line.37></a>
+    }<a name=line.38></a>
+    <span class='keyword'>else</span> {<a name=line.39></a>
+      renderer.setForeground(fDarkGreen);<a name=line.40></a>
+    }<a name=line.41></a>
+    <span class='keyword'>return</span> <span class='keyword'>this</span>;<a name=line.42></a>
+  }<a name=line.43></a>
+  <a name=line.44></a>
+  <span class='comment'>// PRIVATE <a name=line.45></a>
+</span>  <a name=line.46></a>
+  <span class='comment'>//the default green is too bright and illegible<a name=line.47></a>
+</span>  <span class='keyword'>private</span> Color fDarkGreen = Color.green.darker();<a name=line.48></a>
+} <a name=line.49></a>
+</PRE><a name=line.50></a>
+ </BODY><a name=line.51></a>
+<HTML><a name=line.52></a>

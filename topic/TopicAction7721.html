@@ -1,0 +1,401 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=51 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="thread,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Objects communicating across threads</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Objects communicating across threads</div>
+
+<br>
+Since version 1.5, the JDK has included the <a href="https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/package-summary.html"><code>java.util.concurrent</code></a> package.
+It was developed by experienced gurus, and includes a number of items for creating many kinds of multi-threaded programs.
+<i>Java Concurrency in Practice</i> by Goetz and others is a good reference for this package.
+
+<p>Here's a basic example of using 
+<a href="https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/ExecutorService.html"><code>ExecutorService</code></a> 
+and <a href="https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/CountDownLatch.html"><code>CountDownLatch</code></a> 
+from <code>java.util.concurrent</code> to communicate between threads.
+The example has the following context: in client side programming, it's common to show the user a list of their available printers. 
+However, the JDK's tool for fetching this information can have poor performance - sometimes resulting in delays of several seconds or more.
+So, one option is to fetch the list of available printers early upon startup of the application, in a separate worker thread.
+Later, when the user wishes to print something, the list of available printers will already be pre-fetched.
+<br></p><pre>
+<span class="keyword">import</span> java.util.List;
+<span class="keyword">import</span> javax.print.PrintService;
+
+<span class="comment">/** 
+ Toy client application. 
+ Needs to present a list of printers to the end user.
+ The problem is that fetching the list of printers can take several seconds.
+ So, the idea is to start fetching the list in a worker thread upon startup.
+*/</span> 
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> LaunchApplication {
+
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args){
+    log(<span class="literal">"Launching application."</span>);
+    PrinterListDAO.init(); <span class="comment">//launches worker thread
+</span>    
+    <span class="comment">//construct the user interface, other start tasks, etc...
+</span>    
+    <span class="comment">//use the list of printers later in processing
+</span>    List&lt;PrintService&gt; printers = <span class="keyword">new</span> PrinterListDAO().getPrinters();
+    log(<span class="literal">"Seeing this many printers:"</span> + printers.size());
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(String msg){
+    System.out.println(msg);
+  }
+} 
+</pre>
+
+<br><pre>
+<span class="keyword">import</span> java.util.List;
+<span class="keyword">import</span> java.util.concurrent.CountDownLatch;
+<span class="keyword">import</span> java.util.concurrent.ExecutorService;
+<span class="keyword">import</span> java.util.concurrent.Executors;
+<span class="keyword">import</span> javax.print.PrintService;
+
+<span class="keyword">final</span> <span class="keyword">class</span> PrinterListDAO {
+
+  <span class="comment">/** This must be called early upon startup. */</span>
+  <span class="keyword">static</span> <span class="keyword">void</span> init(){
+    latch = <span class="keyword">new</span> CountDownLatch(<span class="literal">1</span>);
+    worker = <span class="keyword">new</span> PrinterListWorker(latch);
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+    executor.execute(worker);
+    executor.shutdown(); <span class="comment">//reclaims resources
+</span>  }
+
+  <span class="comment">/** Return the list of printers that can print PDFs (double-sided, portrait).*/</span>
+  List&lt;PrintService&gt; getPrinters(){
+    <span class="keyword">try</span> {
+      <span class="comment">//block until the worker has set the latch to 0:
+</span>      latch.await();
+    }
+    <span class="keyword">catch</span> (InterruptedException ex){
+      log(ex.toString());
+      Thread.currentThread().interrupt();
+    }
+    <span class="keyword">return</span> worker.getPrinterList();
+  }
+  
+  <span class="comment">// PRIVATE
+</span>  
+  <span class="comment">/** Used to communicate between threads. */</span>
+  <span class="keyword">static</span> <span class="keyword">private</span> CountDownLatch latch;
+  
+  <span class="keyword">static</span> <span class="keyword">private</span> PrinterListWorker worker;
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(String msg){
+    System.out.println(msg);
+  }
+} 
+</pre>
+
+<br><pre>
+<span class="keyword">import</span> java.util.*;
+<span class="keyword">import</span> java.util.concurrent.CountDownLatch;
+<span class="keyword">import</span> javax.print.PrintService;
+<span class="keyword">import</span> javax.print.PrintServiceLookup;
+<span class="keyword">import</span> javax.print.attribute.HashPrintRequestAttributeSet;
+<span class="keyword">import</span> javax.print.attribute.PrintRequestAttributeSet;
+<span class="keyword">import</span> javax.print.attribute.standard.OrientationRequested;
+<span class="keyword">import</span> javax.print.attribute.standard.Sides;
+<span class="keyword">import</span> javax.print.DocFlavor;
+
+<span class="comment">/** Look up the list of printers. */</span>
+<span class="keyword">final</span> <span class="keyword">class</span> PrinterListWorker <span class="keyword">implements</span> Runnable {
+
+  <span class="comment">/** When the work is done, the latch will count down to 0. */</span>
+  PrinterListWorker(CountDownLatch latch){
+    <span class="keyword">this</span>.latch = latch;  
+  }
+  
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> run() {
+    log(<span class="literal">"Worker thread started..."</span>);
+    <span class="keyword">long</span> start = System.nanoTime();
+
+    <span class="comment">//double-sided, portrait, for PDF files.
+</span>    PrintRequestAttributeSet attrs = <span class="keyword">new</span> HashPrintRequestAttributeSet();
+    attrs.add(Sides.DUPLEX);
+    attrs.add(OrientationRequested.PORTRAIT);
+    <span class="comment">//this can take several seconds in some environments:
+</span>    printServices = Arrays.asList(
+      PrintServiceLookup.lookupPrintServices(DocFlavor.INPUT_STREAM.PDF, attrs)
+    );
+    
+    <span class="keyword">long</span> end = System.nanoTime();
+    log(<span class="literal">"Finished fetching list of printers. Nanos: "</span> + (end-start));
+    log(<span class="literal">"Num printers found:"</span> + printServices.size());
+    latch.countDown();
+  }
+
+  <span class="comment">/** Return an unmodifiable list of printers. */</span>
+  List&lt;PrintService&gt; getPrinterList(){
+    <span class="keyword">return</span> Collections.unmodifiableList(printServices);
+  }
+  
+  <span class="comment">// PRIVATE
+</span>  
+  <span class="comment">/** Used to communicate between threads. */</span>
+  <span class="keyword">private</span> CountDownLatch latch;
+
+  <span class="keyword">private</span> List&lt;PrintService&gt; printServices;
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(String msg){
+    System.out.println(msg);
+  }
+} 
+</pre>
+
+Here's an example run:
+<p></p><pre>Launching application.
+Worker thread started...
+Finished fetching list of printers. Nanos: 586542213
+Num printers found:0
+Seeing this many printers:0</pre>
+
+<h3>Older JDKs</h3>
+If a modern JDK is not available to you, then you can't use the services of <code>java.util.concurrent</code>.
+Instead, you will need to rely on other means - often the Thread class, and the <code>wait</code> and <code>notify</code> 
+methods of the Object class.
+
+<p>The following technique uses the <code>wait-</code>loop idiom and <code>notifyAll</code>. 
+To be safe, always use <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Object.html#notifyAll()">notifyAll</a></code>
+instead of <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Object.html#notify()">notify</a></code>.
+(As an optimization, <code>notify</code> can be used instead of <code>notifyAll</code>, but only if you know exactly what you are doing.)
+
+</p><p>Important points:
+</p><ul>
+<li>
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Object.html#wait()">wait</a></code>
+and <code>notifyAll</code> must always occur within a <code>synchronized</code>
+block</li>
+
+<li>
+<code>wait</code> must always be invoked within a <code>while</code> loop, and not in an <code>if</code> statement</li>
+</ul>
+<b>Example</b>
+
+<p>In this example, the <code>Airplane</code> always needs to check with the
+<code>Airport</code>
+to see if it has an available runway before it's able to take off or land.
+<br></p><pre>
+<span class="comment">/** Uses wait loop idiom for inter-thread communication. */</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Airplane <span class="keyword">implements</span> Runnable {
+
+  <span class="keyword">public</span> Airplane (Airport airport, String flightId){
+    <span class="keyword">this</span>.airport = airport;
+    <span class="keyword">this</span>.flightId = flightId;
+  }
+
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> run() {
+    takeOff();
+    fly();
+    land();
+  }
+
+  <span class="comment">// PRIVATE 
+</span>  <span class="keyword">private</span> Airport airport;
+  <span class="keyword">private</span> String flightId;
+
+  <span class="keyword">private</span> <span class="keyword">void</span> takeOff() {
+    <span class="keyword">synchronized</span>(airport) {
+      <span class="comment">//always use a while loop, never an if-statement:
+</span>      <span class="keyword">while</span> (!airport.hasAvailableRunway()) {
+        log(flightId + <span class="literal">": waiting for runway..."</span>);
+        <span class="keyword">try</span> {
+          <span class="comment">//wait for notification from the airport that
+</span>          <span class="comment">//the state of the airport has changed.
+</span>          <span class="comment">//wait must always occur within a synchronized block
+</span>          airport.wait();
+        }
+        <span class="keyword">catch</span> (InterruptedException ex) {
+          Thread.currentThread().interrupt();
+          System.err.println(ex);
+        }
+      }
+      <span class="comment">//there is an available runway now, so we may take off
+</span>      log(flightId + <span class="literal">": taking off now..."</span>);
+    }
+  }
+
+  <span class="keyword">private</span> <span class="keyword">void</span> fly() {
+    log(flightId + <span class="literal">": flying now..."</span>);
+    <span class="keyword">try</span> {
+      <span class="comment">//do nothing for several seconds
+</span>      Thread.sleep(<span class="literal">10000</span>);
+    }
+    <span class="keyword">catch</span> (InterruptedException ex){
+      log(ex.getMessage());
+      Thread.currentThread().interrupt();
+    }
+  }
+
+  <span class="keyword">private</span> <span class="keyword">void</span> land() {
+    <span class="keyword">synchronized</span>(airport) {
+      <span class="keyword">while</span> (!airport.hasAvailableRunway()) {
+        <span class="comment">//wait for notification from the airport that
+</span>        <span class="comment">//the state of the airport has changed.
+</span>        log(flightId + <span class="literal">": waiting for runway..."</span>);
+        <span class="keyword">try</span> {
+          airport.wait();
+        }
+        <span class="keyword">catch</span> (InterruptedException ex) {
+          System.err.println( ex );
+          Thread.currentThread().interrupt();
+        }
+      }
+      <span class="comment">//there is an available runway now, so we may take off
+</span>      log(flightId + <span class="literal">": landing now..."</span>);
+    }
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">void</span> log(String msg) {
+    System.out.println(msg);
+  }
+} 
+</pre>
+
+<br><pre>
+<span class="comment">/** Notifies Airplanes when its state changes. */</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Airport <span class="keyword">implements</span> Runnable {
+
+  <span class="keyword">public</span> Airport(String name) {
+    <span class="keyword">super</span>();
+    <span class="keyword">this</span>.name = name;
+  }
+
+  <span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">boolean</span> hasAvailableRunway() {
+    <span class="keyword">return</span> hasAvailableRunway;
+  }
+
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> run() {
+    System.out.println(<span class="literal">"Running "</span> + name + <span class="literal">" Airport."</span>);
+    <span class="keyword">while</span> (<span class="keyword">true</span>) {
+      <span class="keyword">try</span> {
+        <span class="keyword">synchronized</span>(<span class="keyword">this</span>) {
+          <span class="comment">//simply toggle the state between available and not available
+</span>          hasAvailableRunway = !hasAvailableRunway;
+          System.out.println(name + <span class="literal">" Has Available Runway: "</span> + hasAvailableRunway);
+          <span class="comment">//notify all waiters of the change of state
+</span>          notifyAll();
+        }
+        <span class="comment">//pause execution for a few seconds
+</span>        Thread.sleep(<span class="literal">1000</span>);
+      }
+      <span class="keyword">catch</span> (InterruptedException ex){
+        System.err.println(ex);
+        Thread.currentThread().interrupt();
+      }
+    }
+  }
+
+  <span class="comment">//PRIVATE
+</span>  <span class="keyword">private</span> <span class="keyword">boolean</span> hasAvailableRunway = <span class="keyword">true</span>;
+
+  <span class="keyword">private</span> String name;
+} 
+</pre>
+
+<br>An example run of the following <code>FlightSimulator</code> class resulted
+in this output:
+<p></p><p><code>Running Flight Simulator.</code>
+<br><code>Terminating the original user thread.</code>
+<br><code>Running Charles de Gaulle Airport.</code>
+<br><code>Charles de Gaulle Has Available Runway: false</code>
+<br><code>Flight 8875: waiting for runway...</code>
+<br><code>Charles de Gaulle Has Available Runway: true</code>
+<br><code>Flight 8875: taking off now...</code>
+<br><code>Flight 8875: flying now...</code>
+<br><code>Charles de Gaulle Has Available Runway: false</code>
+<br><code>Charles de Gaulle Has Available Runway: true</code>
+<br><code>Charles de Gaulle Has Available Runway: false</code>
+<br><code>Charles de Gaulle Has Available Runway: true</code>
+<br><code>Charles de Gaulle Has Available Runway: false</code>
+<br><code>Charles de Gaulle Has Available Runway: true</code>
+<br><code>Charles de Gaulle Has Available Runway: false</code>
+<br><code>Charles de Gaulle Has Available Runway: true</code>
+<br><code>Charles de Gaulle Has Available Runway: false</code>
+<br><code>Flight 8875: waiting for runway...</code>
+<br><code>Charles de Gaulle Has Available Runway: true</code>
+<br><code>Flight 8875: landing now...</code>
+<br><code>Charles de Gaulle Has Available Runway: false</code>
+<br><code>Charles de Gaulle Has Available Runway: true</code>
+<br></p><pre>
+<span class="comment">/** 
+ Builds and starts threads for Airport and Airplanes.  
+ (Using raw Thread objects is discouraged in favour of the
+ more modern java.util.concurrent package.)
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> FlightSimulator {
+
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... arguments) {
+    System.out.println(<span class="literal">"Running Flight Simulator."</span>);
+
+    <span class="comment">//build an airport and start it running
+</span>    Airport charlesDeGaulle = <span class="keyword">new</span> Airport(<span class="literal">"Charles de Gaulle"</span>);
+    Thread airport = <span class="keyword">new</span> Thread(charlesDeGaulle);
+    airport.start();
+
+    <span class="comment">//build a plane and start it running
+</span>    Thread planeOne = <span class="keyword">new</span> Thread(<span class="keyword">new</span> Airplane(charlesDeGaulle, <span class="literal">"Flight 8875"</span>));
+    planeOne.start();
+
+    <span class="comment">//notice that this user thread now ends, but the program itself does
+</span>    <span class="comment">//NOT end since the threads created above are also user
+</span>    <span class="comment">//threads. All user threads have equal status, and there
+</span>    <span class="comment">//is nothing special about the thread which launches a program.
+</span>    System.out.println(<span class="literal">"Terminating the original user thread."</span>);
+  }
+} 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction4826.html?Id=50">Launch thread is just another user thread</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=51 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

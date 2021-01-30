@@ -1,0 +1,330 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=143 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="log,logging,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Logging messages</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Logging messages</div>
+
+<br>Java's logging facility (see Oracle's <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/logging/overview.html">overview</a>
+and <a href="https://docs.oracle.com/javase/10/docs/api/java/util/logging/package-summary.html">API</a>) 
+has two parts: a configuration file, and an API for using logging services.
+It's a good tool, and is perfectly fine for simple and moderate logging needs. 
+(For <em>complex</em> logging needs, you might consider <a href="https://logging.apache.org/">log4j</a> or some similar tool as an 
+alternative.)
+
+<p>Log entries can be sent to these destinations, as either simple text or as XML:
+</p><ul>
+<li>
+the console</li>
+
+<li>
+a file</li>
+
+<li>
+a stream</li>
+
+<li>
+memory</li>
+
+<li>
+a TCP socket on a remote host</li>
+</ul>
+The <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/logging/Level.html">Level</a></code>
+class defines seven levels of logging enlightenment:
+<ul>
+<li>
+<code>FINEST, FINER, FINE, CONFIG, INFO, WARNING, SEVERE</code></li>
+
+<li>
+<code>ALL</code> and <code>OFF</code> are defined values as well</li>
+</ul>
+Here's one style of using these <code>Level</code>s in code, which may be modified as desired:
+<ul>
+<li>
+upon startup, use <code>CONFIG</code> to log configuration parameters</li>
+
+<li>
+during normal operation, use <code>INFO</code> to log high-level "heartbeat"
+information</li>
+
+<li>
+when bugs or critical conditions occur, use <code>SEVERE</code></li>
+
+<li>
+debugging information might default to <code>FINE</code>, with <code>FINER</code> and <code>FINEST</code>
+used occasionally, according to taste.</li>
+</ul>
+There's flexibility in how logging levels can be changed at runtime, without
+the need for a restart:
+<ul>
+<li>
+simply change the configuration file and call <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/logging/LogManager.html#readConfiguration()">LogManager.readConfiguration</a></code>.</li>
+
+<li>
+or, change the level in the body of your code, using the logging API; for example, one might automatically increase the logging level in response
+to unexpected events.</li>
+</ul>
+Levels are attached to these items:
+<ul>
+<li>
+an originating logging request (from a single line of code)</li>
+
+<li>
+a <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/logging/Logger.html">Logger</a></code>
+(usually attached to the package containing the above line of code)</li>
+
+<li>
+a <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/logging/Handler.html">Handler</a></code>
+(attached to an application)</li>
+</ul>
+The flow of execution for a particular logging request usually proceeds
+as follows:
+<p><code>logging request of some level is made to logger attached to current
+package</code>
+<br><code>if the request level is too low for that package's logger {</code>
+<br><code>&nbsp;&nbsp; discard it</code>
+<br><code>}</code>
+<br><code>otherwise {</code>
+<br><code>&nbsp;&nbsp; cycle through all handlers {</code>
+<br><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if the request level is too low
+for that handler {</code>
+<br><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; discard it</code>
+<br><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</code>
+<br><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; otherwise {</code>
+<br><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; log the request</code>
+<br><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</code>
+<br><code>&nbsp;&nbsp; }</code>
+<br><code>}</code>
+</p><p>Here's an example of a logging configuration file:
+</p><p><code># Properties file which configures the operation of the JDK</code>
+<br><code># logging facility.</code>
+</p><p><code># The system will look for this config file, first using</code>
+<br><code># a System property specified at startup:</code>
+<br><code>#</code>
+<br><code># &gt;java -Djava.util.logging.config.file=myLoggingConfigFilePath</code>
+<br><code>#</code>
+<br><code># If this property is not specified, then the config file is</code>
+<br><code># retrieved from its default location at:</code>
+<br><code>#</code>
+<br><code># JDK_HOME/jre/lib/logging.properties</code>
+</p><p><code># Global logging properties.</code>
+<br><code># ------------------------------------------</code>
+<br><code># The set of handlers to be loaded upon startup.</code>
+<br><code># Comma-separated list of class names.</code>
+<br><code># (? LogManager docs say no comma here, but JDK example has comma.)</code>
+<br><code>handlers=java.util.logging.FileHandler, java.util.logging.ConsoleHandler</code>
+</p><p><code># Default global logging level.</code>
+<br><code># Loggers and Handlers may override this level</code>
+<br><code>.level=INFO</code>
+</p><p><code># Loggers</code>
+<br><code># ------------------------------------------</code>
+<br><code># Loggers are usually attached to packages.</code>
+<br><code># Here, the level for each package is specified.</code>
+<br><code># The global level is used by default, so levels</code>
+<br><code># specified here simply act as an override.</code>
+<br><code>myapp.ui.level=ALL</code>
+<br><code>myapp.business.level=CONFIG</code>
+<br><code>myapp.data.level=SEVERE</code>
+</p><p><code># Handlers</code>
+<br><code># -----------------------------------------</code>
+</p><p><code># --- ConsoleHandler ---</code>
+<br><code># Override of global logging level</code>
+<br><code>java.util.logging.ConsoleHandler.level=SEVERE</code>
+<br><code>java.util.logging.ConsoleHandler.formatter=java.util.logging.SimpleFormatter</code>
+</p><p><code># --- FileHandler ---</code>
+<br><code># Override of global logging level</code>
+<br><code>java.util.logging.FileHandler.level=ALL</code>
+</p><p><code># Naming style for the output file:</code>
+<br><code># (The output file is placed in the directory</code>
+<br><code># defined by the "user.home" System property.)</code>
+<br><code>java.util.logging.FileHandler.pattern=%h/java%u.log</code>
+</p><p><code># Limiting size of output file in bytes:</code>
+<br><code>java.util.logging.FileHandler.limit=50000</code>
+</p><p><code># Number of output files to cycle through, by appending an</code>
+<br><code># integer to the base file name:</code>
+<br><code>java.util.logging.FileHandler.count=1</code>
+</p><p><code># Style of output (Simple or XML):</code>
+<br><code>java.util.logging.FileHandler.formatter=java.util.logging.SimpleFormatter</code>
+</p><p>An application should likely centralize the naming policy for <code>Logger</code>s,
+since switching naming styles becomes a simple edit in one method, instead
+of a large number of edits spread throughout the application. Reasons to
+alter the naming policy might include:
+</p><ul>
+<li>
+in a shared environment, adding an application name to the <code>Logger</code>
+name can help distinguish one application's entries from others</li>
+
+<li>
+adding application version information might be beneficial for debugging</li>
+</ul>
+
+There's a common complaint with the JDK logging config file: a Handler cannot be 
+restricted to a specific Logger. That is, Handlers defined in the config file are 
+global, in the sense that they will be attached to <em>all</em> Loggers. This is 
+particularly annoying in a server environment, since different applications will, 
+by default, output logging statements into the same file.
+<em>This behavior can be easily changed, but only by using the JDK logging API.</em>
+Many would prefer to do this directly in the config file.
+
+<p>Here's an example of using the logging API:
+<br></p><pre>
+<span class="keyword">package</span> myapp.business;
+
+<span class="keyword">import</span> java.util.logging.*;
+
+<span class="comment">/**
+* Demonstrate Java's logging facilities, in conjunction
+* with a logging config file.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> SimpleLogger {
+
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args) {
+    SimpleLogger thing = <span class="keyword">new</span> SimpleLogger();
+    thing.doSomething();
+  }
+
+  <span class="keyword">public</span> <span class="keyword">void</span> doSomething() {
+    <span class="comment">//Log messages, one for each level
+</span>    <span class="comment">//The actual logging output depends on the configured
+</span>    <span class="comment">//level for this package. Calls to "inapplicable"
+</span>    <span class="comment">//messages are inexpensive.
+</span>    logger.finest(<span class="literal">"this is finest"</span>);
+    logger.finer(<span class="literal">"this is finer"</span>);
+    logger.fine(<span class="literal">"this is fine"</span>);
+    logger.config(<span class="literal">"this is config"</span>);
+    logger.info(<span class="literal">"this is info"</span>);
+    logger.warning(<span class="literal">"this is a warning"</span>);
+    logger.severe(<span class="literal">"this is severe"</span>);
+
+    <span class="comment">//In the above style, the name of the class and
+</span>    <span class="comment">//method which has generated a message is placed
+</span>    <span class="comment">//in the output on a best-efforts basis only.
+</span>    <span class="comment">//To ensure that this information is always
+</span>    <span class="comment">//included, use the following "precise log"
+</span>    <span class="comment">//style instead :
+</span>    logger.logp(Level.INFO, <span class="keyword">this</span>.getClass().toString(), <span class="literal">"doSomething"</span>, <span class="literal">"blah"</span>);
+
+    <span class="comment">//For the very common task of logging exceptions, there is a
+</span>    <span class="comment">//method which takes a Throwable :
+</span>    Throwable ex = <span class="keyword">new</span> IllegalArgumentException(<span class="literal">"Some exception text"</span>);
+    logger.log(Level.SEVERE, <span class="literal">"Some message"</span>, ex);
+
+    <span class="comment">//There are convenience methods for exiting and
+</span>    <span class="comment">//entering a method, which are at Level.FINER :
+</span>    logger.exiting(<span class="keyword">this</span>.getClass().toString(), <span class="literal">"doSomething"</span>);
+
+    <span class="comment">//Display user.home directory, if desired.
+</span>    <span class="comment">//(This is the directory where the log files are generated.)
+</span>    <span class="comment">//System.out.println("user.home dir: " + System.getProperty("user.home") );
+</span>  }
+
+  <span class="comment">// PRIVATE
+</span>
+  <span class="comment">//This style has no hard-coded literals, and requires the logger
+</span>  <span class="comment">//to be non-static.
+</span>  <span class="keyword">private</span> <span class="keyword">final</span> Logger logger=Logger.getLogger(<span class="keyword">this</span>.getClass().getPackage().getName());
+
+  <span class="comment">//This style lets the logger be static, but hard-codes a class literal.
+</span>  <span class="comment">//private static final Logger logger =
+</span>  <span class="comment">//  Logger.getLogger(SimpleLogger.class.getPackage().getName())
+</span>  <span class="comment">//;
+</span>
+  <span class="comment">//This style uses a hard-coded literal and should likely be avoided:
+</span>  <span class="comment">//private static final Logger logger = Logger.getLogger("myapp.business");
+</span>} 
+</pre>
+
+<br>Example Run 1 , using the config file defined above:
+<p></p><p><code>&gt;java -Djava.util.logging.config.file=C:\\Temp\\logging.properties</code>
+<br><code>-cp . myapp.business.SimpleLogger</code>
+</p><p><code>ConsoleHandler</code> is configured to show only <code>SEVERE</code> messages
+:
+</p><p><code>Jan 8, 2003 10:43:47 AM myapp.business.SimpleLogger doSomething</code>
+<br><code>SEVERE: this is severe</code>
+<br><code>Jan 8, 2003 10:43:47 AM myapp.business.SimpleLogger doSomething</code>
+<br><code>SEVERE: Some message</code>
+<br><code>java.lang.IllegalArgumentException: Some exception text</code>
+<br><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; at myapp.business.SimpleLogger.doSomething(SimpleLogger.java:39)</code>
+<br><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; at myapp.business.SimpleLogger.main(SimpleLogger.java:13)</code>
+</p><p>While the <code>FileHandler</code> shows <code>ALL</code> that is sent to it:
+</p><p><code>Jan 8, 2003 10:43:46 AM myapp.business.SimpleLogger doSomething</code>
+<br><code>CONFIG: this is config</code>
+<br><code>Jan 8, 2003 10:43:47 AM myapp.business.SimpleLogger doSomething</code>
+<br><code>INFO: this is info</code>
+<br><code>Jan 8, 2003 10:43:47 AM myapp.business.SimpleLogger doSomething</code>
+<br><code>WARNING: this is a warning</code>
+<br><code>Jan 8, 2003 10:43:47 AM myapp.business.SimpleLogger doSomething</code>
+<br><code>SEVERE: this is severe</code>
+<br><code>Jan 8, 2003 10:43:47 AM class myapp.business.SimpleLogger doSomething</code>
+<br><code>INFO: blah</code>
+<br><code>Jan 8, 2003 10:43:47 AM myapp.business.SimpleLogger doSomething</code>
+<br><code>SEVERE: Some message</code>
+<br><code>java.lang.IllegalArgumentException: Some exception text</code>
+<br><code>&nbsp;at myapp.business.SimpleLogger.doSomething(SimpleLogger.java:39)</code>
+<br><code>&nbsp;at myapp.business.SimpleLogger.main(SimpleLogger.java:13)</code>
+<br>&nbsp;
+</p><p>Example Run 2, showing the <code>ConsoleHandler</code> output, using the
+<code>logging.properties</code>
+file which ships with the JDK, and which logs only <code>INFO</code> level
+and above:
+</p><p><code>&gt;java -cp . myapp.business.SimpleLogger</code>
+</p><p><code>Jan 8, 2003 10:52:31 AM myapp.business.SimpleLogger doSomething</code>
+<br><code>INFO: this is info</code>
+<br><code>Jan 8, 2003 10:52:31 AM myapp.business.SimpleLogger doSomething</code>
+<br><code>WARNING: this is a warning</code>
+<br><code>Jan 8, 2003 10:52:31 AM myapp.business.SimpleLogger doSomething</code>
+<br><code>SEVERE: this is severe</code>
+<br><code>Jan 8, 2003 10:52:31 AM class myapp.business.SimpleLogger doSomething</code>
+<br><code>INFO: blah</code>
+<br><code>Jan 8, 2003 10:52:31 AM myapp.business.SimpleLogger doSomething</code>
+<br><code>SEVERE: Some message</code>
+<br><code>java.lang.IllegalArgumentException: Some exception text</code>
+<br><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; at myapp.business.SimpleLogger.doSomething(SimpleLogger.java:39)</code>
+<br><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; at myapp.business.SimpleLogger.main(SimpleLogger.java:13)</code>
+<br>
+</p>
+<p></p>
+
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=143 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

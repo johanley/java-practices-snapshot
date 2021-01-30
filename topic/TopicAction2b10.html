@@ -1,0 +1,98 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=61 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="database,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Remember the basics of database design</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Remember the basics of database design</div>
+
+<br>Remember the basics of database design, 
+or <a href="http://en.wikipedia.org/wiki/Database_normalization">normalization</a>:
+<ul>
+<li>
+each table has a primary key</li>
+
+<li>
+the job of the primary key is to uniquely identify records, <i>not</i>
+to store business data; any use of business data in a primary key is a
+dangerous practice, since any changes to such data will have large ripple
+effects</li>
+
+<li>
+a good deal of data normalization is summed up by the memorable phrase: 
+<span class="highlight">"a table stores facts 
+about the key, the whole key, and nothing but the key"</span></li>
+
+<li>
+relations between tables are implemented using foreign keys, where one
+table refers to the primary key of another table</li>
+
+<li>
+almost all relations are 1..N</li>
+
+<li>
+1..1 relations are permitted, but need a reason to <i>not</i> be a 1..N
+relation (this reason is usually a performance optimization)</li>
+
+<li>
+cross references between tables A and B are implemented by a third table
+C, which contains two foreign keys, one for each of the primary keys of
+tables A and B</li>
+</ul>
+Database performance:
+<ul>
+<li><code>Connection</code> pools can improve performance</li>
+<li>using <code>PreparedStatement</code> instead of <code>Statement</code> can improve
+performance as well</li>
+<li>fetching data with SELECT statements can often account for the great majority of activity
+(often 95% or more). For apps that focus on processing transactions, 
+the relative number of <code>SELECT</code>s is usually lower.</li>
+</ul>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction12eb.html?Id=75">Connection pools</a> <br>
+  <a href="TopicAction400e.html?Id=118">Read write locks</a> <br>
+  <a href="TopicActiona3f5.html?Id=192">Business identifiers as String</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=61 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+</html>

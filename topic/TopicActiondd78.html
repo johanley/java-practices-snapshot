@@ -1,0 +1,238 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=85 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="speed,time,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Time execution speed</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Time execution speed</div>
+
+<br>Here's an example of a utility <code>Stopwatch</code> class which can
+provide timings for any section of code.
+
+<p>It's important to note that 
+<code>System.<a href="https://docs.oracle.com/javase/10/docs/api/java/lang/System.html#currentTimeMillis%28%29">currentTimeMillis</a></code> 
+has low resolution, on the order of 10ms for most systems. 
+For timing the execution speed of code, 
+it's usually best to use 
+<code>System.<a href="https://docs.oracle.com/javase/10/docs/api/java/lang/System.html#nanoTime%28%29">nanoTime</a></code> 
+instead. According to this excellent <a href="https://blogs.oracle.com/dholmes/entry/inside_the_hotspot_vm_clocks">article</a> 
+by David Holmes, the typical resolution of <code>nanoTime</code> is on the order of microseconds.
+
+</p><p>Since variations will naturally occur between invocations,
+ you should take the median value of a number of different measurements.
+
+</p><p>Profiling tools like <a href="http://docs.oracle.com/javase/7/docs/technotes/guides/visualvm/">Visual VM</a> 
+are another option as well. Profilers are often included in IDEs.
+
+</p><p>Note that precise micro-benchmarking in Java is a 
+<a href="http://stackoverflow.com/questions/504103/how-do-i-write-a-correct-micro-benchmark-in-java">tricky business</a>,
+mostly because of just-in-time compilation (the HotSpot compiler):
+</p><ul>
+ <li>the presence or absence of compiled code will greatly influence timings. 
+ </li><li>if you need to time only the compiled version, then you will need to ensure a proper warm up of the code.
+ </li><li>for another data point, you can simply turn off the HotSpot compiler entirely, using 
+ <code><a href="http://docs.oracle.com/javase/6/docs/technotes/tools/windows/java.html#nonstandard" title="Non-standard options for java.">java -Xint</a></code>.
+ See the <a href="TopicActionb30e.html?Id=3">copy an array</a> topic for an illustration.
+</li></ul>
+
+<p>Here's an example run of the <code>Stopwatch</code> class appearing below:
+</p><pre>The reading for StringBuilder is: 3.611 ms
+The reading is high: 193.484 ms</pre>
+<br><pre>
+<span class="keyword">import</span> java.math.BigDecimal;
+<span class="keyword">import</span> java.math.RoundingMode;
+
+<span class="comment">/** 
+ Time the execution of any block of code.
+ 
+ &lt;P&gt;This implementation times the duration using &lt;code&gt;System.nanoTime&lt;/code&gt;.
+ 
+ &lt;P&gt;On most systems &lt;code&gt;System.currentTimeMillis&lt;/code&gt; has a time 
+ resolution of about 10ms, which is quite poor for timing code, so it is
+ avoided here.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Stopwatch {
+
+  <span class="comment">/**
+   An example of the use of this class to
+   time the execution of simple String manipulation code.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... arguments) {
+    Stopwatch stopwatch = <span class="keyword">new</span> Stopwatch();
+
+    stopwatch.start();
+
+    <span class="comment">//do stuff
+</span>    StringBuilder messageOne = <span class="keyword">new</span> StringBuilder();
+    <span class="keyword">int</span> numIterations = <span class="literal">5000</span>;
+    <span class="keyword">for</span>(<span class="keyword">int</span> idx=<span class="literal">0</span>; idx &lt; numIterations; ++idx){
+      messageOne.append(<span class="literal">"blah"</span>);
+    }
+
+    stopwatch.stop();
+    <span class="comment">//Note that there is no need to call a method to get the duration,
+</span>    <span class="comment">//since toString is automatic here
+</span>    log(<span class="literal">"The reading for StringBuilder is: "</span> + stopwatch);
+
+    <span class="comment">//reuse the same stopwatch to measure an alternative implementation
+</span>    <span class="comment">//Note that there is no need to call a reset method.
+</span>    stopwatch.start();
+
+    <span class="comment">//do stuff again
+</span>    String messageTwo = <span class="keyword">null</span>;
+    <span class="keyword">for</span>(<span class="keyword">int</span> idx=<span class="literal">0</span>; idx &lt; numIterations; ++idx){
+      messageTwo = messageTwo + <span class="literal">"blah"</span>;
+    }
+
+    stopwatch.stop();
+    <span class="comment">//perform a numeric comparsion
+</span>    <span class="keyword">if</span> ( stopwatch.toValue() &gt; <span class="literal">5</span> ) {
+      log(<span class="literal">"The reading is high: "</span> + stopwatch);
+    }
+    <span class="keyword">else</span> {
+      log(<span class="literal">"The reading is low: "</span> + stopwatch);
+    }
+  }
+  
+  <span class="comment">/**
+   Start the stopwatch.
+   @throws IllegalStateException if the stopwatch is already running.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">void</span> start(){
+    <span class="keyword">if</span> (isRunning) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="literal">"Must stop before calling start again."</span>);
+    }
+    <span class="comment">//reset both start and stop
+</span>    start = System.nanoTime();
+    stop = <span class="literal">0</span>;
+    isRunning = <span class="keyword">true</span>;
+    hasBeenUsedOnce = <span class="keyword">true</span>;
+  }
+
+  <span class="comment">/**
+   Stop the stopwatch.
+   @throws IllegalStateException if the stopwatch is not already running.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">void</span> stop() {
+    <span class="keyword">if</span> (!isRunning) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="literal">"Cannot stop if not currently running."</span>);
+    }
+    stop = System.nanoTime();
+    isRunning = <span class="keyword">false</span>;
+  }
+
+  <span class="comment">/**
+   Express the "reading" on the stopwatch.
+    
+   &lt;P&gt;Example: &lt;code&gt;123.456 ms&lt;/code&gt;. The resolution of timings on most systems 
+   is on the order of a few microseconds, so this style of presentation is usually 
+   appropriate for reflecting the real precision of most timers. 
+  
+   &lt;P&gt;Ref: https://blogs.oracle.com/dholmes/entry/inside_the_hotspot_vm_clocks
+     
+   @throws IllegalStateException if the Stopwatch has never been used,
+   or if the stopwatch is still running.
+  */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> String toString() {
+    validateIsReadable();
+    StringBuilder result = <span class="keyword">new</span> StringBuilder();
+    BigDecimal value = <span class="keyword">new</span> BigDecimal(toValue());<span class="comment">//scale is zero
+</span>    <span class="comment">//millis, with 3 decimals:
+</span>    value = value.divide(MILLION, <span class="literal">3</span>, RoundingMode.HALF_EVEN);
+    result.append(value);
+    result.append(<span class="literal">" ms"</span>);
+    <span class="keyword">return</span> result.toString();
+  }
+
+  <span class="comment">/**
+   Express the "reading" on the stopwatch as a numeric type, in nanoseconds.
+  
+   @throws IllegalStateException if the Stopwatch has never been used,
+   or if the stopwatch is still running.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">long</span> toValue() {
+    validateIsReadable();
+    <span class="keyword">return</span>  stop - start;
+  }
+  
+  <span class="comment">// PRIVATE
+</span>  <span class="keyword">private</span> <span class="keyword">long</span> start;
+  <span class="keyword">private</span> <span class="keyword">long</span> stop;
+
+  <span class="keyword">private</span> <span class="keyword">boolean</span> isRunning;
+  <span class="keyword">private</span> <span class="keyword">boolean</span> hasBeenUsedOnce;
+  
+  <span class="comment">/** Converts from nanos to millis. */</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> BigDecimal MILLION = <span class="keyword">new</span> BigDecimal(<span class="literal">"1000000"</span>);
+  
+  <span class="comment">/**
+   Throws IllegalStateException if the watch has never been started,
+   or if the watch is still running.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">void</span> validateIsReadable() {
+    <span class="keyword">if</span> (isRunning) {
+      String message = <span class="literal">"Cannot read a stopwatch which is still running."</span>;
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(message);
+    }
+    <span class="keyword">if</span> (!hasBeenUsedOnce) {
+      String message = <span class="literal">"Cannot read a stopwatch which has never been started."</span>;
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(message);
+    }
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(String msg) {
+    System.out.println(msg);
+  }
+} 
+ 
+</pre>
+
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActionb30e.html?Id=3">Copy an array </a> <br>
+  <a href="TopicAction851d.html?Id=4">String concatenation does not scale</a> <br>
+  <a href="TopicAction8240.html?Id=36">Measure application performance</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=85 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

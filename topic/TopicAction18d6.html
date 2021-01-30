@@ -1,0 +1,333 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=268 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:49 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="apache,cheat sheet,container,guidelines,summary,tomcat,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Using Tomcat for servlets</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Using Tomcat for servlets</div>
+
+<br><a href="http://tomcat.apache.org/">Apache Tomcat</a> is a widely-used servlet container.
+A servlet container implements the servlet specification, and can serve Java Server Pages (JSPs).
+
+<p>The following is a collection of reminders regarding its use.
+It was created using Tomcat 8, but most of this should apply to later versions as well.
+
+</p><h3>Getting Started</h3>
+To start and stop the Tomcat server:
+<ul>
+ <li><code>bin/startup.bat</code> (<code>.sh</code> for Linux)
+ </li><li><code>bin/shutdown.bat</code>
+ </li><li>the default <code>ROOT</code> application is here: <code><a href="http://localhost:8080/">http://localhost:8080/</a></code>
+ </li><li>note that Tomcat runs on a JRE. 
+ You can use a JDK if you wish, but it's not necessary.
+ For compiling JSPs, Tomcat uses its own internal compiler.
+</li></ul>
+
+<p>Tomcat comes with default configuration.
+When changing that config, you should change the file minimally, and do only what you need. 
+Leave the comments alone, for example, and don't rearrange things unnecessarily. 
+Only then will a simple <em>diff</em> with the default config show where you've deviated from the defaults. 
+
+</p><p>To understand and use Tomcat effectively during development, you need to understand two important ideas: 
+</p><ol>
+ <li>Tomcat <b>instances</b>
+ </li><li>the difference between <b>reload</b> and <b>redeploy</b>
+</li></ol>
+
+<h3>Tomcat Instances</h3>
+In Tomcat lingo, an <b>instance</b> is a directory that's separate from the Tomcat binary. It contains two things:
+<ul>
+  <li>config
+  </li><li>optionally, apps (but the apps don't need to be here, and it's usually best that they just remain where they are.)
+</li></ul>
+
+There's not a <em>huge</em> difference between using an instance and not using an instance.
+But, using an instance does have these advantages:
+<ul>
+    <li>it separates the Tomcat binary from config and apps (and even the apps can be separate, too).
+    </li><li>you can have N Tomcat instances, as many as you want.
+    </li><li>instances are easy to create, share, and use: they're just a few config files, and start-stop scripts that set up environment variables.
+    </li><li>using N configs is trivial.
+ You typically need at least 2 environments: dev and prod. 
+ The config for prod is almost always different than that in dev.
+ App reloading needs to be turned off in prod, for example, because it slows down the server too much, by repeatedly scanning the file system for changes.
+    </li><li>changing Tomcat binaries, or versions of the JRE, is trivial when you use an instance.
+    </li><li>an instance is a much smaller unit, without the binary, and even without the app source.
+</li></ul>
+
+In the Tomcat docs, you'll see many references to two important environment variables:
+<ul>
+    <li><b><code>$CATALINA_HOME</code></b>: location of the Tomcat <em>binary</em>
+    </li><li><b><code>$CATALINA_BASE</code></b>: location of the Tomcat <em>instance</em>
+</li></ul>
+ If you're not using an instance, then <code>$CATALINA_BASE</code> is the same as <code>$CATALINA_HOME</code>.
+
+<p>You can think of a Tomcat instance as a kind of mini-Tomcat. 
+It mimics the same directory structure found in the binary install, and looks like this:
+</p><pre>
+ startup.bat [short scripts that you create]
+ shutdown.bat
+ conf [start with the same conf folder in the Tomcat binary]
+   server.xml [main config; each instance needs its own shutdown port]
+   web.xml [settings amalgamated with app web.xml]
+   context.xml [settings amalgamated with app's context xml file]
+   catalina.properties
+   logging.properties
+   tomcat-users.xml [used for simple access control]
+   Catalina
+     localhost
+      [app context xml files, that point to your web app]
+      [add/delete an xml file here is one way to deploy/undeploy an app]
+ lib [database jar; jars shared between apps]
+ logs
+ webapps 
+   [not really needed for deployment, but it's an option]
+   [instead, put a context file in conf/Catalina/localhost]
+ work [compiled JSPs and whatnot]
+</pre>
+
+So, the idea is that someone on your team sets up an instance, and all of its config, and then the Tomcat instance is shared with the team. 
+The start-stop scripts are short. 
+They simply set up environment variables, and then start the Tomcat binary.
+
+<h3>Reload versus Redeploy</h3>
+The second important idea is the distinction between <em>reload</em> and <em>redeploy</em>. 
+
+<p>Reload of an app:
+</p><ul>
+    <li>is faster than redeploy, and is preferred for most development work
+    </li><li>is triggered in various ways: changes to <code>web.xml</code> (via <code>WatchedResource</code>), or changes somewhere inside <code>WEB-INF/classes</code> (via the <code>reloadable</code> setting for the app's context xml)
+    </li><li>reload preserves session data (by default)
+    </li><li>by default, sessions are preserved by being saved first to the file system (serialized), then read back in when the app starts up again (deserialized).
+  In order for this to work well, Java objects in the session need to implement <code>Serializable</code>.
+    </li><li>as a user of the app, there's no need to log in again, re-navigate, and re-enter data. This saves a lot of time when you're developing.
+    </li><li>Tomcat abandons the app's classloader, and starts over again with a new classloader for the app, by going back to the file system, where your app is located
+    </li><li>the app starts up again from scratch
+</li></ul>
+
+<p>Redeploy of an app:
+</p><ul>
+  <li>if the app is running, it's stopped
+  </li><li>completely removes <em>all</em> of its artifacts, and starts from the beginning
+  </li><li>all items related to the app are abandoned and removed: sessions are lost in a redeploy, and internal, compiled versions of JSPs and tags are removed
+  </li><li>the new app code is put in place
+  </li><li>the app is started
+</li></ul>
+
+Summary of the possible operations:
+<ul>
+  <li>app-reload
+  </li><li>app-stop, app-start
+  </li><li>app-redeploy
+  </li><li>server-stop, server-start
+</li></ul>
+
+By default, app-reload and app-stop/start will preserve sessions. 
+App-redeploy will never preserve sessions.
+
+<h3>Avoiding Slow Development</h3>
+To avoid slow development:
+<ul>
+  <li>use actions that cause reload
+  </li><li>avoid actions that cause redeploy
+  </li><li>avoid hard-coding items in Servlet 3.0 annotations: in <code>web.xml</code>, mark the web-app top level node as <code>metadata-complete</code>. 
+  If this is not done, then the container will need to scan upon startup every class and jar in your app, to search for annotations and <code>web-fragment.xml</code> files. 
+  That's slow.
+</li></ul>
+
+<h3>Context Files</h3>
+A context is simply a web app. 
+It forms part of a Tomcat instance. 
+An app's context xml file instructs Tomcat how to deploy the app:
+<ul>
+    <li>the location of the code
+    </li><li>the connection pool needed by the app (or similar resources)
+    </li><li>any other config params
+</li></ul>
+
+Here's an example of a context xml file (note that its <code>reloadable</code> setting is not suitable for prod):
+<pre>
+&lt;Context docBase="/some/dir/" reloadable="true"&gt;
+ &lt;Resource 
+ name="jdbc/MYDatabase" 
+ auth="Container" 
+ type="javax.sql.DataSource" 
+ driverClassName="com.microsoft.sqlserver.jdbc.SQLServerDriver"
+ username="someusername"
+ password="somepassword"
+ url="jdbc:sqlserver://my_database_server_url"
+ maxTotal="10"
+ maxIdle="5"
+ /&gt;
+&lt;/Context&gt;
+</pre>
+
+The file is located in <code>../conf/Catalina/localhost/mywar.xml</code>. 
+(It can also be embedded in war file itself, at the conventional location <code>META-INF/context.xml</code>.)
+This will map the app to the URL <code>localhost:8080/mywar</code>. 
+By default, it simply takes the path from the name of the file. 
+If the context points to a war file, instead of a directory, then by default Tomcat will explode the war into its <code>webapps</code> directory.
+
+<p>Note the default naming convention used by Tomcat uses the same name (<code>blah</code>, in the following example) in 3 places:
+</p><ul>
+ <li>the name of the war file: <code>blah.war</code>
+ </li><li>the name of the context file in the <code>conf</code> directory: <code>conf/Catalina/localhost/blah.xml</code>
+ </li><li>the URL path under which the app is deployed: <code>localhost:8080/blah</code>
+</li></ul>
+
+
+<h3>Manager Application</h3>
+Tomcat's Manager application lets you 
+<ul>
+ <li>stop-start your apps, or redeploy them
+ </li><li>view basic memory stats for the Java Runtime
+ </li><li>other miscellaneous tasks
+</li></ul>
+
+If you want to use Tomcat's Manager application, you will need to edit two files. 
+First, <code>conf/tomcat-users.xml</code>. Add the following:
+<pre>&lt;?xml version='1.0' encoding='utf-8'?/&gt;
+&lt;tomcat-users&gt;
+  &lt;role rolename="manager-gui"/&gt;
+  &lt;role rolename="manager-script"/&gt;
+  &lt;role rolename="manager-jmx"/&gt;
+  &lt;role rolename="manager-status"/&gt;
+  &lt;user username="admin" password="admin" roles="manager-gui, manager-script, manager-jmx, manager-status"/&gt;
+&lt;/tomcat-users/&gt;</pre>
+
+Next is the Manager app's context file. 
+By default, it's located in <code>/webapps/manager/META-INF/context.xml</code>, and it defines an IP filter, that restricts it to the <code>localhost</code> only. 
+You may need to change or remove that restriction.
+<pre>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;Context docBase="${catalina.home}/webapps/manager" antiResourceLocking="false" privileged="true"&gt;
+  &lt;Valve className="org.apache.catalina.valves.RemoteAddrValve" allow="127\.0\.0\.1" /&gt;
+&lt;/Context&gt;
+</pre>
+Here, the <code>allow</code> param is actually a regular expression.
+
+<h3>Useful Configuration Items</h3>
+Ideally, these setting should be done once, by a single developer, and then shared with the others on the team.
+Tomcat is configured using xml files and properties files:
+<ul>
+   <li> <code>server.xml</code> (this is the main config file)
+   </li><li> <code>web.xml</code> (amalgamated with your web app's <code>web.xml</code>)
+   </li><li> <code>context.xml</code> (amalgamated with your web app's context file)
+   </li><li> <code>logging.properties</code> (JDK loggers)
+   </li><li> <code>catalina.properties</code>
+</li></ul>
+
+Some settings to consider in <code>server.xml</code> ('#' means it's a default setting):
+<ul>
+ <li><code>Connector.compression="on"</code> - gzip textual output from the server, if the client supports it (which, these days, they all do, in practice). 
+ </li><li><code>#Connector.URIEncoding="UTF-8"</code>
+ </li><li><code>Connector.disableUploadTimeout="false"</code>
+ </li><li><code>Connector.connectionUploadTimeout="600000"</code>
+ </li><li><code>#Connector.useBodyEncodingForURI="false"</code> 
+ </li><li><code>#Connector.connectionTimeout="20000"</code> - defaults to 20 seconds in <code>server.xml</code>
+ </li><li><code>#Connector.maxThreads="200"</code>
+ </li><li><code>#Connector.minSpareThreads="10"</code>
+ </li><li><code>#Connector.SSLEnabled="false"</code> - if true, you need to set other things as well: <code>.scheme="https" .secure="true"</code>, port, and so on
+ </li><li><code>#Host.autoDeploy="true"</code> - true in dev, false in prod
+ </li><li><code>Host.deployOnStartup="false"</code>  - false in dev, true in prod
+ </li><li><code>Host.deployXml="false"</code> - deploy using xml files in <code>META-INF/context.xml</code>, in the app, instead of outside the app
+ </li><li><code>#Host.unpackWars="true"</code> - explode war files into directories; faster to serve files this way
+</li></ul>
+
+<p>Some settings in <code>context.xml</code>:
+</p><ul>
+ <li><code>Context.deployOnStartup="false"</code> - false in dev, true in prod
+ </li><li><code>Context.reloadable="true"</code> - true in dev, false in prod (the default)
+ </li><li><code>Context.logEffectiveWebXml="true"</code>  - combines all settings: app <code>web.xml</code>, app annotations, container settings; prod should always have this on; outputs to the <code>catalina</code> log
+ </li><li><code>Context.Parameter</code> - as <code>context-param</code> in <code>web.xml</code>, but without editing <code>web.xml</code>; overrides <code>web.xml</code> by default.
+ </li><li><code>Context.Environment</code> - as above, but for data accessible by JNDI
+ </li><li><code>Context.Listener</code> - hooks into Tomcat; could record startup times, for instance
+ </li><li><code>Context.Manager</code> - in prod, Tomcat recommends changing from <code>StandardManager</code> (the default) to <code>PersistentManager</code>
+ </li><li><code>Context.Manager.Store</code> - needed by <code>PersistentManager</code>, but not by <code>StandardManager</code>
+</li></ul>
+
+<h3>Parallel deployment</h3>
+Parallel deployment means you deploy two versions of the app side by side, with a version number in the name of the war file (<code>myapp##001.war</code>). 
+Existing sessions continue to be handled by the old version of the app, while new sessions go to the new version of the app. 
+Users migrate over from the old world to the new world, simply by logging in again.
+Of course, the idea is to have zero downtime during a production upgrade.  
+
+<p>Things to consider:
+</p><ul>
+    <li>database changes that may be incompatible with one version of the app
+    </li><li>log file names need to have a version number as well
+    </li><li>possible interaction with config data stored in memory
+    </li><li>in an emergency, you can even remove the new version, and revert to the old
+    </li><li>practical advice <a href="http://java-monitor.com/forum/showthread.php?t=1288">here</a>
+</li></ul>
+
+<h3>Setting up HTTPS and SSL</h3>
+Ideally, this should be done only once, by a single developer, and then just distributed to the others on the team.
+<p>Once you have a certificate in a local keystore file, edit <code>server.xml</code>, and add a second <code>Connector</code>, for use with SSL. 
+</p><pre>
+&lt;Connector port="8443" protocol="org.apache.coyote.http11.Http11NioProtocol"
+    maxThreads="150" SSLEnabled="true" scheme="https" secure="true"
+    clientAuth="false" sslProtocol="TLS" keystoreFile="conf/mykeystorefile" keystorePass="changeIt"/&gt;</pre>
+
+The above <code>Connector</code> is a second <code>Connector</code>. 
+You leave the existing non-SSL <code>Connector</code> in place. 
+The non-SSL <code>Connector</code> will be used for apps that don't require SSL. 
+In addition, if an app does require SSL, and a request URL for that app erroneously uses HTTP (and not HTTPS), 
+then Tomcat will use the <code>Connector.redirectPort</code> setting of the non-SSL <code>Connector</code>, and the browser gets 
+redirected to the secured <code>Connector</code>, running on a different port.
+ 
+<p>The <code>keystoreFile</code> path can be absolute; if relative, it's relative to <code>$CATALINA_BASE</code>.
+Self-signed certificates can be used only informally: they encrypt traffic, but they can't help with authentication or authorization.
+When you use them, your browser will give you a warning, and you'll need to explicitly instruct the browser to accept the certificate.
+
+</p><p>The default HTTPS port is 443, not 8443. A warning from the docs:
+<br><em>"special setup (outside the scope of this document) is necessary to run Tomcat on port numbers lower than 1024 on 
+many operating systems [eg Linux]."</em> 
+
+</p><p>After you've finished configuring Tomcat for SSL, restart Tomcat, and navigate to a URL in your app (changing <code>http</code> to <code>https</code>). 
+ 
+
+</p>
+<p></p>
+
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=268 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:49 GMT -->
+</html>

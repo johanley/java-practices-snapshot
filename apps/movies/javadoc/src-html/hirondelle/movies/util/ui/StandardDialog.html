@@ -1,0 +1,173 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/movies/javadoc/src-html/hirondelle/movies/util/ui/StandardDialog.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:33 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+StandardDialog.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.movies.util.ui;<a name=line.1></a>
+<a name=line.2></a>
+<span class='keyword'>import</span> javax.swing.*;<a name=line.3></a>
+<span class='keyword'>import</span> java.awt.*;<a name=line.4></a>
+<span class='keyword'>import</span> java.awt.event.ActionEvent;<a name=line.5></a>
+<span class='keyword'>import</span> java.awt.event.KeyEvent;<a name=line.6></a>
+<a name=line.7></a>
+<span class='comment'>/**<a name=line.8></a>
+  &lt;b&gt;Standard dialog&lt;/b&gt;, centralizing various display policies.<a name=line.9></a>
+ <a name=line.10></a>
+  &lt;P&gt;Using a standard class for all dialogs increases the uniformity of the application's<a name=line.11></a>
+  appearance, and eliminates code repetition.<a name=line.12></a>
+  <a name=line.13></a>
+  &lt;P&gt;This standard dialog has the following characteristics :<a name=line.14></a>
+  &lt;ul&gt;<a name=line.15></a>
+  &lt;li&gt;it's centered on its owner<a name=line.16></a>
+  &lt;li&gt;it can't be resized<a name=line.17></a>
+  &lt;li&gt;it has a border of standard dimensions<a name=line.18></a>
+  &lt;li&gt;it inherits the parent frame's icon<a name=line.19></a>
+  &lt;li&gt;the title has standardized content<a name=line.20></a>
+  &lt;li&gt;a row of buttons are placed at the bottom of the dialog, centered, <a name=line.21></a>
+  and with fixed spacing<a name=line.22></a>
+  &lt;li&gt;the escape key performs the same operation as the {@link OnClose} value passed to<a name=line.23></a>
+  the constructor<a name=line.24></a>
+  &lt;li&gt;preserves the usual ALT+TAB behavior when switching between applications<a name=line.25></a>
+  &lt;/ul&gt;<a name=line.26></a>
+  <a name=line.27></a>
+  &lt;P&gt; Taken individually, such policies are relatively minor. Taken as a group, they form an<a name=line.28></a>
+  effective way of establish the overall feel of your application.<a name=line.29></a>
+  <a name=line.30></a>
+  &lt;P&gt;&lt;b&gt;Login dialogs&lt;/b&gt;&lt;br&gt;<a name=line.31></a>
+  Login dialogs represent a special case, since they have no parent JFrame. Thus, they<a name=line.32></a>
+  cannot inherit an icon. In JDK 6, this can be fixed, by adding a method to this class to<a name=line.33></a>
+  specify the icon.<a name=line.34></a>
+  <a name=line.35></a>
+  &lt;P&gt;In addition, closing a login dialog should cause the application to exit. However,<a name=line.36></a>
+  {@link JDialog#setDefaultCloseOperation(int)} does not allow for that behavior, while <a name=line.37></a>
+  this class does.<a name=line.38></a>
+  <a name=line.39></a>
+  &lt;P&gt;&lt;em&gt;This class does not extend {@link JDialog}, since it <a name=line.40></a>
+    doesn't need to&lt;/em&gt;. As a pleasant side-effect of this choice, the javadoc for this <a name=line.41></a>
+    class is &lt;em&gt;greatly&lt;/em&gt; simplified.<a name=line.42></a>
+ */</span><a name=line.43></a>
+<span class='keyword'>public</span> <span class='keyword'>final</span> <span class='keyword'>class</span> StandardDialog {<a name=line.44></a>
+<a name=line.45></a>
+  <span class='comment'>/**<a name=line.46></a>
+   Construct a standard dialog.<a name=line.47></a>
+   <a name=line.48></a>
+   @param aOwner the frame which is the owner/caller/parent of this dialog. This dialog<a name=line.49></a>
+   gets its icon and its position from the owner. Possibly null. It's strongly recommened to use <a name=line.50></a>
+   a non-null owner.<a name=line.51></a>
+   @param aTitle the text to appear on the title bar of this dialog<a name=line.52></a>
+   @param aIsModal controls whether this dialog is modal: if &lt;tt&gt;true&lt;/tt&gt;, then this<a name=line.53></a>
+   dialog must be dismissed before you are allowed to return to the main window.<a name=line.54></a>
+   @param aOnClose specifies desired behavior when this dialog closes <a name=line.55></a>
+   @param aBody the body of the dialog, where the user enters information<a name=line.56></a>
+   @param aButtons a row of buttons appearing at the bottom of this dialog<a name=line.57></a>
+   */</span><a name=line.58></a>
+  <span class='keyword'>public</span> StandardDialog (<a name=line.59></a>
+    JFrame aOwner, String aTitle, <span class='keyword'>boolean</span> aIsModal, OnClose aOnClose, <a name=line.60></a>
+    JPanel aBody, java.util.List&lt;JButton&gt; aButtons<a name=line.61></a>
+  ) {<a name=line.62></a>
+    String title = UiUtil.getDialogTitle(aTitle);<a name=line.63></a>
+    fDialog = <span class='keyword'>new</span> JDialog(aOwner, title, aIsModal);<a name=line.64></a>
+    JPanel content = <span class='keyword'>new</span> JPanel();<a name=line.65></a>
+    content.setLayout(<span class='keyword'>new</span> BoxLayout(content, BoxLayout.PAGE_AXIS));<a name=line.66></a>
+    content.setBorder(UiUtil.getStandardBorder());<a name=line.67></a>
+    aBody.setAlignmentX(Component.CENTER_ALIGNMENT);<a name=line.68></a>
+    content.add(aBody);<a name=line.69></a>
+    content.add(Box.createVerticalStrut(<span class='literal'>10</span>));<a name=line.70></a>
+    content.add(buildButtonPanel(aButtons));<a name=line.71></a>
+    fDialog.add(content);<a name=line.72></a>
+    fDialog.setResizable(<span class='keyword'>false</span>);<a name=line.73></a>
+    fDialog.setDefaultCloseOperation(aOnClose.getIntValue());<a name=line.74></a>
+    addCancelByEscapeKey(aOnClose);<a name=line.75></a>
+  }<a name=line.76></a>
+<a name=line.77></a>
+  <span class='comment'>/**<a name=line.78></a>
+   Display the dialog.<a name=line.79></a>
+    <a name=line.80></a>
+   &lt;P&gt; The dialog is not automatically displayed in the constructor. This is because some<a name=line.81></a>
+   callers may want to build a dialog upon startup, but only display it later. (Such a<a name=line.82></a>
+   style might be chosen in order to slightly improve the apparent responsiveness of the<a name=line.83></a>
+   application.)<a name=line.84></a>
+   */</span><a name=line.85></a>
+  <span class='keyword'>public</span> <span class='keyword'>void</span> display() {<a name=line.86></a>
+    UiUtil.centerAndShow(fDialog);<a name=line.87></a>
+  }<a name=line.88></a>
+<a name=line.89></a>
+  <span class='comment'>/** Assign a default button for this dialog. */</span><a name=line.90></a>
+  <span class='keyword'>public</span> <span class='keyword'>void</span> setDefaultButton(JButton aButton) {<a name=line.91></a>
+    fDialog.getRootPane().setDefaultButton(aButton);<a name=line.92></a>
+  }<a name=line.93></a>
+<a name=line.94></a>
+  <span class='comment'>/** Call &lt;tt&gt;dispose&lt;/tt&gt; on the underlying dialog object. */</span><a name=line.95></a>
+  <span class='keyword'>public</span> <span class='keyword'>void</span> dispose() {<a name=line.96></a>
+    fDialog.dispose();<a name=line.97></a>
+  }<a name=line.98></a>
+<a name=line.99></a>
+  <span class='comment'>/** Return the underlying dialog object.   */</span><a name=line.100></a>
+  <span class='keyword'>public</span> JDialog getDialog() {<a name=line.101></a>
+    <span class='keyword'>return</span> fDialog;<a name=line.102></a>
+  }<a name=line.103></a>
+<a name=line.104></a>
+  <span class='comment'>// PRIVATE<a name=line.105></a>
+</span>  <span class='keyword'>private</span> JDialog fDialog;<a name=line.106></a>
+<a name=line.107></a>
+  <span class='comment'>/**<a name=line.108></a>
+    Force the escape key to call the same action as the default {@link OnClose} operation<a name=line.109></a>
+    passed to the constructor. In some special cases, this does not always work.<a name=line.110></a>
+   */</span><a name=line.111></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> addCancelByEscapeKey(<span class='keyword'>final</span> OnClose aOnClose) {<a name=line.112></a>
+    String CANCEL_ACTION_KEY = <span class='literal'>"CANCEL_ACTION_KEY"</span>;<a name=line.113></a>
+    <span class='keyword'>int</span> noModifiers = <span class='literal'>0</span>;<a name=line.114></a>
+    KeyStroke escapeKey = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, noModifiers, <span class='keyword'>false</span>);<a name=line.115></a>
+    InputMap inputMap = fDialog.getRootPane().getInputMap(<a name=line.116></a>
+    JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);<a name=line.117></a>
+    inputMap.put(escapeKey, CANCEL_ACTION_KEY);<a name=line.118></a>
+    AbstractAction cancelAction = <span class='keyword'>new</span> AbstractAction() {<a name=line.119></a>
+      <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> actionPerformed(ActionEvent e) {<a name=line.120></a>
+        <span class='keyword'>if</span> (OnClose.DO_NOTHING == aOnClose) {<a name=line.121></a>
+          <span class='comment'>// do nothing<a name=line.122></a>
+</span>        }<a name=line.123></a>
+        <span class='keyword'>else</span> <span class='keyword'>if</span> (OnClose.DISPOSE == aOnClose) {<a name=line.124></a>
+          fDialog.dispose();<a name=line.125></a>
+        }<a name=line.126></a>
+        <span class='keyword'>else</span> <span class='keyword'>if</span> (OnClose.HIDE == aOnClose) {<a name=line.127></a>
+          fDialog.setVisible(<span class='keyword'>false</span>);<a name=line.128></a>
+        }<a name=line.129></a>
+        <span class='keyword'>else</span> <span class='keyword'>if</span> (OnClose.EXIT == aOnClose) {<a name=line.130></a>
+          fDialog.dispose();<a name=line.131></a>
+          System.exit(<span class='literal'>0</span>);<a name=line.132></a>
+        }<a name=line.133></a>
+        <span class='keyword'>else</span> {<a name=line.134></a>
+          <span class='keyword'>throw</span> <span class='keyword'>new</span> AssertionError(<span class='literal'>"Unexpected branch for this value of OnClose: "</span> + aOnClose);<a name=line.135></a>
+        }<a name=line.136></a>
+      }<a name=line.137></a>
+    };<a name=line.138></a>
+    fDialog.getRootPane().getActionMap().put(CANCEL_ACTION_KEY, cancelAction);<a name=line.139></a>
+  }<a name=line.140></a>
+<a name=line.141></a>
+  <span class='keyword'>private</span> JPanel buildButtonPanel(java.util.List&lt;JButton&gt; aButtons) {<a name=line.142></a>
+    JPanel result = <span class='keyword'>new</span> JPanel();<a name=line.143></a>
+    result.setLayout(<span class='keyword'>new</span> BoxLayout(result, BoxLayout.LINE_AXIS));<a name=line.144></a>
+    result.add(Box.createHorizontalGlue());<a name=line.145></a>
+    <span class='keyword'>int</span> count = <span class='literal'>0</span>;<a name=line.146></a>
+    <span class='keyword'>for</span> (JButton button : aButtons) {<a name=line.147></a>
+      count++;<a name=line.148></a>
+      result.add(button);<a name=line.149></a>
+      <span class='keyword'>if</span> (count &lt; aButtons.size()) {<a name=line.150></a>
+        result.add(Box.createHorizontalStrut(<span class='literal'>6</span>));<a name=line.151></a>
+      }<a name=line.152></a>
+    }<a name=line.153></a>
+    result.add(Box.createHorizontalGlue());<a name=line.154></a>
+    <span class='keyword'>return</span> result;<a name=line.155></a>
+  }<a name=line.156></a>
+}<a name=line.157></a>
+ <a name=line.158></a>
+</PRE><a name=line.159></a>
+ </BODY><a name=line.160></a>
+<HTML><a name=line.161></a>

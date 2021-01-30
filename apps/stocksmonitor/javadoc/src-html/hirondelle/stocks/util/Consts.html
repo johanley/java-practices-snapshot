@@ -1,0 +1,71 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/util/Consts.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:35 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+Consts.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.stocks.util;<a name=line.1></a>
+<a name=line.2></a>
+<span class='keyword'>import</span> java.math.BigDecimal;<a name=line.3></a>
+<a name=line.4></a>
+<span class='comment'>/**<a name=line.5></a>
+* Collected constants of very general utility.<a name=line.6></a>
+*<a name=line.7></a>
+*&lt;P&gt; All constants are immutable.<a name=line.8></a>
+*/</span><a name=line.9></a>
+<span class='keyword'>public</span> <span class='keyword'>final</span> <span class='keyword'>class</span> Consts  { <a name=line.10></a>
+<a name=line.11></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String APP_NAME = <span class='literal'>"StocksMonitor"</span>;<a name=line.12></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String APP_VERSION = <span class='literal'>"1.7.0"</span>;<a name=line.13></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String AUTHOR = <span class='literal'>"www.javapractices.com"</span>;<a name=line.14></a>
+  <a name=line.15></a>
+  <span class='comment'>//Common Strings<a name=line.16></a>
+</span>  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String NEW_LINE = System.getProperty(<span class='literal'>"line.separator"</span>);<a name=line.17></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String FILE_SEPARATOR = System.getProperty(<span class='literal'>"file.separator"</span>);<a name=line.18></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String PATH_SEPARATOR = System.getProperty(<span class='literal'>"path.separator"</span>);<a name=line.19></a>
+<a name=line.20></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String EMPTY_STRING = <span class='literal'>""</span>;<a name=line.21></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String SPACE = <span class='literal'>" "</span>;<a name=line.22></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String PERIOD = <span class='literal'>"."</span>;<a name=line.23></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String TAB = <span class='literal'>"&#092;t"</span>;<a name=line.24></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String COMMA = <span class='literal'>","</span>;<a name=line.25></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String DOUBLE_QUOTE = <span class='literal'>"&#092;""</span>;<a name=line.26></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String ELLIPSIS = <span class='literal'>"..."</span>;<a name=line.27></a>
+<a name=line.28></a>
+  <span class='comment'>//numbers and algebraic signs<a name=line.29></a>
+</span>  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> <span class='keyword'>int</span> POSITIVE = <span class='literal'>1</span>;<a name=line.30></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> <span class='keyword'>int</span> NEGATIVE = -<span class='literal'>1</span>;<a name=line.31></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String PLUS_SIGN = <span class='literal'>"+"</span>;<a name=line.32></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String NEGATIVE_SIGN = <span class='literal'>"-"</span>;<a name=line.33></a>
+<a name=line.34></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> Integer ZERO = <span class='keyword'>new</span> Integer(<span class='literal'>0</span>);<a name=line.35></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> Integer ONE = <span class='keyword'>new</span> Integer(<span class='literal'>1</span>);<a name=line.36></a>
+<a name=line.37></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> <span class='keyword'>long</span> ONE_KILOBYTE = <span class='literal'>1024L</span>;<a name=line.38></a>
+<a name=line.39></a>
+  <span class='comment'>//For monetary calculations<a name=line.40></a>
+</span>  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> <span class='keyword'>int</span> MONEY_DECIMAL_PLACES = <span class='literal'>2</span>;<a name=line.41></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> <span class='keyword'>int</span> MONEY_ROUNDING_STYLE = BigDecimal.ROUND_HALF_EVEN;<a name=line.42></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> BigDecimal ZERO_MONEY = <span class='keyword'>new</span> BigDecimal(<span class='literal'>"0"</span>);<a name=line.43></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> BigDecimal ZERO_MONEY_WITH_DECIMAL = <span class='keyword'>new</span> BigDecimal(<span class='literal'>"0.00"</span>);<a name=line.44></a>
+   <a name=line.45></a>
+  <span class='comment'>//Time conversion factors<a name=line.46></a>
+</span>  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> <span class='keyword'>int</span> MILLISECONDS_PER_SECOND = <span class='literal'>1000</span>;<a name=line.47></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> <span class='keyword'>int</span> SECONDS_PER_MINUTE = <span class='literal'>60</span>;<a name=line.48></a>
+  <a name=line.49></a>
+  <span class='comment'>// PRIVATE <a name=line.50></a>
+</span>  <a name=line.51></a>
+  <span class='comment'>/** Prevent object construction.  */</span><a name=line.52></a>
+  <span class='keyword'>private</span> Consts(){<a name=line.53></a>
+    <span class='keyword'>throw</span> <span class='keyword'>new</span> AssertionError();<a name=line.54></a>
+  }<a name=line.55></a>
+} <a name=line.56></a>
+</PRE><a name=line.57></a>
+ </BODY><a name=line.58></a>
+<HTML><a name=line.59></a>

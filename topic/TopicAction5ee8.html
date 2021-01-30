@@ -1,0 +1,111 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=235 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Beware of unknown root causes</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Beware of unknown root causes</div>
+
+<br>All exceptions are based on the 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Throwable.html">Throwable</a></code> class.
+By default, all <code>Throwable</code>s can have an underlying <i>root cause</i>. The root cause may be set in the Throwable's 
+constructor, or after construction by calling <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Throwable.html#initCause(java.lang.Throwable)">initCause</a></code>.
+
+<p>Having the root cause is very useful for troubleshooting. 
+However, there is a case in which root causes can cause a problem. 
+When a <code>Throwable</code> is passed over the network, it must first be serialized, and then reconstructed (deserialized) on the other end.
+If the root cause inside a <code>Throwable</code> object is not known to the receiver on the other end, then what happens?
+The receiver will throw a <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/NoClassDefFoundError.html">NoClassDefFoundError</a></code>.
+Of course, this replaces the original exception with something unrelated.
+
+</p><p>One option is to define a "locked down" exception, which can hold only <code>null</code> as the root cause.
+
+</p><p><b>Example</b>
+
+</p><p>This class is a checked exception which cannot take a root cause.
+<br></p><pre>
+<span class="comment">/**
+A checked exception that cannot be given a root cause.
+
+All calls to {@link #getCause()} will return &lt;tt&gt;null&lt;/tt&gt;.
+This class cannot be subclassed. 
+ */</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> LockedDownException <span class="keyword">extends</span> Exception {
+
+  <span class="comment">/**
+   The sole constructor.
+   No root cause can be passed to this constructor.
+  */</span>
+  <span class="keyword">public</span> LockedDownException(String message){
+    <span class="keyword">super</span>(message);
+  }
+
+  <span class="comment">/**
+   Always coerces the root cause to &lt;tt&gt;null&lt;/tt&gt;.
+
+   Even though the caller is allowed to call this method, it will never
+   have any effect. The caller is not allowed to set the root cause, neither
+   during construction, nor after construction.
+  */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">synchronized</span> Throwable initCause(Throwable rootCause) {
+    <span class="keyword">return</span> <span class="keyword">super</span>.initCause(<span class="keyword">null</span>);
+  }
+
+
+  <span class="comment">/** Simple test harness. */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args){
+    LockedDownException ex = <span class="keyword">new</span> LockedDownException(<span class="literal">"Hello"</span>);
+    ex.initCause(<span class="keyword">new</span> IllegalArgumentException(<span class="literal">"Test"</span>));
+    System.out.println(ex.getCause()); <span class="comment">//prints 'null'
+</span>  }
+} 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActionf6c1.html?Id=77">Data exception wrapping</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=235 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+</html>

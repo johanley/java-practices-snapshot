@@ -1,0 +1,179 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=265 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="implementation,interface,short,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Short public methods</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Short public methods</div>
+
+<br>One of the ideas of lasting value in programming is the distinction between interface and implementation.
+In this context,
+<ul>
+ <li><em>interface</em> means the high-level description of some chunk of code
+ </li><li><em>implementation</em> means the chunk of code itself
+</li></ul>
+
+When someone is reading the code for the first time, it's the interface which is most important. 
+Here are two ways of <b>emphasizing the interface</b>:
+<ul>
+ <li>place the <code>public</code> (or, sometimes, the package-private) <a href="TopicAction311e.html?Id=136">methods at the top</a>, 
+and the <code>private</code> methods at the bottom
+ </li><li>ensure that the <code>public</code> methods are trivially short, by call-forwarding to corresponding <code>private</code> methods 
+that do the actual work
+</li></ul>
+
+<p>When you see a class for the first time, then you usually want to know only one thing: what it can do for the caller. 
+If you follow the style suggested here, then all of that information appears at the top of the file, and, 
+just as important, <em>only</em> that information appears at the top. 
+All of the implementation details are placed at the bottom, in the <code>private</code> methods.
+ 
+</p><p><b>Example</b>
+</p><p>Note how the class is <b>top-heavy with documentation</b>.
+
+<br></p><pre>
+<span class="keyword">import</span> java.time.LocalDate;
+<span class="keyword">import</span> java.time.LocalDateTime;
+
+<span class="comment">/**
+ Demo of short implementations for all public (or package-private) methods.
+ Simply call-forward to similarly named private methods to do the actual work. 
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Astronomy {
+
+  <span class="comment">/**
+   Find the eclipses that will occur at the given position on the Earth, between 
+   the two given dates (UTC). Both lunar and solar eclipses are returned.
+   
+   @param position location for which the eclipses are desired
+   @param from the start-date (inclusive, UTC).
+   @param to the end-date (inclusive, UTC).
+  */</span>
+  <span class="keyword">public</span> Ephemeris eclipses(Position position, LocalDate from, LocalDate to){
+    <span class="keyword">return</span> eclipsesCalc(position, from, to);
+  }
+  
+  <span class="comment">/**
+   Return an ephemeris for the Moon, for the given date-time (UTC).
+   
+   @param position can be null; if not null, then topocentric elements are also included 
+   in the returned ephemeris.
+  */</span>
+  <span class="keyword">public</span> Ephemeris moon(LocalDateTime utc, Position position){
+    <span class="keyword">return</span> moonCalc(utc);
+  }
+  
+  <span class="comment">/**
+   Return an ephemeris for the Sun, for the given date-time (UTC).
+  */</span>
+  <span class="keyword">public</span> Ephemeris sun(LocalDateTime utc){
+    <span class="keyword">return</span> sunCalc(utc);
+  }
+
+  <span class="comment">/**
+   A struct to carry data related to the position of a celestial object. 
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">class</span> Ephemeris {
+    <span class="comment">//.. elided 
+</span>  }  
+  
+  <span class="comment">/**
+   A struct to carry data related to the position on the surface of the Earth. 
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">class</span> Position {
+    <span class="comment">//.. elided 
+</span>  }
+
+  <span class="comment">//..elided
+</span>  
+  <span class="comment">// PRIVATE
+</span>  
+  <span class="keyword">private</span> Ephemeris eclipsesCalc(Position position, LocalDate from, LocalDate to){
+    Ephemeris result = <span class="keyword">new</span> Ephemeris();
+    <span class="comment">/*
+     * 
+     * 
+     * elided: long implementation 
+     * 
+     * 
+     */</span>
+    <span class="keyword">return</span> result;
+  }
+  
+  <span class="keyword">private</span> Ephemeris moonCalc(LocalDateTime to){
+    Ephemeris result = <span class="keyword">new</span> Ephemeris();
+    <span class="comment">/*
+     * 
+     * 
+     * 
+     * elided: long implementation
+     * 
+     *  
+     *  
+     */</span>
+    <span class="keyword">return</span> result;
+  }
+  
+  <span class="keyword">private</span> Ephemeris sunCalc(LocalDateTime to){
+    Ephemeris result = <span class="keyword">new</span> Ephemeris();
+    <span class="comment">/*
+     * 
+     * 
+     * 
+     * elided: long implementation
+     * 
+     *  
+     *  
+     */</span>
+    <span class="keyword">return</span> result;
+  }
+} 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActionff16.html?Id=58">Naming conventions</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=265 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

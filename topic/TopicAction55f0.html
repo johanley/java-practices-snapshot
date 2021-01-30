@@ -1,0 +1,492 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=135 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:49 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="ant,build,script,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Using Ant for build scripts</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Using Ant for build scripts</div>
+
+<br><a href="http://ant.apache.org/">Ant</a> is an excellent tool for creating build scripts.
+<p>Ant has these characteristics:
+</p><ul>
+<li>it's cross-platform, and implemented in Java</li>
+<li>it's fairly easy to learn and use</li>
+<li>it uses an XML file to define the steps of a build
+</li><li>like <a href="http://www.junit.org/">JUnit</a>, it has become
+part of the standard tool kit for many Java programmers</li>
+<li>it allows build scripts to be constructed fairly quickly and cleanly (but it does have some quirks)</li>
+</ul>
+<p>Every Java programmer should at least be familiar with Ant. 
+</p><p>Using Ant, a build file is made up of <em>tasks</em>, which perform operations commonly needed for 
+builds. The list of tasks is extensive:
+</p><ul>
+ <li>compile source files
+ </li><li>copy, rename, and delete files
+ </li><li>run unit tests
+ </li><li>create javadoc
+ </li><li>create jar and zip files
+ </li><li>send emails
+ </li><li>fetch source code from CVS or other source code management tools
+ </li><li>and many other tasks as well
+</li></ul>
+
+<h3>Example Build File</h3>
+
+Here's an example of an Ant build file:
+<pre style="font-size:75%;">
+&lt;project name="test-ant-builds" default='all' basedir="." &gt;
+  
+   &lt;description&gt;
+     Demonstrate the use of the Ant build tool with a simple Java project.
+   &lt;/description&gt;
+
+   &lt;!-- 
+    First define properties, datatypes, and default tasks; then define targets.
+    Any Ant tasks placed outside of any target are always executed first.
+   --&gt;  
+  
+  &lt;!-- Override default property values with an external properties file, if present. --&gt;
+  &lt;property file='build.properties'/&gt;
+
+  &lt;!-- Default property values, if not overridden elsewhere: --&gt;
+  &lt;property name='build' location='build' /&gt;
+  &lt;property name='app.version' value='1.0'/&gt;
+  &lt;property name='app.name' value='Example App'/&gt;
+  &lt;property name='distro-name' value='example-app-${app.version}'/&gt;
+  &lt;tstamp&gt;&lt;format property='build.time' pattern='yyyy-MM-dd HH:mm:ss'/&gt;&lt;/tstamp&gt;
+
+  &lt;path id='compile.classpath'&gt;
+    &lt;fileset dir='lib'&gt;
+       &lt;include name='*.jar'/&gt;
+    &lt;/fileset&gt;
+  &lt;/path&gt;
+
+  &lt;!-- Simply extends the compile.classpath with your own compiled classes. --&gt;
+  &lt;path id='run.classpath'&gt;
+    &lt;path refid='compile.classpath'/&gt;
+    &lt;path location='src'/&gt;
+  &lt;/path&gt;
+  
+  &lt;fileset id='class.files' dir='src'&gt;
+     &lt;include name='**/*.class'/&gt;
+  &lt;/fileset&gt;
+
+  &lt;fileset id='files.for.jar' dir='src'&gt;
+    &lt;exclude name='**/*.java'/&gt;
+    &lt;exclude name='**/doc-files/'/&gt;
+  &lt;/fileset&gt;
+  
+  &lt;fileset id='test.classes' dir='src'&gt;
+    &lt;include name='**/TEST*.java'/&gt;
+  &lt;/fileset&gt;
+
+  &lt;!-- Text files using Ant's '@' syntax are here called template files. --&gt;
+  &lt;fileset id='template.files' dir='.'&gt;
+    &lt;include name='**/*_template.*'/&gt;
+  &lt;/fileset&gt;
+
+  &lt;!-- Inspect the environment, to see if a deployment host is currently running. --&gt;
+  &lt;condition property='deployment.server.running' value='true' else='false'&gt; 
+     &lt;socket port='8081' server='127.0.0.1' /&gt;
+  &lt;/condition&gt;
+  
+  &lt;!-- A connection to this URL is used when building javadoc. --&gt;
+  &lt;condition property='jdk.javadoc.visible' value='true' else='false'&gt; 
+    &lt;http url='http://java.sun.com/javase/6/docs/api/' /&gt;
+  &lt;/condition&gt;
+  
+  &lt;echo&gt;
+    Application: ${app.name} ${app.version}
+    Build File : ${ant.file} 
+    Run Date   : ${build.time}
+    Run by     : ${user.name}
+    Build Dir  : ${build}
+    Base Dir   : ${basedir}
+    Java Home  : ${java.home}
+    Deployment host running: ${deployment.server.running}
+    Connected to the web   : ${jdk.javadoc.visible}
+  &lt;/echo&gt;
+    
+  &lt;echo message='Create build directory, and its subdirectories.'/&gt;
+  &lt;mkdir dir="${build}/javadoc"/&gt;
+  &lt;mkdir dir="${build}/dist"/&gt;
+  &lt;mkdir dir="${build}/templates"/&gt;
+
+  &lt;!-- Now define the targets, which use the properties and datatypes defined above. --&gt;
+
+   &lt;target name='clean' description="Delete all build artifacts." &gt;
+     &lt;delete dir='${build}'/&gt;
+     &lt;delete&gt;
+      &lt;fileset refid='class.files'/&gt;
+     &lt;/delete&gt;
+     &lt;mkdir dir="${build}/javadoc"/&gt;
+     &lt;mkdir dir="${build}/dist"/&gt;
+     &lt;mkdir dir="${build}/templates"/&gt;
+   &lt;/target&gt;
+  
+   &lt;target name='compile' description='Compile source files and place beside source.'&gt;
+     &lt;javac srcdir="src"&gt;   
+       &lt;classpath refid='compile.classpath'/&gt;
+     &lt;/javac&gt;
+     &lt;!-- Here's a simple way of debugging a path, fileset, or patternset, using its refid: --&gt;
+     &lt;echo&gt;Classpath: ${toString:compile.classpath}&lt;/echo&gt;
+   &lt;/target&gt; 
+  
+   &lt;target name='test' description='Run all JUnit tests.' depends='compile'&gt;
+     &lt;junit haltonfailure='false'&gt; 
+       &lt;classpath&gt;
+         &lt;pathelement location="src"/&gt;
+       &lt;/classpath&gt;
+       &lt;batchtest&gt;
+         &lt;fileset refid='test.classes'/&gt;
+       &lt;/batchtest&gt;
+       &lt;formatter type='brief' usefile='no'/&gt;
+     &lt;/junit&gt;
+   &lt;/target&gt;
+
+   &lt;target name='launch' description='Build and run the program.' depends='compile, test'&gt;
+     &lt;java classname='hirondelle.ante.Launcher' classpathref='run.classpath' failonerror='true'&gt;
+       &lt;arg value="Solar System"/&gt;
+     &lt;/java&gt;
+   &lt;/target&gt;
+  
+   &lt;target name='jar' description='Create a jar file for distribution.' depends='compile'&gt;
+    &lt;jar destfile='${build}/dist/${distro-name}.jar' manifest='MANIFEST.MF' duplicate='preserve'&gt;
+      &lt;fileset refid='files.for.jar'/&gt;
+      &lt;!-- The static manifest.mf file is merged with additional dynamic items, specified here : --&gt;
+      &lt;manifest&gt;
+        &lt;attribute name='Specification-Version' value='${app.version}'/&gt; 
+        &lt;attribute name='Specification-Title' value='${app.name}' /&gt;
+        &lt;attribute name='Implementation-Version' value='${app.version}'/&gt; 
+        &lt;attribute name='Implementation-Title' value='${app.name}' /&gt;
+      &lt;/manifest&gt;
+    &lt;/jar&gt;
+   &lt;/target&gt;
+  
+  &lt;target name='javadoc' description='Generate javadoc.' &gt;
+    &lt;javadoc  
+      use='true' author='true'  version='true'
+      overview='overview.html'  
+      access='package' 
+      sourcepath='src'
+      packagenames='*.*' 
+      destdir='${build}/javadoc'
+      windowtitle='${app.name} ${app.version}'
+      noqualifier='java.*:javax.*:com.sun.*'   
+      linksource='true'
+    &gt;
+      &lt;classpath refid='compile.classpath'/&gt;
+      &lt;link href='http://java.sun.com/javase/6/docs/api/'/&gt;      
+      &lt;header&gt;&lt;![CDATA[&lt;h1&gt;${app.name} ${app.version}&lt;/h1&gt;]]&gt;&lt;/header&gt;
+    &lt;/javadoc&gt;
+  &lt;/target&gt;
+  
+  &lt;target name='text-templates' description='Process template files, and assign values to @ variables.'&gt;
+    &lt;copy overwrite='true' todir='${build}/templates'&gt;
+      &lt;fileset refid='template.files'/&gt;       
+      &lt;!-- New files have 'template' removed from their name : --&gt;      
+      &lt;globmapper from='*_template.txt' to='*.txt'/&gt;
+      &lt;filterset&gt;
+        &lt;filter token='app.name' value='${app.name}'/&gt;
+        &lt;filter token='app.version' value='${app.version}'/&gt;
+        &lt;filter token='build.time' value='${build.time}'/&gt;
+      &lt;/filterset&gt;
+    &lt;/copy&gt;
+  &lt;/target&gt;
+  
+  &lt;target name='distro-binary' description='Create zip file with executable jar, docs.' depends='jar, javadoc, text-templates'&gt;
+    &lt;zip destfile='${build}/dist/${distro-name}-binary.zip' duplicate='preserve'&gt;
+      &lt;zipfileset dir='${build}/dist/' includes='${distro-name}.jar'/&gt;
+      &lt;zipfileset dir='${build}/javadoc' prefix='javadoc' /&gt;
+      &lt;zipfileset dir='${build}/templates' includes='README.txt'/&gt;
+    &lt;/zip&gt;
+  &lt;/target&gt;
+  
+  &lt;target name='distro-source' description='Create zip file with project source code.'&gt;
+    &lt;zip destfile='${build}/dist/${distro-name}-src.zip' duplicate='preserve' &gt;
+      &lt;!-- exclude items specific to the author's IDE setup: --&gt;
+      &lt;zipfileset dir='.' excludes='.classpath, .project'/&gt;
+    &lt;/zip&gt;
+  &lt;/target&gt;
+  
+  &lt;!-- Add mail.jar and activation.jar to your ANT_HOME/lib! --&gt;
+  &lt;!-- Please edit, using values appropriate to your environment. --&gt;
+  &lt;target name='email' &gt;
+    &lt;mail mailhost='smtp.blah.com' mailport='25' user='blah@blah.com'  
+       password='blah'  messageMimeType='text/html'
+       tolist='blah@whatever.com' from='blah@blah.com'  subject='Build completed.'
+     &gt;
+      &lt;message&gt;
+        &lt;![CDATA[ Test email. &lt;P&gt;&lt;a href='http://www.google.com'&gt;link&lt;/a&gt; ]]&gt;
+      &lt;/message&gt;
+    &lt;/mail&gt;
+  &lt;/target&gt;
+  
+  &lt;target name='all' description='Create all build artifacts.' 
+             depends='clean, compile, test, jar, javadoc, distro-binary, distro-source'&gt;
+    &lt;echo&gt;Finished creating all build artifacts.&lt;/echo&gt;
+  &lt;/target&gt;
+  
+&lt;/project&gt;
+</pre>
+
+Example of running the above build script:
+
+<pre style="font-size:75%;">
+C:\\johanley\\Projects\\ant-test&gt;ant -file build.xml all
+Buildfile: build.xml
+     [echo]
+     [echo]     Application: Example Appl  1.1
+     [echo]     Build File : C:\\johanley\\Projects\\ant-test\\build.xml
+     [echo]     Run Date   : 2010-07-21 19:14:11
+     [echo]     Run by     : John
+     [echo]     Build Dir  : C:\\@build
+     [echo]     Base Dir   : C:\\johanley\\Projects\\ant-test
+     [echo]     Java Home  : C:\\jdk1.5.0\\jre
+     [echo]     Deployment host running: true
+     [echo]     Connected to the web   : true
+     [echo]
+     [echo] Create build directory, and its subdirectories.
+    [mkdir] Created dir: C:\\@build\\javadoc
+    [mkdir] Created dir: C:\\@build\\dist
+    [mkdir] Created dir: C:\\@build\\templates
+
+clean:
+   [delete] Deleting directory C:\\@build
+   [delete] Deleting 3 files from C:\\johanley\\Projects\\ant-test\\src
+    [mkdir] Created dir: C:\\@build\\javadoc
+    [mkdir] Created dir: C:\\@build\\dist
+    [mkdir] Created dir: C:\\@build\\templates
+
+compile:
+    [javac] Compiling 5 source files
+     [echo] Classpath: C:\\johanley\\Projects\\ant-test\\lib\\junit.jar
+
+test:
+    [junit] Testsuite: hirondelle.ante.TESTLauncher
+    [junit] Tests run: 1, Failures: 0, Errors: 0, Time elapsed: 0 sec
+
+
+jar:
+      [jar] Building jar: C:\\@build\\dist\\example-app-1.1.jar
+
+javadoc:
+  [javadoc] Generating Javadoc
+  [javadoc] Javadoc execution
+  [javadoc] Loading source files for package hirondelle.ante...
+  [javadoc] Loading source files for package hirondelle.ante.deluvian...
+  [javadoc] Constructing Javadoc information...
+  [javadoc] Standard Doclet version 1.5.0_07
+  [javadoc] Building tree for all the packages and classes...
+  [javadoc] Generating C:\\@build\\javadoc\\hirondelle/ante/\\package-summary.html...
+  [javadoc] Copying file C:\\johanley\\Projects\\ant-test\\src\\hirondelle\\ante\\doc-files\\VersionHistory.html 
+            to directory C:\\@build\\javadoc\\hirondelle\\ante\\doc-files...
+  [javadoc] Building index for all the packages and classes...
+  [javadoc] Building index for all classes...
+
+text-templates:
+     [copy] Copying 1 file to C:\\@build\\templates
+
+distro-binary:
+      [zip] Building zip: C:\\@build\\dist\\example-app-1.1-binary.zip
+
+distro-source:
+      [zip] Building zip: C:\\@build\\dist\\example-app-1.1-src.zip
+
+all:
+     [echo] Finished creating all build artifacts.
+
+BUILD SUCCESSFUL
+Total time: 6 seconds
+</pre>
+
+<hr>
+
+For those already familiar with Ant, here are some reminders regarding its use.
+
+<h3>General</h3>
+<ul>
+ <li>tasks placed outside of a target will always be run. You can think of them as being 'global' in scope.
+ </li><li>many tasks are incremental <code>(&lt;javac&gt;</code>, for example), and inspect file timestamp information.
+ </li><li>more than a single target can be specified when calling Ant.
+ </li><li>file separators can go either way in a build file, \\ or /. Both are accepted.
+ </li><li>for booleans, <code>on/true/yes</code> means true, and all other values are false.
+ </li><li>sometimes a feature of Ant will not be available in an IDE.
+</li></ul>
+
+<h3>Datatypes</h3>
+<ul>
+ <li>usually Paths or Filesets
+ </li><li>can be declared within a task, or outside of a task
+ </li><li>the id's assigned to a datatype must be unique across all datatypes
+</li></ul>
+
+<h4>Paths</h4>
+<ul>
+ <li>similar to <code>PATH</code> and <code>CLASSPATH</code>
+ </li><li>ordered list of directories and files 
+ </li><li>can include Filesets
+ </li><li>many Path items include 'path' in their name, but some don't
+</li></ul>
+
+<h4>Filesets</h4>
+<ul>
+ <li>set of files rooted in a single directory.
+ </li><li>Ant doesn't guarantee the order in which files are processed.
+ </li><li>membership in a Fileset is done with a Selector, based on file name, size, last-modified date, 
+  file content, and so on.
+ </li><li>Filesets are resolved when the declaration is first evaluated. After that, they stay the same, while the 
+  content of the file system can change.
+</li></ul>
+
+<h4>Patternset</h4>
+<ul>
+ <li>just a list of file name patterns
+ </li><li>the Patternset doesn't contain files, just file name patterns
+ </li><li>usually embedded inside Filesets, but can be used as a datatype itself
+ </li><li><code>excludes</code> override <code>includes</code>
+ </li><li>a number of file types are excluded by default (CVS files, etc.)
+ </li><li>the <code>&lt;defaultexcludes&gt;</code> task controls the list of default excludes
+</li></ul>
+
+Patternsets use 4 special char's:
+<ul>
+ <li>* - 0..N characters
+ </li><li>? - single character
+ </li><li>** - used to signify all directories from that point down
+ </li><li>/ and \\ - path separators 
+</li></ul>
+
+<h4>Other datatypes</h4>
+<ul>
+ <li>Filelist - ordered list of files/directories, that may or may not exist.
+ </li><li>Dirset - directories only. Used only in javadoc task.
+ </li><li>Filterset - alter file content (version number, timestamp), during a copy or move. 
+  Uses '@' character to delimit text in 
+  the file that needs to be updated.
+ </li><li>FilterReader - again, alters file content. Can be chained together. 
+  Flavors: tabs-to-spaces, replace tokens, escape non-ASCII chars, etc.
+</li></ul>
+
+
+<h3>Properties</h3>
+
+Properties are immutable once set. 
+
+<h4>Sources of Properties</h4>
+<ul>
+ <li> <code>&lt;property&gt;</code> tasks
+ </li><li> properties files referenced by a <code>&lt;property&gt;</code> task
+ </li><li> <code>ANT_OPTS</code> environment variable
+ </li><li> command line arguments, <code>ant -Dx=y</code>, or <code>ant -propertfile blah.properties</code>. This style can never be overidden by other settings.
+</li></ul>
+
+
+<h4>Built-in Properties</h4>
+<ul>
+ <li>all JRE system properties (<code>user.name</code>, <code>user.home</code>, etc.)
+ </li><li><code>ant.project.name</code>
+ </li><li><code>ant.file</code>
+ </li><li><code>ant.home</code>
+ </li><li><code>ant.java.version</code>
+ </li><li><code>ant.version</code>
+ </li><li><code>basedir</code>
+</li></ul>
+
+<h4>Properties Files</h4>
+<ul>
+ <li>are typically used to avoid editing the build file itself.
+ </li><li>resolve the <code>${xyz}</code> syntax when used with <code>&lt;property&gt;</code>, but NOT when used with <code>-propertyfile</code> on the Ant command line.
+ </li><li>equate to using <code>&lt;property name='x' value='y'&gt;</code> since the <code>location</code> attribute isn't used, this isn't
+  recommended for files and directories, since this will not resolve relative references. 
+  If you do specify a location in a properties file, then it should be absolute, not relative. In addition, you'll
+  need to escape backslashes.
+</li></ul>
+
+Example 
+<pre>
+# example properties file
+app.version = 1.0
+
+# This style also works, and it's not sensitive to order 
+# of appearance in this file
+# Thus, the contents of this file is manipulated somewhat 
+# after being loaded.
+# This does NOT work when using 'ant -propertyfile'
+app.name = My Wonderful App ${app.version}
+
+# you need to escape backslashes
+build.dir = C:\\\\@build
+</pre>
+
+<h3>Reminders and Practices</h3>
+<ul>
+ <li>properties are immutable once set.
+ </li><li>command line arguments can never be overridden:  <code>ant -Dx=y</code>, or <code>ant -propertfile blah.properties</code>.
+ </li><li><code>ant -propertyfile blah.properties</code> doesn't resolve <code>${xyz}</code> style references within properties files.
+ </li><li><code>ant -projecthelp</code> lists all targets having a description. It also tests the general syntax of your build file.
+ </li><li>if you use a copy task with the <code>@</code> placeholder, ensure <code>overwrite='yes'</code>.
+ </li><li>when running programs with Ant, using <code>fork='true'</code> can often fix problems.
+ </li><li>a common convention for target names is to use dashes, as in <code>like-this</code>
+ </li><li>performing a clean before a build is often desirable. For important or official builds, it's essential.
+ </li><li>instead of setting properties in an init target, you can simply place them near the start of the build file, 
+  <em>outside</em> of any target. That will cause them to be executed for all targets anyway.
+ </li><li>consider adding a description to your project and its targets.
+ </li><li>for properties that represent a file or directory, use the <code>location</code> attribute, not <code>value</code>
+ </li><li>don't misuse <code>antcall</code>; to specify order, use the order of dependencies instead
+ </li><li>to avoid editing the build file itself, use properties files. Place <code>&lt;property file='build.properties'&gt;</code> in your build file, to let users easily override values.
+  The build file must work without the build.properties file being present.
+ </li><li>for tasks with many attributes, consider putting each attribute on a separate line
+ </li><li>PatternSets have a set of default file types to exclude; you can control it using the <code>&lt;defaultexcludes&gt;</code> task; you 
+    should usually only extend the default file types.
+ </li><li>if desired, use <code>&lt;property environment='env'/&gt;</code> to force ant properties and system properties into different namespaces.
+ </li><li>you usually want your source code management tool to ignore generated class files. 
+  CVS users can set a <code>$CVSIGNORE</code> environment variable, or place a <code>.cvsignore</code> file in their home directory.
+ </li><li>jar-ing files with <code>duplicate='preserve'</code> is usually desirable.
+</li></ul>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActiond5a5.html?Id=33">Use a testing framework (JUnit)</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=135 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:49 GMT -->
+</html>

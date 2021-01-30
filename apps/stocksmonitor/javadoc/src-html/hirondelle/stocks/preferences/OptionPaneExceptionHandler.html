@@ -1,0 +1,144 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/preferences/OptionPaneExceptionHandler.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:37 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+OptionPaneExceptionHandler.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.stocks.preferences;<a name=line.1></a>
+<a name=line.2></a>
+<span class='keyword'>import</span> java.util.logging.*;<a name=line.3></a>
+<span class='keyword'>import</span> javax.swing.JOptionPane;<a name=line.4></a>
+<span class='keyword'>import</span> java.awt.EventQueue;<a name=line.5></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Consts;<a name=line.6></a>
+<a name=line.7></a>
+<span class='comment'>/**<a name=line.8></a>
+* An implementation of a Java Logging API {@link Handler}<a name=line.9></a>
+* which displays a short message to the user using a &lt;tt&gt;JOptionPane&lt;/tt&gt;, and <a name=line.10></a>
+* is intended only for &lt;tt&gt;Level.SEVERE&lt;/tt&gt; messages.<a name=line.11></a>
+*<a name=line.12></a>
+* &lt;P&gt;The issue arises of how to inform the user in the case of a <a name=line.13></a>
+* &lt;tt&gt;Level.SEVERE&lt;/tt&gt; message : if all <a name=line.14></a>
+* &lt;tt&gt;Handler&lt;/tt&gt;s are purely textual, then in a graphical application it is <a name=line.15></a>
+* not uncommon for the user to be unaware of the problem, since the textual output  <a name=line.16></a>
+* is not necessarily visible. This &lt;tt&gt;Handler&lt;/tt&gt; addresses the issue by defining <a name=line.17></a>
+* a graphical logging &lt;tt&gt;Handler&lt;/tt&gt;, which will always get the user's attention <a name=line.18></a>
+* by using a visual pop-up message.<a name=line.19></a>
+* <a name=line.20></a>
+* &lt;P&gt;This &lt;tt&gt;Handler&lt;/tt&gt; is unusual for two reasons :<a name=line.21></a>
+* &lt;ul&gt;<a name=line.22></a>
+* &lt;li&gt; it is intended only for &lt;tt&gt;SEVERE&lt;/tt&gt; messages, so <a name=line.23></a>
+* that the user is never overloaded with too many pop-up messages.<a name=line.24></a>
+* &lt;li&gt;it is intended only for programmatic use, and should not appear in the <a name=line.25></a>
+* &lt;tt&gt;logging.properties&lt;/tt&gt; config file. <a name=line.26></a>
+*&lt;/ul&gt;<a name=line.27></a>
+*<a name=line.28></a>
+* &lt;P&gt;The content of the message is taken from <a name=line.29></a>
+* {@link LogRecord#getMessage}, which is usually a short piece <a name=line.30></a>
+* of text. The intent is that this &lt;tt&gt;Handler&lt;/tt&gt; present only the barest<a name=line.31></a>
+* facts, and that the user refer to other text-based &lt;tt&gt;Handler&lt;/tt&gt; tools <a name=line.32></a>
+* for further information.<a name=line.33></a>
+*<a name=line.34></a>
+* &lt;P&gt;This &lt;tt&gt;Handler&lt;/tt&gt; can be used both from the event dispatch thread, <a name=line.35></a>
+* and from any other thread. Thus, it may be used by any worker thread which <a name=line.36></a>
+* is experiencing difficulties.<a name=line.37></a>
+*<a name=line.38></a>
+* &lt;P&gt;Typically, this &lt;tt&gt;Handler&lt;/tt&gt; is attached to the root &lt;tt&gt;Logger&lt;/tt&gt;,<a name=line.39></a>
+* and is thus inherited by all all other &lt;tt&gt;Logger&lt;/tt&gt;s.<a name=line.40></a>
+*/</span><a name=line.41></a>
+<span class='keyword'>public</span> <span class='keyword'>final</span> <span class='keyword'>class</span> OptionPaneExceptionHandler <span class='keyword'>extends</span> Handler {<a name=line.42></a>
+<a name=line.43></a>
+  <span class='comment'>/*<a name=line.44></a>
+  * Implementation Note :<a name=line.45></a>
+  * A simple way to test the behavior of this class is <a name=line.46></a>
+  * to attempt a File-&gt;Import with corrupted data.<a name=line.47></a>
+  */</span><a name=line.48></a>
+  <a name=line.49></a>
+  <span class='comment'>/**<a name=line.50></a>
+  * Construct this &lt;tt&gt;Handler&lt;/tt&gt; with default settings.<a name=line.51></a>
+  *<a name=line.52></a>
+  * These defaults should not be changed :<a name=line.53></a>
+  *&lt;ul&gt;<a name=line.54></a>
+  * &lt;li&gt;&lt;tt&gt;Level&lt;/tt&gt; is set to &lt;tt&gt;SEVERE&lt;/tt&gt;<a name=line.55></a>
+  * &lt;li&gt;{@link Formatter} is set to a {@link SimpleFormatter}<a name=line.56></a>
+  *&lt;/ul&gt;<a name=line.57></a>
+  */</span><a name=line.58></a>
+  <span class='keyword'>public</span> OptionPaneExceptionHandler(){<a name=line.59></a>
+    setFormatter( <span class='keyword'>new</span> SimpleFormatter() );<a name=line.60></a>
+    setLevel(Level.SEVERE);<a name=line.61></a>
+  }<a name=line.62></a>
+<a name=line.63></a>
+  <span class='comment'>/** No-operation. */</span><a name=line.64></a>
+  <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> close() { }<a name=line.65></a>
+  <a name=line.66></a>
+  <span class='comment'>/** No-operation.  */</span><a name=line.67></a>
+  <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> flush() { }<a name=line.68></a>
+<a name=line.69></a>
+  <span class='comment'>/**<a name=line.70></a>
+  * If &lt;tt&gt;aLogRecord&lt;/tt&gt; satisfies {@link Handler#isLoggable},<a name=line.71></a>
+  * then a short message is displayed to the user using a &lt;tt&gt;JOptionPane&lt;/tt&gt;.<a name=line.72></a>
+  *<a name=line.73></a>
+  * &lt;P&gt;The message is presented in a modal dialog, and will grab the focus. <a name=line.74></a>
+  *<a name=line.75></a>
+  * &lt;P&gt; Warning : if a &lt;tt&gt;SEVERE&lt;/tt&gt; message is generated during startup, before <a name=line.76></a>
+  * the main window is displayed, then any pop-up message generated by this class will <a name=line.77></a>
+  * eventually be hidden behind the main window.<a name=line.78></a>
+  */</span><a name=line.79></a>
+  <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> publish(LogRecord aLogRecord) {<a name=line.80></a>
+    <span class='keyword'>if</span> ( ! isLoggable(aLogRecord) ) <span class='keyword'>return</span>;<a name=line.81></a>
+    <a name=line.82></a>
+    <span class='keyword'>if</span> (EventQueue.isDispatchThread()) {<a name=line.83></a>
+      showGui(aLogRecord);<a name=line.84></a>
+    }<a name=line.85></a>
+    <span class='keyword'>else</span> {<a name=line.86></a>
+      <span class='comment'>//using a SwingWorker would be a more modern style, but this still works fine too<a name=line.87></a>
+</span>      EventQueue.invokeLater( <span class='keyword'>new</span> Worker(aLogRecord) );<a name=line.88></a>
+    }<a name=line.89></a>
+  }<a name=line.90></a>
+<a name=line.91></a>
+  <span class='comment'>/**<a name=line.92></a>
+  * Add a &lt;tt&gt;OptionPaneExceptionHandler&lt;/tt&gt; to the root &lt;tt&gt;Logger&lt;/tt&gt;.<a name=line.93></a>
+  *<a name=line.94></a>
+  *&lt;P&gt;Typically, the &lt;tt&gt;Handler&lt;/tt&gt; attached to the root &lt;tt&gt;Logger&lt;/tt&gt; is <a name=line.95></a>
+  * inherited by all other &lt;tt&gt;Logger&lt;/tt&gt;s.<a name=line.96></a>
+  *<a name=line.97></a>
+  * &lt;P&gt;Called both upon startup and when refreshing the <a name=line.98></a>
+  * &lt;tt&gt;logging.properties&lt;/tt&gt; file. In the case of startup, it is best to <a name=line.99></a>
+  * call this method only after the main window is shown ; otherwise, it is likely that<a name=line.100></a>
+  * any startup error messages generated by this class will be hidden<a name=line.101></a>
+  * by the main window.<a name=line.102></a>
+  */</span><a name=line.103></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>void</span> attachToRootLogger(){<a name=line.104></a>
+    Handler handler =  <span class='keyword'>new</span> OptionPaneExceptionHandler();<a name=line.105></a>
+    Logger rootLogger = Logger.getLogger(Consts.EMPTY_STRING);<a name=line.106></a>
+    rootLogger.addHandler(handler);<a name=line.107></a>
+  }<a name=line.108></a>
+  <a name=line.109></a>
+  <span class='comment'>// PRIVATE<a name=line.110></a>
+</span>  <a name=line.111></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String TITLE = <span class='literal'>"Error Occured"</span>;<a name=line.112></a>
+  <a name=line.113></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> showGui(LogRecord aLogRecord){<a name=line.114></a>
+    String message = getFormatter().formatMessage(aLogRecord);<a name=line.115></a>
+    JOptionPane.showMessageDialog(<span class='keyword'>null</span>, message, TITLE, JOptionPane.ERROR_MESSAGE);<a name=line.116></a>
+  }<a name=line.117></a>
+  <a name=line.118></a>
+  <span class='keyword'>private</span> <span class='keyword'>class</span> Worker <span class='keyword'>implements</span> Runnable {<a name=line.119></a>
+    Worker(LogRecord aLogRecord){<a name=line.120></a>
+      fLogRecord = aLogRecord;<a name=line.121></a>
+    }<a name=line.122></a>
+    <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> run(){<a name=line.123></a>
+      showGui(fLogRecord);<a name=line.124></a>
+    }<a name=line.125></a>
+    <span class='keyword'>private</span> LogRecord fLogRecord;<a name=line.126></a>
+  }<a name=line.127></a>
+}<a name=line.128></a>
+ <a name=line.129></a>
+</PRE><a name=line.130></a>
+ </BODY><a name=line.131></a>
+<HTML><a name=line.132></a>

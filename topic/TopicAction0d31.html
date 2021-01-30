@@ -1,0 +1,453 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=6 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="invariant,validate,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Validate state with class invariants</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Validate state with class invariants</div>
+
+<br>Class invariants are methods which check the validity of an object's
+state (its data). The idea is to define validation methods for fields,
+and to perform these validations whenever the fields change. As usual,
+this should be done without repeating any code.
+
+<p>An object's state may become invalid for various reasons:
+
+</p><p><b>An invalid argument is passed by the caller.</b>
+<br>To ensure that the caller fulfills the requirements of a method or
+constructor, all <a href="TopicAction5d11.html?Id=5">arguments to non-private methods
+should be explicitly checked</a>. An exception should be thrown
+if a problem is detected. A special case is <a href="../home/HomeAction.html#Serialization">deserialization</a>,
+which should treat <code>readObject</code> like a constructor. (Assertions
+<a href="TopicActionbf65.html?Id=100">should not be used</a> for these types of checks.)
+
+</p><p><b>The implementation of the class is defective.</b>
+<br>As a defensive measure, a method which changes the state of an object
+can include an <a href="../home/HomeAction.html#Assertions">assertion</a> at
+its end, to check that the object has indeed remained in a valid state.
+Here, such assertions verify correctness of internal implementation details
+- they do not check arguments.
+
+</p><p><b>Example 1</b>
+
+</p><p><code>Resto</code> is an immutable <a href="TopicActiond08d.html?Id=187">Model Object</a>
+(MO). Its class invariant is defined by the <code>validateState</code> method.
+In this particular case, if validation fails a checked exception
+is thrown, and the end user is presented with their original input, along
+with associated error messages.
+
+</p><p>Such immutable classes represent the simplest case, since validation is performed only
+once, during construction (and deserialization, if necessary). 
+By definition, an <a href="TopicActiond838.html?Id=29">immutable object</a> cannot 
+change state after construction, so performing validations
+at other times in the object's life is never necessary.
+<br></p><pre>
+<span class="keyword">package</span> hirondelle.fish.main.resto;
+
+<span class="keyword">import</span> hirondelle.web4j.model.ModelCtorException;
+<span class="keyword">import</span> hirondelle.web4j.model.ModelUtil;
+<span class="keyword">import</span> hirondelle.web4j.model.Id;
+<span class="keyword">import</span> hirondelle.web4j.security.SafeText;
+<span class="keyword">import</span> hirondelle.web4j.model.Decimal;
+<span class="keyword">import</span> <span class="keyword">static</span> hirondelle.web4j.model.Decimal.ZERO;
+<span class="keyword">import</span> hirondelle.web4j.model.Check;
+<span class="keyword">import</span> hirondelle.web4j.model.Validator;
+<span class="keyword">import</span> <span class="keyword">static</span> hirondelle.web4j.util.Consts.FAILS;
+
+<span class="comment">/** Model Object for a Restaurant. */</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Resto {
+
+  <span class="comment">/**
+   Full constructor.
+    
+   @param aId underlying database internal identifier (optional) 1..50 characters
+   @param aName of the restaurant (required), 2..50 characters
+   @param aLocation street address of the restaurant (optional), 2..50 characters
+   @param aPrice of the fish and chips meal (optional) $0.00..$100.00
+   @param aComment on the restaurant in general (optional) 2..50 characters
+  */</span>
+  <span class="keyword">public</span> Resto(
+    Id aId, SafeText aName, SafeText aLocation, Decimal aPrice, SafeText aComment
+  ) <span class="keyword">throws</span> ModelCtorException {
+    fId = aId;
+    fName = aName;
+    fLocation = aLocation;
+    fPrice = aPrice;
+    fComment = aComment;
+    validateState();
+  }
+  
+  <span class="keyword">public</span> Id getId() { <span class="keyword">return</span> fId; }
+  <span class="keyword">public</span> SafeText getName() {  <span class="keyword">return</span> fName; }
+  <span class="keyword">public</span> SafeText getLocation() {  <span class="keyword">return</span> fLocation;  }
+  <span class="keyword">public</span> Decimal getPrice() { <span class="keyword">return</span> fPrice; }
+  <span class="keyword">public</span> SafeText getComment() {  <span class="keyword">return</span> fComment; }
+
+  <span class="keyword">@Override</span> <span class="keyword">public</span> String toString(){
+    <span class="keyword">return</span> ModelUtil.toStringFor(<span class="keyword">this</span>);
+  }
+  
+  <span class="keyword">@Override</span> <span class="keyword">public</span>  <span class="keyword">boolean</span> equals(Object aThat){
+    Boolean result = ModelUtil.quickEquals(<span class="keyword">this</span>, aThat);
+    <span class="keyword">if</span> (result ==  <span class="keyword">null</span>) {
+      Resto that = (Resto) aThat;
+      result = ModelUtil.equalsFor(
+        <span class="keyword">this</span>.getSignificantFields(), that.getSignificantFields()
+      );
+    }
+    <span class="keyword">return</span> result;
+  }
+  
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">int</span> hashCode(){
+    <span class="keyword">if</span> (fHashCode == <span class="literal">0</span>){
+      fHashCode = ModelUtil.hashCodeFor(getSignificantFields());
+    }
+    <span class="keyword">return</span> fHashCode;
+  }
+  
+  <span class="comment">// PRIVATE 
+</span>  <span class="keyword">private</span> <span class="keyword">final</span> Id fId;
+  <span class="keyword">private</span> <span class="keyword">final</span> SafeText fName;
+  <span class="keyword">private</span> <span class="keyword">final</span> SafeText fLocation;
+  <span class="keyword">private</span> <span class="keyword">final</span> Decimal fPrice;
+  <span class="keyword">private</span> <span class="keyword">final</span> SafeText fComment;
+  <span class="keyword">private</span> <span class="keyword">int</span> fHashCode;
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Decimal HUNDRED = Decimal.from(<span class="literal">"100"</span>);
+
+  <span class="keyword">private</span> <span class="keyword">void</span> validateState() <span class="keyword">throws</span> ModelCtorException {
+    ModelCtorException ex = <span class="keyword">new</span> ModelCtorException();
+    <span class="keyword">if</span> (FAILS == Check.optional(fId, Check.range(<span class="literal">1</span>,<span class="literal">50</span>))) {
+      ex.add(<span class="literal">"Id is optional, 1..50 chars."</span>);
+    }
+    <span class="keyword">if</span> (FAILS == Check.required(fName, Check.range(<span class="literal">2</span>,<span class="literal">50</span>))) {
+      ex.add(<span class="literal">"Restaurant Name is required, 2..50 chars."</span>);
+    }
+    <span class="keyword">if</span> (FAILS == Check.optional(fLocation, Check.range(<span class="literal">2</span>,<span class="literal">50</span>))) {
+      ex.add(<span class="literal">"Location is optional, 2..50 chars."</span>);
+    }
+    Validator[] priceChecks = {Check.range(ZERO, HUNDRED), Check.numDecimalsAlways(<span class="literal">2</span>)};
+    <span class="keyword">if</span> (FAILS == Check.optional(fPrice, priceChecks)) {
+      ex.add(<span class="literal">"Price is optional, 0.00 to 100.00."</span>);
+    }
+    <span class="keyword">if</span> (FAILS == Check.optional(fComment, Check.range(<span class="literal">2</span>,<span class="literal">50</span>))) {
+      ex.add(<span class="literal">"Comment is optional, 2..50 chars."</span>);
+    }
+    <span class="keyword">if</span> ( ! ex.isEmpty() ) <span class="keyword">throw</span> ex;
+  }
+  
+  <span class="keyword">private</span> Object[] getSignificantFields(){
+    <span class="keyword">return</span> <span class="keyword">new</span> Object[] {fName, fLocation, fPrice, fComment};
+  }
+}
+ 
+</pre>
+
+<br><b>Example 2</b>
+<p></p><p>Here's an example of a mutable, <code>Serializable</code> class which defines
+class invariants.
+</p><p>Items to note:
+</p><ul>
+<li>the assertion at the end of the <code>close</code> method</li>
+<li>the call to <code>validateState</code> at the end of the <code>readObject</code> method</li>
+<li>the implementation is significantly more complex, since the class is mutable</li>
+</ul>
+<br><pre>
+<span class="keyword">import</span> java.text.StringCharacterIterator;
+<span class="keyword">import</span> java.io.*;
+
+<span class="comment">/**
+* In this style of implementation, both the entire state of the object
+* and its individual fields are validated without duplicating any code.
+*
+* Argument validation usually has if's and thrown exceptions at the
+* start of a method. Here, these are replaced with a simple
+* call to validateXXX. Validation is separated cleanly from the
+* regular path of execution, improving legibility.
+* JDK 7+.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> BankAccount <span class="keyword">implements</span> Serializable {
+
+   <span class="comment">/**
+   * @param firstName contains only letters, spaces, and apostrophes.
+   * @param lastName contains only letters, spaces, and apostrophes.
+   * @param accountNumber is non-negative.
+   *
+   * @throws IllegalArgumentException if any param does not comply.
+   */</span>
+   <span class="keyword">public</span> BankAccount(String firstName, String lastName, <span class="keyword">int</span> accountNumber) {
+      <span class="comment">//don't call an overridable method in a constructor
+</span>      setFirstName(firstName);
+      setLastName(lastName);
+      setAccountNumber(accountNumber);
+   }
+
+   <span class="comment">/**
+   * All "secondary" constructors call the "primary" constructor, such that
+   * validations are always performed.
+   */</span>
+   <span class="keyword">public</span> BankAccount() {
+      <span class="keyword">this</span>(<span class="literal">"FirstName"</span>, <span class="literal">"LastName"</span>, <span class="literal">0</span>);
+   }
+
+   <span class="keyword">public</span> String getFirstName() {
+     <span class="keyword">return</span> firstName;
+   }
+
+   <span class="keyword">public</span> String getLastName(){
+    <span class="keyword">return</span> lastName;
+   }
+
+   <span class="keyword">public</span> <span class="keyword">int</span> getAccountNumber() {
+    <span class="keyword">return</span> accountNumber;
+   }
+
+   <span class="comment">/**
+   * This method changes state internally, and may use an assert to
+   * implement a post-condition on the object's state.
+   */</span>
+   <span class="keyword">public</span> <span class="keyword">void</span> close(){
+     <span class="comment">//valid:
+</span>     accountNumber = <span class="literal">0</span>;
+
+     <span class="comment">//this invalid value will fire the assertion:
+</span>     <span class="comment">//fAccountNumber = -2;
+</span>
+     assert hasValidState(): <span class="keyword">this</span>;
+   }
+
+   <span class="comment">/**
+   * Names must contain only letters, spaces, and apostrophes.
+   *
+   * @throws IllegalArgumentException if any param does not comply.
+   */</span>
+   <span class="keyword">public</span> <span class="keyword">void</span> setFirstName(String newFirstName) {
+      validateName(newFirstName);
+      <span class="keyword">this</span>.firstName = newFirstName;
+   }
+
+   <span class="comment">/**
+   * Names must contain only letters, spaces, and apostrophes.
+   *
+   * @throws IllegalArgumentException if any param does not comply.
+   */</span>
+   <span class="keyword">public</span> <span class="keyword">void</span> setLastName (String newLastName) {
+      validateName(newLastName);
+      <span class="keyword">this</span>.lastName = newLastName;
+   }
+
+   <span class="comment">/**
+   * AccountNumber must be non-negative.
+   *
+   * @throws IllegalArgumentException if any param does not comply.
+   */</span>
+   <span class="keyword">public</span> <span class="keyword">void</span> setAccountNumber(<span class="keyword">int</span> newAccountNumber) {
+      validateAccountNumber(newAccountNumber);
+      <span class="keyword">this</span>.accountNumber = newAccountNumber;
+   }
+
+   <span class="comment">/**
+   * Can be used to easily pass object description to an assertion,
+   * using a "this" reference.
+   */</span>
+   <span class="keyword">public</span> String toString(){
+     <span class="keyword">final</span> StringBuilder result = <span class="keyword">new</span> StringBuilder();
+     <span class="keyword">final</span> String SPACE = <span class="literal">" "</span>;
+     result.append(firstName);
+     result.append(SPACE);
+     result.append(lastName);
+     result.append(SPACE);
+     result.append(accountNumber);
+     <span class="keyword">return</span> result.toString();
+   }
+
+   <span class="comment">// PRIVATE
+</span>
+   <span class="keyword">private</span> String firstName;
+   <span class="keyword">private</span> String lastName;
+   <span class="keyword">private</span> <span class="keyword">int</span> accountNumber;
+
+   <span class="comment">/**
+   * Verify that all fields of this object take permissible values; that is,
+   * this method defines the class invariant.
+   *
+   * Call after deserialization.
+   * @throws IllegalArgumentException if any field takes an unpermitted value.
+   */</span>
+   <span class="keyword">private</span> <span class="keyword">void</span> validateState() {
+      validateAccountNumber(accountNumber);
+      validateName(firstName);
+      validateName(lastName);
+   }
+
+   <span class="comment">/**
+   * Return true if &lt;code&gt;validateState&lt;/code&gt; does not throw
+   * an IllegalArgumentException, otherwise return false.
+   *
+   * Call at the end of any public method which has changed
+   * state (any "mutator" method). This is usually done in
+   * an assertion, since it corresponds to a post-condition.
+   * For example,
+   * &lt;pre&gt;
+   * assert hasValidState() : this;
+   * &lt;/pre&gt;
+   * This method is provided since &lt;code&gt;validateState&lt;/code&gt; cannot be used
+   * in an assertion.
+   */</span>
+   <span class="keyword">private</span> <span class="keyword">boolean</span> hasValidState() {
+     <span class="keyword">boolean</span> result = <span class="keyword">true</span>;
+     <span class="keyword">try</span> {
+       validateState();
+     }
+     <span class="keyword">catch</span> (IllegalArgumentException ex){
+       result = <span class="keyword">false</span>;
+     }
+     <span class="keyword">return</span> result;
+   }
+
+   <span class="comment">/**
+   * Ensure names contain only letters, spaces, and apostrophes.
+   *
+   * @throws IllegalArgumentException if argument does not comply.
+   */</span>
+   <span class="keyword">private</span> <span class="keyword">void</span> validateName(String name){
+     <span class="keyword">boolean</span> nameHasContent = (name != <span class="keyword">null</span>) &amp;&amp; (!name.equals(<span class="literal">""</span>));
+     <span class="keyword">if</span> (!nameHasContent){
+       <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="literal">"Names must be non-null and non-empty."</span>);
+     }
+     StringCharacterIterator iterator = <span class="keyword">new</span> StringCharacterIterator(name);
+     <span class="keyword">char</span> character =  iterator.current();
+     <span class="keyword">while</span> (character != StringCharacterIterator.DONE ){
+       <span class="keyword">boolean</span> isValidChar = (Character.isLetter(character)
+                             || Character.isSpaceChar(character)
+                             || character ==<span class="literal">'\''</span>);
+       <span class="keyword">if</span> (isValidChar) {
+         <span class="comment">//do nothing
+</span>       }
+       <span class="keyword">else</span> {
+         String message = <span class="literal">"Names can contain only letters, spaces, and apostrophes."</span>;
+         <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(message);
+       }
+       character = iterator.next();
+     }
+  }
+
+  <span class="comment">/**
+  * AccountNumber must be non-negative.
+  *
+  * @throws IllegalArgumentException if argument does not comply.
+  */</span>
+   <span class="keyword">private</span> <span class="keyword">void</span> validateAccountNumber(<span class="keyword">int</span> accountNumber){
+      <span class="keyword">if</span> (accountNumber &lt; <span class="literal">0</span>) {
+        String message = <span class="literal">"Account Number must be greater than or equal to 0."</span>;
+        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(message);
+      }
+   }
+
+   <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">long</span> serialVersionUID = <span class="literal">7526472295622776147L</span>;
+
+   <span class="comment">/**
+   * Always treat de-serialization as a full-blown constructor, by
+   * validating the final state of the de-serialized object.
+   */</span>
+   <span class="keyword">private</span> <span class="keyword">void</span> readObject(ObjectInputStream inputStream)
+                                <span class="keyword">throws</span> ClassNotFoundException, IOException {
+     <span class="comment">//always perform the default de-serialization first
+</span>     inputStream.defaultReadObject();
+
+     <span class="comment">//ensure that object state has not been corrupted or
+</span>     <span class="comment">//tampered with maliciously
+</span>     validateState();
+  }
+
+  <span class="comment">/** Test harness.  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main (String... args) {
+    BankAccount account = <span class="keyword">new</span> BankAccount(<span class="literal">"Joe"</span>, <span class="literal">"Strummer"</span>, <span class="literal">532</span>);
+    <span class="comment">//exercise specific validations.
+</span>    account.setFirstName(<span class="literal">"John"</span>);
+    account.setAccountNumber(<span class="literal">987</span>);
+    <span class="comment">//exercise the post-condition assertion
+</span>    <span class="comment">//requires enabled assertions: "java -ea"
+</span>    account.close();
+
+    <span class="comment">//exercise the serialization
+</span>    <span class="keyword">try</span> (
+      OutputStream file = <span class="keyword">new</span> FileOutputStream(<span class="literal">"account.ser"</span>);
+      OutputStream buffer = <span class="keyword">new</span> BufferedOutputStream(file);
+      ObjectOutput output = <span class="keyword">new</span> ObjectOutputStream(buffer);
+    ){
+      output.writeObject(account);
+    }
+    <span class="keyword">catch</span>(IOException exception){
+      System.err.println(exception);
+    }
+
+    <span class="comment">//exercise the deserialization
+</span>    <span class="keyword">try</span> (
+      InputStream file = <span class="keyword">new</span> FileInputStream(<span class="literal">"account.ser"</span>);
+      InputStream buffer = <span class="keyword">new</span> BufferedInputStream(file);
+      ObjectInput input = <span class="keyword">new</span> ObjectInputStream(buffer);
+    ){
+      BankAccount recoveredAccount = (BankAccount)input.readObject();
+      System.out.println(<span class="literal">"Recovered account: "</span> + recoveredAccount);
+    }
+    <span class="keyword">catch</span>(IOException | ClassNotFoundException exception ){
+      System.err.println(exception);
+    }
+  }
+} 
+</pre>
+
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction5d11.html?Id=5">Validate method arguments</a> <br>
+  <a href="TopicActiond838.html?Id=29">Immutable objects</a> <br>
+  <a href="TopicActionb750.html?Id=45">Implementing Serializable</a> <br>
+  <a href="TopicActionc981.html?Id=64">Conditional compile</a> <br>
+  <a href="TopicActionbf65.html?Id=100">Assert is for private arguments only</a> <br>
+  <a href="TopicActionfbf8.html?Id=102">Assert use cases</a> <br>
+  <a href="TopicActiond08d.html?Id=187">Model Objects</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=6 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

@@ -1,0 +1,137 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=203 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Beware multilingual submit buttons</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Beware multilingual submit buttons</div>
+
+<br>When multiple&nbsp;<code>SUBMIT</code> controls are used in an HTML form,
+it's natural to use this style:
+<p><code>&lt;input type='submit' name='operation' value='Add'&gt;
+<br>&lt;input type='submit' name='operation' value='Change'&gt;
+<br>&lt;input type='submit' name='operation' value='Delete'&gt;</code>
+</p><p>Here, the server detects the desired operation by simply examining the
+value of the&nbsp;<code>operation</code> parameter.
+</p><p>However, this style doesn't work well when the application is multilingual,
+since the&nbsp;<code>value</code> attribute varies according to language.
+</p><p>A simple workaround for this problem is to use a different name for
+each&nbsp;<code>SUBMIT</code> control:
+</p><p><code>&lt;input type='submit' name='operation_Add' value='Add'&gt;
+<br>&lt;input type='submit' name='operation_Change' value='Change'&gt;
+<br>&lt;input type='submit' name='operation_Delete' value='Delete'&gt;</code>
+</p><p>Here, the server will detect the desired operation by looking for the
+<i>presence</i> of certain parameter names, and not by examining the value
+of a single&nbsp;<code>operation</code> parameter.
+</p><p>An application might define a naming convention to ease the extraction
+of the desired operation. Here's an example method where request parameters
+whose names start with&nbsp;<code>operation_</code> are treated as operation
+indicators. This method may be placed in a base action class, or in a utility
+class:
+<br></p><pre>
+<span class="keyword">import</span> java.util.*;
+<span class="keyword">import</span> javax.servlet.http.HttpServletRequest;
+<span class="keyword">import</span> java.util.logging.*;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> SubmitOperation {
+
+ <span class="comment">/**
+  * Determine the desired operation.
+  *
+  * Returns the name of the single submitted operation_X parameter, without
+  * the leading 'operation_'. For example, if a single parameter named
+  * operation_Add is present in aRequest, then this method will return
+  * 'Add'.
+  *
+  * This method depends on two conventions :
+  * &lt;ul&gt;
+  * &lt;li&gt;a naming convention, whereby the names of request parameters which
+  * denote an operation are in the style : 'operation_blah', 'operation_XYZ',
+  * and so on. That is, the parameter name starts with 'operation_'
+  * &lt;li&gt;at most one operation_X parameter can appear in aRequest
+  * (it may have none; in that case this method will return null).
+  * &lt;/ul&gt;
+  *
+  * This method is needed only when the app is multilingual, and
+  * multiple SUBMIT buttons appear on a single page.
+  */</span>
+  String getOperation(HttpServletRequest request){
+    String result = <span class="keyword">null</span>;
+    String OPERATION = <span class="literal">"operation_"</span>;
+    List&lt;String&gt; operationParamNames = <span class="keyword">new</span> ArrayList&lt;&gt;();
+    Enumeration&lt;String&gt; allParamNamesEnum = (Enumeration&lt;String&gt;)request.getParameterNames();
+    <span class="keyword">while</span> (allParamNamesEnum.hasMoreElements()) {
+      String paramName = allParamNamesEnum.nextElement();
+      <span class="keyword">if</span> (paramName.startsWith(OPERATION)) {
+        operationParamNames.add(paramName);
+      }
+    }
+    <span class="keyword">if</span> (! operationParamNames.isEmpty()) {
+      <span class="keyword">if</span> (operationParamNames.size() &gt; <span class="literal">1</span>) {
+        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(
+          <span class="literal">"Expecting at most one parameter starting with '"</span> + OPERATION +
+          <span class="literal">"'. Actually found : "</span> + operationParamNames
+        );
+      }
+      String operationParamName = operationParamNames.get(<span class="literal">0</span>);
+      result = operationParamName.substring(OPERATION.length());
+    }
+    logger.fine(<span class="literal">"Operation : "</span> + result);
+    <span class="keyword">return</span> result;
+  }
+
+  <span class="comment">// PRIVATE 
+</span>  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Logger logger = Logger.getLogger(
+    SubmitOperation.<span class="keyword">class</span>.getName()
+  );
+} 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction5422.html?Id=218">Understand details of FORM tags</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=203 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

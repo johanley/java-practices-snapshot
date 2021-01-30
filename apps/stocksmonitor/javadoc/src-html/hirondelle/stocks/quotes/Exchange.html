@@ -1,0 +1,194 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/quotes/Exchange.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+Exchange.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.stocks.quotes;<a name=line.1></a>
+<a name=line.2></a>
+<span class='keyword'>import</span> java.util.*;<a name=line.3></a>
+<span class='keyword'>import</span> java.io.*;<a name=line.4></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Consts;<a name=line.5></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.FileUtil;<a name=line.6></a>
+ <a name=line.7></a>
+<span class='comment'>/** <a name=line.8></a>
+* Enumeration for all exchanges used by the Yahoo quote system.<a name=line.9></a>
+* <a name=line.10></a>
+* &lt;P&gt;Warning: this is an example of an older-style enumeration. A more modern style <a name=line.11></a>
+* would use an 'enum', instead of a class.<a name=line.12></a>
+* <a name=line.13></a>
+* &lt;P&gt;The full name of the &lt;tt&gt;Exchange&lt;/tt&gt; is used as an identifier. All other items<a name=line.14></a>
+* are attached to the full name.<a name=line.15></a>
+*<a name=line.16></a>
+* &lt;P&gt; This type-safe enumeration is unusual in that each element is not <a name=line.17></a>
+* declared or exported individually; rather, the {@link #VALUES} field includes <a name=line.18></a>
+* all elements in one &lt;tt&gt;Collection&lt;/tt&gt;. Thus, the caller cannot refer to <a name=line.19></a>
+* specific &lt;tt&gt;Exchange&lt;/tt&gt; objects. <a name=line.20></a>
+*/</span><a name=line.21></a>
+<span class='keyword'>public</span> <span class='keyword'>final</span> <span class='keyword'>class</span> Exchange <span class='keyword'>implements</span> Comparable&lt;Exchange&gt; { <a name=line.22></a>
+  <a name=line.23></a>
+  <span class='comment'>/*<a name=line.24></a>
+  * Implementation Note:<a name=line.25></a>
+  * This class is unusual in that its data is read in from an associated text file, <a name=line.26></a>
+  * which is placed in the same directory as this class. This text file must be available <a name=line.27></a>
+  * at runtime. The text file is read when this class is loaded.<a name=line.28></a>
+  *<a name=line.29></a>
+  * The format of the text file is shown by these example lines:<a name=line.30></a>
+  * # Blah comment<a name=line.31></a>
+  * NYSE Stock Exchanges  (NYS) N/A<a name=line.32></a>
+  * Amsterdam Stock Exchange  (AEX) .AS<a name=line.33></a>
+  * ..etc<a name=line.34></a>
+  * <a name=line.35></a>
+  * This class is not implemented as an enum class, since it relies on an <a name=line.36></a>
+  * underlying file for its data, and cannot declare enumeration members in the <a name=line.37></a>
+  * usual way.<a name=line.38></a>
+  */</span><a name=line.39></a>
+  <a name=line.40></a>
+  <span class='comment'>/**<a name=line.41></a>
+  * Return the suffix representing the &lt;tt&gt;Exchange&lt;/tt&gt; (excluding dot). <a name=line.42></a>
+  * <a name=line.43></a>
+  * &lt;P&gt;These suffixes are defined by Yahoo, and are appended to tickers in order <a name=line.44></a>
+  * to provide an exact identification of a traded entity. For example, the Toronto <a name=line.45></a>
+  * Stock Exchange is assigned the TO suffix. Yahoo will append .TO to all <a name=line.46></a>
+  * tickers defined by the Toronto Stock Exchange.<a name=line.47></a>
+  *<a name=line.48></a>
+  * &lt;P&gt;In this system, some exchanges (for example, the NYSE) do not have <a name=line.49></a>
+  * a suffix. In this case, an empty &lt;tt&gt;String&lt;/tt&gt; is returned.<a name=line.50></a>
+  *<a name=line.51></a>
+  * &lt;P&gt;The suffix is not intended for display to the end user; rather, these <a name=line.52></a>
+  * suffixes should be an internal detail hidden from them.<a name=line.53></a>
+  */</span>  <a name=line.54></a>
+  <span class='keyword'>public</span> String getTickerSuffix(){<a name=line.55></a>
+    <span class='keyword'>return</span> fTickerSuffix;<a name=line.56></a>
+  }<a name=line.57></a>
+<a name=line.58></a>
+  <span class='comment'>/**<a name=line.59></a>
+  * Return the full name of this &lt;tt&gt;Exchange&lt;/tt&gt;, suitable for presentation to the <a name=line.60></a>
+  * end user.<a name=line.61></a>
+  *<a name=line.62></a>
+  * &lt;P&gt;The suffix is not included in the return value.<a name=line.63></a>
+  */</span><a name=line.64></a>
+  <span class='keyword'>@Override</span> <span class='keyword'>public</span> String toString() { <a name=line.65></a>
+    <span class='keyword'>return</span> fName;  <a name=line.66></a>
+  } <a name=line.67></a>
+<a name=line.68></a>
+  <span class='comment'>/** <a name=line.69></a>
+  * Convert &lt;tt&gt;aText&lt;/tt&gt; into its corresponding &lt;tt&gt;Exchange&lt;/tt&gt; object, <a name=line.70></a>
+  * if possible.<a name=line.71></a>
+  *<a name=line.72></a>
+  * @param aText possibly-null text which may map to an Exchange.<a name=line.73></a>
+  * @return null if &lt;tt&gt;aText&lt;/tt&gt; is null, else try to<a name=line.74></a>
+  * match to the &lt;tt&gt;Exchange&lt;/tt&gt; whose {@link #toString} equals &lt;tt&gt;aText&lt;/tt&gt;.<a name=line.75></a>
+  * @throws IllegalArgumentException if a non-null &lt;tt&gt;aText&lt;/tt&gt;<a name=line.76></a>
+  * cannot be matched to a known enumeration element.<a name=line.77></a>
+  */</span><a name=line.78></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> Exchange valueFrom(String aText) { <a name=line.79></a>
+    <span class='keyword'>if</span> (aText == <span class='keyword'>null</span>) <span class='keyword'>return</span> <span class='keyword'>null</span>; <a name=line.80></a>
+    <a name=line.81></a>
+    <span class='keyword'>for</span>(Exchange exchange : VALUES){<a name=line.82></a>
+      <span class='keyword'>if</span> ( aText.equals( exchange.toString() ) ) { <a name=line.83></a>
+        <span class='keyword'>return</span> exchange; <a name=line.84></a>
+      } <a name=line.85></a>
+    }<a name=line.86></a>
+    <span class='keyword'>throw</span> <span class='keyword'>new</span> IllegalArgumentException(<span class='literal'>"Cannot parse into Exchange object:"</span> + aText); <a name=line.87></a>
+  } <a name=line.88></a>
+<a name=line.89></a>
+  <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>int</span> compareTo(Exchange that) {<a name=line.90></a>
+    <span class='keyword'>return</span> fOrdinal - that.fOrdinal;<a name=line.91></a>
+  }  <a name=line.92></a>
+  <a name=line.93></a>
+  <span class='keyword'>private</span> <span class='keyword'>final</span> String fName;<a name=line.94></a>
+  <span class='keyword'>private</span> <span class='keyword'>final</span> String fTickerSuffix;<a name=line.95></a>
+<a name=line.96></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>int</span> fNextOrdinal = <span class='literal'>0</span>;<a name=line.97></a>
+  <span class='keyword'>private</span> <span class='keyword'>final</span> <span class='keyword'>int</span> fOrdinal = fNextOrdinal++;<a name=line.98></a>
+  <a name=line.99></a>
+  <span class='comment'>/** Text file name */</span><a name=line.100></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String TEXT_FILE_NAME = <span class='literal'>"exchanges.txt"</span>;<a name=line.101></a>
+<a name=line.102></a>
+  <span class='comment'>/**<a name=line.103></a>
+  * The text file resource uses this char to denote comment lines.<a name=line.104></a>
+  */</span><a name=line.105></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String COMMENT_CHAR = <span class='literal'>"#"</span>;<a name=line.106></a>
+  <a name=line.107></a>
+  <span class='comment'>/**<a name=line.108></a>
+  * The text file resource uses this String to denote absent data.<a name=line.109></a>
+  * For example, the NYSE has no associated suffix, whose absence is <a name=line.110></a>
+  * denoted by this String.<a name=line.111></a>
+  */</span><a name=line.112></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String NOT_AVAILABLE = <span class='literal'>"N/A"</span>;<a name=line.113></a>
+  <a name=line.114></a>
+  <span class='comment'>/**<a name=line.115></a>
+  * Populated when this class is loaded, this field contains the <a name=line.116></a>
+  * parsed result of reading in the text resource file.<a name=line.117></a>
+  */</span><a name=line.118></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> List&lt;Exchange&gt; fValues;<a name=line.119></a>
+  <a name=line.120></a>
+  <span class='comment'>/**<a name=line.121></a>
+  * Private constructor is needed to disallow the caller from constructing <a name=line.122></a>
+  * these objects.<a name=line.123></a>
+  */</span><a name=line.124></a>
+  <span class='keyword'>private</span> Exchange (String aName, String aTickerSuffix) { <a name=line.125></a>
+    fName = aName;<a name=line.126></a>
+    fTickerSuffix = aTickerSuffix;<a name=line.127></a>
+  }<a name=line.128></a>
+<a name=line.129></a>
+  <span class='comment'>/**<a name=line.130></a>
+  * Parse the text resource file and store the result in a field.<a name=line.131></a>
+  */</span><a name=line.132></a>
+  <span class='keyword'>static</span> {<a name=line.133></a>
+    fValues = <span class='keyword'>new</span> ArrayList&lt;&gt;();<a name=line.134></a>
+    parseExchangesFromTextFile();<a name=line.135></a>
+  }<a name=line.136></a>
+<a name=line.137></a>
+  <span class='comment'>/**<a name=line.138></a>
+  * Parse each line not starting with a fCOMMENT_CHAR into an Exchange object.<a name=line.139></a>
+  * Add each Exchange object to fValues, in the same order as in the text file.<a name=line.140></a>
+  */</span><a name=line.141></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>void</span> parseExchangesFromTextFile() {<a name=line.142></a>
+    List&lt;String&gt; exchangesText = FileUtil.asLines(TEXT_FILE_NAME, Exchange.<span class='keyword'>class</span>);<a name=line.143></a>
+    <span class='keyword'>for</span>(String line: exchangesText){<a name=line.144></a>
+      <span class='keyword'>if</span> ( ! line.startsWith(COMMENT_CHAR) ){<a name=line.145></a>
+        parseExchange(line);<a name=line.146></a>
+      }<a name=line.147></a>
+    }<a name=line.148></a>
+  }<a name=line.149></a>
+<a name=line.150></a>
+  <span class='keyword'>static</span> <span class='keyword'>private</span> <span class='keyword'>void</span> parseExchange(String aLine){<a name=line.151></a>
+    StringTokenizer parser = <span class='keyword'>new</span> StringTokenizer(aLine, Consts.TAB);<a name=line.152></a>
+    String fullName = parser.nextToken();<a name=line.153></a>
+    <span class='comment'>//ignore the abbreviation:<a name=line.154></a>
+</span>    parser.nextToken();<a name=line.155></a>
+    String suffix = getSuffix( parser.nextToken() );<a name=line.156></a>
+    Exchange exchange = <span class='keyword'>new</span> Exchange(fullName, suffix);<a name=line.157></a>
+    fValues.add(exchange);<a name=line.158></a>
+  }<a name=line.159></a>
+  <a name=line.160></a>
+  <span class='keyword'>static</span> <span class='keyword'>private</span> String getSuffix(String aRawSuffix){<a name=line.161></a>
+    <span class='keyword'>if</span> ( aRawSuffix.equals(NOT_AVAILABLE) ) {<a name=line.162></a>
+      <span class='keyword'>return</span> Consts.EMPTY_STRING;<a name=line.163></a>
+    }<a name=line.164></a>
+    <span class='keyword'>else</span> {<a name=line.165></a>
+      <span class='keyword'>return</span> removeLeadingDot(aRawSuffix);<a name=line.166></a>
+    }<a name=line.167></a>
+  }<a name=line.168></a>
+  <a name=line.169></a>
+  <span class='keyword'>static</span> <span class='keyword'>private</span> String removeLeadingDot(String aRawSuffix){<a name=line.170></a>
+    <span class='keyword'>return</span> aRawSuffix.substring(<span class='literal'>1</span>);<a name=line.171></a>
+  }<a name=line.172></a>
+<a name=line.173></a>
+  <span class='comment'>/**<a name=line.174></a>
+  * Allows caller to iterate over all elements of the enumeration.<a name=line.175></a>
+  */</span><a name=line.176></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> List&lt;Exchange&gt; VALUES = Collections.unmodifiableList(fValues);<a name=line.177></a>
+}<a name=line.178></a>
+ <a name=line.179></a>
+</PRE><a name=line.180></a>
+ </BODY><a name=line.181></a>
+<HTML><a name=line.182></a>

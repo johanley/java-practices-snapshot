@@ -1,0 +1,83 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=213 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Beware of floating point numbers</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Beware of floating point numbers</div>
+
+<br>Outside of a scientific or engineering context, the use of <code>float</code> and <code>double</code> (and 
+the corresponding wrapper classes 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Float.html">Float</a></code> and 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Double.html">Double</a></code>) 
+should likely be avoided. The fundamental problem is that rounding errors will always occur when using these data types - 
+they are unavoidable.
+
+<p>In a typical business application, using <code>float</code> and <code>double</code> to represent money values is 
+dangerous, because of these rounding issues. Instead, 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/math/BigDecimal.html">BigDecimal</a></code> 
+should usually be used to <a href="TopicAction583d.html?Id=13">represent money</a>.
+
+</p><p>From an IBM article on this topic:
+
+</p><p><span class="highlight">"...binary floating-point arithmetic should not be used for financial, commercial, 
+and user-centric applications or web services because the decimal data used 
+in these applications cannot be represented exactly using binary floating-point."</span>
+
+
+</p><p>From an <a href="https://www.ibm.com/developerworks/library/j-jtp0114/index.html">article</a> by Brian Goetz:
+
+</p><p><span class="highlight">"...it is a bad idea to use floating point to try to represent 
+exact quantities like monetary amounts. Using floating point for dollars-and-cents calculations is a 
+recipe for disaster. Floating point numbers are best reserved for values such as measurements, whose 
+values are fundamentally inexact to begin with."</span>
+
+<br>
+</p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction583d.html?Id=13">Representing money</a> <br>
+  <a href="TopicAction56bf.html?Id=227">Avoid basic style errors</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=213 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

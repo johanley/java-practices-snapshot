@@ -1,0 +1,71 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/table/QuoteField.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:38 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+QuoteField.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.stocks.table;<a name=line.1></a>
+<a name=line.2></a>
+<span class='comment'>/**<a name=line.3></a>
+* Enumeration for the fields of the <a name=line.4></a>
+* {@link hirondelle.stocks.quotes.Quote} class.<a name=line.5></a>
+* <a name=line.6></a>
+* Advantages to using this class as part of a table model :<a name=line.7></a>
+* &lt;ul&gt;<a name=line.8></a>
+* &lt;li&gt; can parse text which maps table columns to fields<a name=line.9></a>
+* &lt;li&gt; can be used for column names<a name=line.10></a>
+* &lt;li&gt; length of &lt;tt&gt;QuoteField.values()&lt;/tt&gt; gives the column count<a name=line.11></a>
+* &lt;/ul&gt;<a name=line.12></a>
+*/</span><a name=line.13></a>
+<span class='keyword'>public</span> <span class='keyword'>enum</span> QuoteField { <a name=line.14></a>
+<a name=line.15></a>
+  Stock(<span class='literal'>"Stock"</span>),<a name=line.16></a>
+  Price(<span class='literal'>"Price"</span>),<a name=line.17></a>
+  Change(<span class='literal'>"Change"</span>),<a name=line.18></a>
+  PercentChange(<span class='literal'>"%Change"</span>),<a name=line.19></a>
+  Profit(<span class='literal'>"Profit"</span>),<a name=line.20></a>
+  PercentProfit(<span class='literal'>"%Profit"</span>);<a name=line.21></a>
+<a name=line.22></a>
+  <span class='comment'>/**<a name=line.23></a>
+  * Return a text representation of the &lt;tt&gt;QuoteField&lt;/tt&gt;.<a name=line.24></a>
+  *<a name=line.25></a>
+  * Return values : &lt;tt&gt;Stock, Price, Change, %Change, Profit, %Profit&lt;/tt&gt;.<a name=line.26></a>
+  * @return value contains only letters, and possibly a percent sign.<a name=line.27></a>
+  */</span><a name=line.28></a>
+  <span class='keyword'>@Override</span> <span class='keyword'>public</span> String toString() { <a name=line.29></a>
+    <span class='keyword'>return</span> fName;  <a name=line.30></a>
+  }<a name=line.31></a>
+<a name=line.32></a>
+  <span class='comment'>/** <a name=line.33></a>
+  * Parse text into a &lt;tt&gt;QuoteField&lt;/tt&gt;.<a name=line.34></a>
+  * <a name=line.35></a>
+  * &lt;P&gt;The text is matched according to the value of {@link #toString()}, <a name=line.36></a>
+  * not from the symbolic name of the enumerated item.<a name=line.37></a>
+  */</span><a name=line.38></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> QuoteField valueFrom(String aText){<a name=line.39></a>
+    <span class='keyword'>for</span> (QuoteField quoteField: values()){<a name=line.40></a>
+      <span class='keyword'>if</span>(quoteField.toString().equals(aText)) {<a name=line.41></a>
+        <span class='keyword'>return</span> quoteField;<a name=line.42></a>
+      }<a name=line.43></a>
+    }<a name=line.44></a>
+    <span class='keyword'>throw</span> <span class='keyword'>new</span> IllegalArgumentException(<span class='literal'>"Cannot parse into a QuoteField: "</span> + aText);<a name=line.45></a>
+  }<a name=line.46></a>
+  <a name=line.47></a>
+  <span class='keyword'>private</span> <span class='keyword'>final</span> String fName;<a name=line.48></a>
+<a name=line.49></a>
+  <span class='comment'>/**<a name=line.50></a>
+  * @param aName only letters and percent sign are valid characters.<a name=line.51></a>
+  */</span><a name=line.52></a>
+  <span class='keyword'>private</span> QuoteField(String aName) { <a name=line.53></a>
+    fName = aName;<a name=line.54></a>
+  }<a name=line.55></a>
+} <a name=line.56></a>
+</PRE><a name=line.57></a>
+ </BODY><a name=line.58></a>
+<HTML><a name=line.59></a>

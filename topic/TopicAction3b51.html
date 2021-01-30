@@ -1,0 +1,256 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=189 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="database,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Use template for transactions</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Use template for transactions</div>
+
+<br>Code related to transactions is bulky, and has significant logic attached
+to it. Such code should not be repeated every time a transaction is required.
+Instead, define a <a href="TopicActione01b.html?Id=164">template method</a> which handles
+most of the processing of the transaction.
+
+<p><b>Example</b>
+</p><p><code>Tx</code> is a generic interface which can be applied to both:
+</p><ul>
+<li>local transactions - attached to a single JDBC connection</li>
+<li>distributed transactions (<code><a href="http://docs.oracle.com/javaee/5/api/javax/transaction/UserTransaction.html">UserTransaction</a></code>) - not attached to a
+single connection, or even to a single database</li>
+</ul>
+<br><pre>
+<span class="keyword">package</span> hirondelle.web4j.database;
+
+<span class="comment">/**
+ Execute a database transaction.
+
+ &lt;P&gt;Should be applied only to operations involving more than one SQL statement.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">interface</span> Tx {
+
+  <span class="comment">/**
+   Execute a database transaction, and return the number of edited records.
+  */</span>
+  <span class="keyword">int</span> executeTx() <span class="keyword">throws</span> DAOException;
+  
+}
+ 
+</pre>
+
+<br><code>TxTemplate</code> is an implementation of <code>Tx</code> for local transactions.
+(An implementation for distributed transactions would be similar). It's an Abstract Base Class, and uses
+the <a href="TopicActione01b.html?Id=164">template method</a> design pattern.
+To implement a transaction, callers subclass <code>TxTemplate</code>, and provide a concrete implementation of 
+<code>executeMultipleSqls(Connection)</code>.
+<br><pre>
+<span class="keyword">import</span> java.sql.*;
+<span class="keyword">import</span> java.util.logging.*;
+
+<span class="keyword">import</span> hirondelle.web4j.BuildImpl;
+<span class="keyword">import</span> hirondelle.web4j.util.Util;
+<span class="keyword">import</span> hirondelle.web4j.util.Consts;
+
+<span class="comment">/** 
+* Template for executing a local, non-distributed transaction versus a 
+* single database, using a single connection.
+*
+* &lt;P&gt;This abstract base class implements the template method design pattern.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">class</span> TxTemplate <span class="keyword">implements</span> Tx {
+  
+  <span class="comment">//..elided
+</span>  
+  <span class="comment">/**
+  * &lt;b&gt;Template&lt;/b&gt; method calls the abstract method {@link #executeMultipleSqls}.
+  * &lt;P&gt;Returns the same value as &lt;tt&gt;executeMultipleSqls&lt;/tt&gt;.
+  *
+  * &lt;P&gt;A &lt;tt&gt;rollback&lt;/tt&gt; is performed if &lt;tt&gt;executeMultipleSqls&lt;/tt&gt; fails.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">int</span> executeTx() <span class="keyword">throws</span> DAOException {
+    <span class="keyword">int</span> result = <span class="literal">0</span>;
+    fLogger.fine(
+      <span class="literal">"Editing within a local transaction, with isolation level : "</span> + fTxIsolationLevel
+    );
+    ConnectionSource connSource = BuildImpl.forConnectionSource();
+    <span class="keyword">if</span>(Util.textHasContent(fDatabaseName)){
+      fConnection = connSource.getConnection(fDatabaseName);
+    }
+    <span class="keyword">else</span> {
+      fConnection = connSource.getConnection();
+    }
+    
+    <span class="keyword">try</span> {
+      TxIsolationLevel.set(fTxIsolationLevel, fConnection);
+      startTx();
+      result = executeMultipleSqls(fConnection);
+      endTx(result);
+    }
+    <span class="keyword">catch</span>(SQLException rootCause){
+      fLogger.fine(<span class="literal">"Transaction throws SQLException."</span>);
+      rollbackTx();
+      String message = 
+        <span class="literal">"Cannot execute edit. ErrorId code : "</span> +  rootCause.getErrorCode() + 
+        Consts.SPACE + rootCause
+      ;
+      <span class="keyword">if</span> (rootCause.getErrorCode() == DbConfig.getErrorCodeForDuplicateKey().intValue()){
+        <span class="keyword">throw</span> <span class="keyword">new</span> DuplicateException(message, rootCause);
+      }
+      <span class="keyword">throw</span> <span class="keyword">new</span> DAOException(message, rootCause);
+    }
+    <span class="keyword">catch</span> (DAOException ex){
+      fLogger.fine(<span class="literal">"Transaction throws DAOException."</span>);
+      rollbackTx();
+      <span class="keyword">throw</span> ex;
+    }
+    <span class="keyword">finally</span> {
+      DbUtil.logWarnings(fConnection);
+      DbUtil.close(fConnection);
+    }
+    fLogger.fine(<span class="literal">"Total number of edited records: "</span> + result);
+    <span class="keyword">return</span> result;
+  }
+
+  <span class="comment">/**
+  * Execute multiple SQL operations in a single local transaction.
+  *
+  * &lt;P&gt;This method returns the number of records edited. 
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">int</span> executeMultipleSqls(
+    Connection aConnection
+  ) <span class="keyword">throws</span> SQLException, DAOException;
+  
+  <span class="comment">// PRIVATE
+</span>  
+  <span class="keyword">private</span> Connection fConnection;
+  <span class="keyword">private</span> String fDatabaseName;
+  <span class="keyword">private</span> <span class="keyword">final</span> TxIsolationLevel fTxIsolationLevel;
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">boolean</span> fOFF = <span class="keyword">false</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">boolean</span> fON = <span class="keyword">true</span>;
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Logger fLogger = Util.getLogger(TxTemplate.<span class="keyword">class</span>);  
+
+  <span class="keyword">private</span> <span class="keyword">void</span> startTx() <span class="keyword">throws</span> SQLException {
+    fConnection.setAutoCommit(fOFF);
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">void</span> endTx(<span class="keyword">int</span> aNumEdits) <span class="keyword">throws</span> SQLException, DAOException {
+    <span class="keyword">if</span> ( BUSINESS_RULE_FAILURE == aNumEdits ) {
+      fLogger.severe(<span class="literal">"Business rule failure occured. Cannot commit transaction."</span>);
+      rollbackTx();
+    }
+    <span class="keyword">else</span> {
+      fLogger.fine(<span class="literal">"Commiting transaction."</span>);
+      fConnection.commit();
+      fConnection.setAutoCommit(fON);
+    }
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">void</span> rollbackTx() <span class="keyword">throws</span> DAOException {
+    fLogger.severe(<span class="literal">"ROLLING BACK TRANSACTION."</span>);
+    <span class="keyword">try</span> {
+      fConnection.rollback();
+    }
+    <span class="keyword">catch</span>(SQLException ex){
+      <span class="keyword">throw</span> <span class="keyword">new</span> DAOException(<span class="literal">"Cannot rollback transaction"</span>, ex);
+    }
+  }
+}
+ 
+</pre>
+
+<br>Here's a concrete implementation named <code>RoleDAO</code>. It has a <code>change</code> method which updates the roles attached to a user.
+The roles are stored in a cross-reference table. In this case, an update is implemented as 
+'delete all old, then add all new'.
+Note the lack of <code>try..catch</code> blocks in this class.
+<br><pre>
+<span class="keyword">final</span> <span class="keyword">class</span> RoleDAO {
+
+  <span class="comment">//..elided  
+</span>
+  <span class="comment">/**
+  * Update all roles attached to a user.
+  * 
+  * &lt;P&gt;This implementation will treat all edits to user roles as 
+  * '&lt;tt&gt;DELETE-ALL&lt;/tt&gt;, then &lt;tt&gt;ADD-ALL&lt;/tt&gt;' operations. 
+  */</span>
+  <span class="keyword">boolean</span> change(UserRole aUserRole) <span class="keyword">throws</span> DAOException {
+    Tx update = <span class="keyword">new</span> UpdateTransaction(aUserRole);
+    <span class="keyword">return</span> Util.isSuccess(update.executeTx());
+  }
+  
+  <span class="comment">// PRIVATE //
+</span>  
+  <span class="comment">/** Cannot be a {@link hirondelle.web4j.database.TxSimple}, since there is looping. */</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">class</span> UpdateTransaction <span class="keyword">extends</span> TxTemplate {
+    UpdateTransaction(UserRole aUserRole){
+      <span class="keyword">super</span>(ConnectionSrc.ACCESS_CONTROL);
+      fUserRole = aUserRole;
+    }
+    <span class="keyword">public</span> <span class="keyword">int</span> executeMultipleSqls(
+      Connection aConnection
+    ) <span class="keyword">throws</span> SQLException, DAOException {
+      <span class="keyword">int</span> result = <span class="literal">0</span>;
+      <span class="comment">//perform edits using a shared connection
+</span>      result = result + DbTx.edit(aConnection, ROLES_DELETE, fUserRole.getUserName());
+      <span class="keyword">for</span>(Id roleId : fUserRole.getRoles()){
+        result = result + DbTx.edit(aConnection,ROLES_ADD,fUserRole.getUserName(),roleId);
+      }
+      <span class="keyword">return</span> result;
+    }
+    <span class="keyword">private</span> UserRole fUserRole;
+  }
+}
+ 
+</pre>
+
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActione01b.html?Id=164">Template method</a> <br>
+  <a href="TopicAction2dbf.html?Id=184">Simplify database operations</a> <br>
+  <a href="TopicAction5f31.html?Id=188">A Web App Framework   WEB4J</a> <br>
+  <a href="TopicAction69dc.html?Id=190">Use template for repeated try catch</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=189 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+</html>

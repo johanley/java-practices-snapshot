@@ -1,0 +1,106 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=146 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="bytecode,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Examine bytecode</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Examine bytecode</div>
+
+<br>Examination of the bytecode of a class is not a common task. 
+However, if you're interested, it's possible to view bytecode using 
+the <code><a href="http://docs.oracle.com/javase/8/docs/technotes/tools/windows/javap.html">javap</a></code>
+tool included in the JDK. 
+Here's an example of its use, where it shows the effect on bytecode of setting fields explicitly
+to their default initial values:
+<p><code>&gt;javap -c -classpath . Quark</code>
+<br><code>Compiled from Quark.java</code>
+<br><code>public final class Quark extends java.lang.Object {</code>
+<br><code>&nbsp;&nbsp;&nbsp; public Quark(java.lang.String,double);</code>
+<br><code>}</code>
+</p><p><code>Method Quark(java.lang.String,double)</code>
+<br><code>&nbsp;&nbsp; 0 aload_0</code>
+<br><code>&nbsp;&nbsp; 1 invokespecial #1 &lt;Method java.lang.Object()&gt;</code>
+<br><code>&nbsp;&nbsp; 4 aload_0</code>
+<br><code>&nbsp;&nbsp; 5 aconst_null</code>
+<br><code>&nbsp;&nbsp; 6 putfield #2 &lt;Field java.lang.String fName&gt;</code>
+<br><code>&nbsp;&nbsp; 9 aload_0</code>
+<br><code>&nbsp; 10 dconst_0</code>
+<br><code>&nbsp; 11 putfield #3 &lt;Field double fMass&gt;</code>
+<br><code>&nbsp; 14 aload_0</code>
+<br><code>&nbsp; 15 aload_1</code>
+<br><code>&nbsp; 16 putfield #2 &lt;Field java.lang.String fName&gt;</code>
+<br><code>&nbsp; 19 aload_0</code>
+<br><code>&nbsp; 20 dload_2</code>
+<br><code>&nbsp; 21 putfield #3 &lt;Field double fMass&gt;</code>
+<br><code>&nbsp; 24 return</code>
+</p><p>Here is the source class itself :
+<br></p><pre>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Quark {
+
+  <span class="keyword">public</span> Quark(String aName, <span class="keyword">double</span> aMass){
+    fName = aName;
+    fMass = aMass;
+  }
+
+  <span class="comment">//PRIVATE
+</span>
+  <span class="comment">//WITHOUT redundant initialization to default values
+</span>  <span class="comment">//private String fName;
+</span>  <span class="comment">//private double fMass;
+</span>
+  <span class="comment">//WITH redundant initialization to default values
+</span>  <span class="keyword">private</span> String fName = <span class="keyword">null</span>;
+  <span class="keyword">private</span> <span class="keyword">double</span> fMass = <span class="literal">0.0d</span>;
+} 
+</pre>
+
+<br>Bytecode instructions are defined by the <a href="http://docs.oracle.com/javase/specs/">JVM
+specification</a>.
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction9b86.html?Id=14">Initializing fields to 0 false null is redundant</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=146 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

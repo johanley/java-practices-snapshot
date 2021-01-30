@@ -1,0 +1,160 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=252 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Don't pass 'this' out of a constructor</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Don't pass 'this' out of a constructor</div>
+
+<br>
+Within a class, the <code>'this'</code> Java keyword refers to the native object, the 
+current instance of the class. 
+Within a constructor, you can use the <code>this</code> keyword in 3 different ways:
+<ul>
+ <li>on the first line, you can call another constructor, using <code>this(...);</code>
+ </li><li>as a qualifier when referencing fields, as in <code>this.name</code>
+ </li><li>as a reference passed to a method of some other object, as in <code>blah.operation(this);</code>
+</li></ul>
+
+<p>You can get into trouble with the last form. 
+The problem is that, inside a constructor, the object is not yet fully constructed. 
+<span class="highlight">An object is only fully constructed after its constructor completely returns, and not before.</span>
+But when passed as a parameter to a method of some other object, the <code>this</code> reference 
+should always refer to a <i>fully-formed</i> object.
+
+</p><p>This problem occurs mainly with listeners. 
+Here's an example which illustrates the point:
+<br></p><pre>
+<span class="keyword">import</span> java.util.Observable;
+<span class="keyword">import</span> java.util.Observer;
+
+<span class="comment">/**
+ @author javapractices.com
+ @author Andrew Sackett
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> EscapingThisReference {
+
+  <span class="comment">/** A RadioStation is observed by the people listening to it. */</span>
+  <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">class</span> RadioStation <span class="keyword">extends</span> Observable {
+    <span class="comment">//elided
+</span>  }
+  
+  <span class="comment">/** 
+   A listener which waits until this object is fully-formed before
+   it lets it be referenced by the outside world.
+   Uses a private constructor to first build the object, and then 
+   configures the fully-formed object as a listener. 
+  */</span>
+  <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">class</span> GoodListener <span class="keyword">implements</span> Observer {
+    <span class="comment">/** Factory method. */</span>
+    <span class="keyword">static</span> GoodListener buildListener(String personsName, RadioStation station){
+      <span class="comment">//first call the private constructor
+</span>      GoodListener result = <span class="keyword">new</span> GoodListener(personsName);
+      <span class="comment">//the 'result' object is now fully constructed, and can now be
+</span>      <span class="comment">//passed safely to the outside world
+</span>      station.addObserver(result);
+      <span class="keyword">return</span> result;
+    }
+    <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> update(Observable station, Object data) {
+      <span class="comment">//..elided
+</span>    }
+    <span class="keyword">private</span> String personsName;
+    <span class="comment">/** Private constructor. */</span>
+    <span class="keyword">private</span> GoodListener(String personsName){
+      <span class="keyword">this</span>.personsName = personsName; <span class="comment">//ok
+</span>    }
+  }
+  
+  <span class="comment">/** 
+   A listener which incorrectly passes a 'this' reference to the outside world 
+   before construction is completed.
+  */</span>
+  <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">class</span> BadListenerExplicit <span class="keyword">implements</span> Observer {
+    <span class="comment">/** Ordinary constructor. */</span>
+    BadListenerExplicit(String personsName, RadioStation station){
+      <span class="keyword">this</span>.personsName = personsName; <span class="comment">//OK
+</span>      <span class="comment">//DANGEROUS - the 'this' reference shouldn't be passed to the listener,
+</span>      <span class="comment">//since the constructor hasn't yet completed; it doesn't matter if 
+</span>      <span class="comment">//this is the last statement in the constructor!
+</span>      station.addObserver(<span class="keyword">this</span>);
+    }
+    <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> update(Observable station, Object data) {
+      <span class="comment">//..elided
+</span>    }
+    <span class="keyword">private</span> String personsName;
+  }
+  
+  <span class="comment">/** 
+   Another listener that passes out a 'this' reference to the outside 
+   world before construction is completed; here, the 'this' reference 
+   is implicit, via the anonymous inner class.
+  */</span>
+  <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">class</span> BadListenerImplicit {
+    <span class="comment">/** Ordinary constructor. */</span>
+    BadListenerImplicit(String personsName, RadioStation station){
+      <span class="keyword">this</span>.personsName = personsName; <span class="comment">//OK
+</span>      <span class="comment">//DANGEROUS
+</span>      station.addObserver(
+        <span class="keyword">new</span> Observer(){
+          <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> update(Observable observable, Object data) {
+            doSomethingUseful();
+          }
+        }
+      );
+    }
+    <span class="keyword">private</span> <span class="keyword">void</span> doSomethingUseful() {
+      <span class="comment">//..elided
+</span>    }
+    <span class="keyword">private</span> String personsName;
+  }
+}
+ 
+</pre>
+
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction19ff.html?Id=11">Constructors in general</a> <br>
+  <a href="TopicAction3898.html?Id=254">Constructors shouldn't start threads</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=252 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+</html>

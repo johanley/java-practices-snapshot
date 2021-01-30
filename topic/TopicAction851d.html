@@ -1,0 +1,162 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=4 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="concatentation,StringBuffer,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;String concatenation does not scale</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">String concatenation does not scale</div>
+
+<br>To build <code>String</code>s dynamically, one may use either the <code>String</code>
+concatenation operator <code>+</code> or the <code>StringBuilder</code> class.
+(<code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/StringBuilder.html">StringBuilder</a></code>
+is generally preferred over <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/StringBuffer.html">StringBuffer</a></code>,
+since it avoids internal synchronization costs.) In the great majority
+of cases, only a few items are concatenated, and either style may be used
+freely, according to taste, without concern for performance.
+<p>On relatively <i>rare</i> occasions, however, when performing <i>extensive</i> <code>String</code>
+manipulation, replacing <code>+</code> with <code>StringBuilder.append</code> is
+likely recommended. Compilers often implement concatenation operations
+by creating&nbsp; intermediate objects in the background. Such intermediate
+objects are not needed by <code>StringBuilder</code>.
+</p><p>Cases in which <code>+</code> is very likely acceptable:
+</p><ul>
+<li>
+if concatenating only a small number of items together, then the difference
+in relative performance is very small, and possibly not even measurable
+(<i>the great majority of use cases of the concatenation operator fall
+into this category</i>).</li>
+
+<li>
+in branches of code which represent a failure in the system - for example,
+a lost database connection, or an invalid method parameter. Since these
+branches are very rarely exercised, the speed at which the system fails
+is usually not important.</li>
+</ul>
+Here's an illustration of the difference in execution speed between +
+and <code>StringBuilder.append</code>, when performing many concatenations.
+Clearly, even the + operator is quite fast, and the difference is not going
+to be noticeable in the great majority of cases encountered in practice.
+<p>Example runs (class appears below):
+</p><p>Here, <code><a href="https://docs.oracle.com/javase/8/docs/technotes/tools/windows/java.html#BABHDABI" title="Non-standard options for java interpreter">-Xint</a></code> 
+was used to turn off the HotSpot compiler. This ensures the
+program is always interpreted, and will execute in a uniform environment
+from start to finish, without any compilation into native code.)
+
+</p><pre>
+Num iterations: 10
+Task using + operator:          175,351 nanoseconds
+Task using StringBuilder.append: 35,057 nanoseconds
+
+Num iterations: 1000
+Task using + operator:          18,295,297 nanoseconds
+Task using StringBuilder.append: 1,200,376 nanoseconds
+
+Num iterations: 10000
+Task using + operator:       1,134,679,975 nanoseconds
+Task using StringBuilder.append: 8,757,343 nanoseconds
+</pre>
+
+<br><pre>
+<span class="comment">/**
+* Illustrates the speed difference between + operator and
+* StringBuilder.append, when performing many concatenations.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> AvoidConcatenation {
+
+  <span class="comment">/**
+  * Takes a single argument : the number of iterations to perform.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main (String... arguments) {
+    numIterations = Integer.parseInt(arguments[<span class="literal">0</span>]);
+
+    <span class="keyword">long</span> start = System.nanoTime();
+    doWithConcatenationOperator();
+    <span class="keyword">long</span> finish = System.nanoTime();
+
+    System.out.println(<span class="literal">"Num iterations: "</span> + numIterations);
+    StringBuilder message = <span class="keyword">new</span> StringBuilder();
+    message.append(<span class="literal">"Task using + operator: "</span>);
+    message.append( finish - start );
+    message.append(<span class="literal">" nanoseconds"</span>);
+    System.out.println(message);
+
+    start = System.nanoTime();
+    doWithStringBuilder();
+    finish = System.nanoTime();
+
+    message = <span class="keyword">new</span> StringBuilder(<span class="literal">"Task using StringBuilder.append: "</span>);
+    message.append( finish - start );
+    message.append(<span class="literal">" nanoseconds"</span>);
+    System.out.println(message);
+  }
+
+  <span class="comment">// PRIVATE
+</span>  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> numIterations;
+
+  <span class="keyword">private</span> <span class="keyword">static</span> String doWithConcatenationOperator() {
+    String result = <span class="literal">"start"</span>;
+    <span class="keyword">for</span> (<span class="keyword">int</span> idx = <span class="literal">0</span>; idx &lt; numIterations; idx++) {
+      result = result + <span class="literal">"blah"</span>;
+    }
+    <span class="keyword">return</span> result;
+  }
+
+  <span class="keyword">private</span> <span class="keyword">static</span> String doWithStringBuilder() {
+    StringBuilder result = <span class="keyword">new</span> StringBuilder(<span class="literal">"start"</span>);
+    <span class="keyword">for</span> (<span class="keyword">int</span> idx = <span class="literal">0</span>; idx &lt; numIterations; idx++) {
+      result.append(<span class="literal">"blah"</span>);
+    }
+    <span class="keyword">return</span> result.toString();
+  }
+} 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActionc3b3.html?Id=55">Implementing toString</a> <br>
+  <a href="TopicActiondd78.html?Id=85">Time execution speed</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=4 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

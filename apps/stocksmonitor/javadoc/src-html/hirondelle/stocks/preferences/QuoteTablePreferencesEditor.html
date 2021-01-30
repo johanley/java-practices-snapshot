@@ -1,0 +1,305 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/preferences/QuoteTablePreferencesEditor.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:38 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+QuoteTablePreferencesEditor.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.stocks.preferences;<a name=line.1></a>
+<a name=line.2></a>
+<span class='keyword'>import</span> java.awt.*;<a name=line.3></a>
+<span class='keyword'>import</span> java.awt.event.*;<a name=line.4></a>
+<span class='keyword'>import</span> javax.swing.*;<a name=line.5></a>
+<span class='keyword'>import</span> java.util.*;<a name=line.6></a>
+<span class='keyword'>import</span> java.util.logging.*;<a name=line.7></a>
+<span class='keyword'>import</span> java.util.prefs.*;<a name=line.8></a>
+<a name=line.9></a>
+<span class='keyword'>import</span> hirondelle.stocks.table.QuoteField;<a name=line.10></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Util;<a name=line.11></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.ui.UiConsts;<a name=line.12></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.ui.UiUtil;<a name=line.13></a>
+<a name=line.14></a>
+<span class='comment'>/**<a name=line.15></a>
+* Graphical component allows editing of user preferences related to the <a name=line.16></a>
+* {@link hirondelle.stocks.table.QuoteTable},<a name=line.17></a>
+* and programmatic read-only access to these preferences.<a name=line.18></a>
+*/</span><a name=line.19></a>
+<span class='keyword'>public</span> <span class='keyword'>final</span> <span class='keyword'>class</span> QuoteTablePreferencesEditor <span class='keyword'>extends</span> Observable <a name=line.20></a>
+  <span class='keyword'>implements</span> PreferencesEditor {<a name=line.21></a>
+<a name=line.22></a>
+  <span class='keyword'>@Override</span> <span class='keyword'>public</span> JComponent getUI() {<a name=line.23></a>
+    JPanel content = <span class='keyword'>new</span> JPanel();<a name=line.24></a>
+    GridBagLayout gridbag = <span class='keyword'>new</span> GridBagLayout();<a name=line.25></a>
+    content.setLayout(gridbag);<a name=line.26></a>
+    addSortField(content);<a name=line.27></a>
+    addHorizontalVerticalLines(content);<a name=line.28></a>
+    addRowHeight(content);<a name=line.29></a>
+    addUpdateFrequency(content);<a name=line.30></a>
+    addColumnOrder(content);<a name=line.31></a>
+    addRestore(content);<a name=line.32></a>
+    matchGuiToStoredPrefs();<a name=line.33></a>
+    <span class='keyword'>return</span> content;<a name=line.34></a>
+  }<a name=line.35></a>
+<a name=line.36></a>
+  <span class='keyword'>@Override</span> <span class='keyword'>public</span> String getTitle() {<a name=line.37></a>
+    <span class='keyword'>return</span> TITLE;<a name=line.38></a>
+  }<a name=line.39></a>
+<a name=line.40></a>
+  <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>int</span> getMnemonic() {<a name=line.41></a>
+    <span class='keyword'>return</span> MNEMONIC;<a name=line.42></a>
+  }<a name=line.43></a>
+<a name=line.44></a>
+  <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> savePreferences() {<a name=line.45></a>
+    fLogger.fine(<span class='literal'>"Updating table preferences."</span>);<a name=line.46></a>
+    fPrefs.putBoolean(HORIZONTAL_LINES_KEY, fHorizontalLines.isSelected());<a name=line.47></a>
+    fPrefs.putBoolean(VERTICAL_LINES_KEY, fVerticalLines.isSelected());<a name=line.48></a>
+    fPrefs.putInt(ROW_HEIGHT_KEY, fRowSizeModel.getNumber().intValue());<a name=line.49></a>
+    fPrefs.put(SORT_FIELD_KEY, fSortField.getSelectedItem().toString());<a name=line.50></a>
+    fPrefs.put(COLUMN_ORDER_KEY, fColumnOrderEditor.getItems().toString());<a name=line.51></a>
+    fPrefs.putInt(UPDATE_FREQ_KEY, fUpdateFreqModel.getNumber().intValue());<a name=line.52></a>
+    setChanged();<a name=line.53></a>
+    notifyObservers();<a name=line.54></a>
+  }<a name=line.55></a>
+<a name=line.56></a>
+  <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> matchGuiToDefaultPreferences() {<a name=line.57></a>
+    fHorizontalLines.setSelected(HORIZONTAL_LINES_DEFAULT);<a name=line.58></a>
+    fVerticalLines.setSelected(VERTICAL_LINES_DEFAULT);<a name=line.59></a>
+    fRowSizeModel.setValue(<span class='keyword'>new</span> Integer(ROW_HEIGHT_DEFAULT));<a name=line.60></a>
+    fSortField.setSelectedItem(QuoteField.valueFrom(SORT_FIELD_DEFAULT));<a name=line.61></a>
+    fColumnOrderEditor.setItems(parseRawColumnOrder(COLUMN_ORDER_DEFAULT));<a name=line.62></a>
+    fUpdateFreqModel.setValue(<span class='keyword'>new</span> Integer(UPDATE_FREQ_DEFAULT));<a name=line.63></a>
+  }<a name=line.64></a>
+<a name=line.65></a>
+  <span class='comment'>/**<a name=line.66></a>
+  * Return preference for the display of horizontal lines for each row.<a name=line.67></a>
+  */</span><a name=line.68></a>
+  <span class='keyword'>public</span> <span class='keyword'>boolean</span> hasHorizontalLines() {<a name=line.69></a>
+    <span class='keyword'>return</span> fPrefs.getBoolean(HORIZONTAL_LINES_KEY, HORIZONTAL_LINES_DEFAULT);<a name=line.70></a>
+  }<a name=line.71></a>
+<a name=line.72></a>
+  <span class='comment'>/**<a name=line.73></a>
+  * Return preference for the display of vertical lines for each column.<a name=line.74></a>
+  */</span><a name=line.75></a>
+  <span class='keyword'>public</span> <span class='keyword'>boolean</span> hasVerticalLines() {<a name=line.76></a>
+    <span class='keyword'>return</span> fPrefs.getBoolean(VERTICAL_LINES_KEY, VERTICAL_LINES_DEFAULT);<a name=line.77></a>
+  }<a name=line.78></a>
+<a name=line.79></a>
+  <span class='comment'>/**<a name=line.80></a>
+   * Return the height of each row in pixels, in the range &lt;tt&gt;16..32&lt;/tt&gt;<a name=line.81></a>
+   * (inclusive).<a name=line.82></a>
+   */</span><a name=line.83></a>
+  <span class='keyword'>public</span> <span class='keyword'>int</span> getRowHeight() {<a name=line.84></a>
+    <span class='keyword'>return</span> fPrefs.getInt(ROW_HEIGHT_KEY, ROW_HEIGHT_DEFAULT);<a name=line.85></a>
+  }<a name=line.86></a>
+<a name=line.87></a>
+  <span class='comment'>/**<a name=line.88></a>
+   * Return a field identifier, but no ascending-descending indicator.<a name=line.89></a>
+   */</span><a name=line.90></a>
+  <span class='keyword'>public</span> QuoteField getSortField() {<a name=line.91></a>
+    String fieldName = fPrefs.get(SORT_FIELD_KEY, SORT_FIELD_DEFAULT);<a name=line.92></a>
+    <span class='keyword'>return</span> QuoteField.valueFrom(fieldName);<a name=line.93></a>
+  }<a name=line.94></a>
+<a name=line.95></a>
+  <span class='comment'>/**<a name=line.96></a>
+   * Return &lt;tt&gt;Set&lt;/tt&gt; of {@link QuoteField} objects, whose<a name=line.97></a>
+   * iteration order reflects the user's preferred column order.<a name=line.98></a>
+   */</span><a name=line.99></a>
+  <span class='keyword'>public</span> Set&lt;Object&gt; getColumnOrder() {<a name=line.100></a>
+    <span class='keyword'>return</span> parseRawColumnOrder(fPrefs.get(COLUMN_ORDER_KEY, COLUMN_ORDER_DEFAULT));<a name=line.101></a>
+  }<a name=line.102></a>
+<a name=line.103></a>
+  <span class='comment'>/**<a name=line.104></a>
+   * Return the number of minutes to wait between periodic updates, in the range<a name=line.105></a>
+   * &lt;tt&gt;1..60&lt;/tt&gt;.<a name=line.106></a>
+   */</span><a name=line.107></a>
+  <span class='keyword'>public</span> <span class='keyword'>int</span> getUpdateFrequency() {<a name=line.108></a>
+    <span class='keyword'>return</span> fPrefs.getInt(UPDATE_FREQ_KEY, UPDATE_FREQ_DEFAULT);<a name=line.109></a>
+  }<a name=line.110></a>
+<a name=line.111></a>
+  <span class='comment'>// PRIVATE<a name=line.112></a>
+</span>  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String TITLE = <span class='literal'>"Quote Table"</span>;<a name=line.113></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> <span class='keyword'>int</span> MNEMONIC = KeyEvent.VK_Q;<a name=line.114></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String STOCKS_TABLE_NODE_NAME = <a name=line.115></a>
+    <span class='literal'>"stocksmonitor/ui/prefs/StocksTable"</span><a name=line.116></a>
+  ;<a name=line.117></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> <span class='keyword'>boolean</span> HORIZONTAL_LINES_DEFAULT = <span class='keyword'>true</span>;<a name=line.118></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String HORIZONTAL_LINES_KEY = <span class='literal'>"HorizontalLines"</span>;<a name=line.119></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> <span class='keyword'>boolean</span> VERTICAL_LINES_DEFAULT = <span class='keyword'>true</span>;<a name=line.120></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String VERTICAL_LINES_KEY = <span class='literal'>"VerticalLines"</span>;<a name=line.121></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> <span class='keyword'>int</span> MAX_ROW_HEIGHT = <span class='literal'>32</span>;<a name=line.122></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> <span class='keyword'>int</span> MIN_ROW_HEIGHT = <span class='literal'>16</span>;<a name=line.123></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> <span class='keyword'>int</span> INITIAL_ROW_HEIGHT = MIN_ROW_HEIGHT;<a name=line.124></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> <span class='keyword'>int</span> STEP_SIZE = <span class='literal'>1</span>;<a name=line.125></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> <span class='keyword'>int</span> ROW_HEIGHT_DEFAULT = MIN_ROW_HEIGHT;<a name=line.126></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String ROW_HEIGHT_KEY = <span class='literal'>"RowHeight"</span>;<a name=line.127></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String SORT_FIELD_DEFAULT = <span class='literal'>"Stock"</span>;<a name=line.128></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String SORT_FIELD_KEY = <span class='literal'>"SortBy"</span>;<a name=line.129></a>
+  <span class='comment'>// This preference is unusual in that in needs a bit of parsing<a name=line.130></a>
+</span>  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String COLUMN_ORDER_DEFAULT = <a name=line.131></a>
+    <span class='literal'>"[Stock, Price, Change, %Change, Profit, %Profit]"</span><a name=line.132></a>
+  ;<a name=line.133></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String COLUMN_ORDER_KEY = <span class='literal'>"ColumnOrder"</span>;<a name=line.134></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> <span class='keyword'>int</span> MAX_UPDATE_FREQ = <span class='literal'>60</span>;<a name=line.135></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> <span class='keyword'>int</span> MIN_UPDATE_FREQ = <span class='literal'>1</span>;<a name=line.136></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> <span class='keyword'>int</span> UPDATE_FREQ_DEFAULT = <span class='literal'>1</span>; <span class='comment'>// seconds<a name=line.137></a>
+</span>  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String UPDATE_FREQ_KEY = <span class='literal'>"UpdateFrequency"</span>;<a name=line.138></a>
+<a name=line.139></a>
+  <span class='keyword'>private</span> Preferences fPrefs = Preferences.userRoot().node(STOCKS_TABLE_NODE_NAME);<a name=line.140></a>
+  <span class='keyword'>private</span> JCheckBox fHorizontalLines;<a name=line.141></a>
+  <span class='keyword'>private</span> JCheckBox fVerticalLines;<a name=line.142></a>
+  <span class='keyword'>private</span> SpinnerNumberModel fRowSizeModel;<a name=line.143></a>
+  <span class='keyword'>private</span> JComboBox&lt;QuoteField&gt; fSortField;<a name=line.144></a>
+  <span class='keyword'>private</span> OrderEditor fColumnOrderEditor;<a name=line.145></a>
+  <span class='keyword'>private</span> SpinnerNumberModel fUpdateFreqModel;<a name=line.146></a>
+<a name=line.147></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> Logger fLogger = Util.getLogger(QuoteTablePreferencesEditor.<span class='keyword'>class</span>);<a name=line.148></a>
+<a name=line.149></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> addSortField(JPanel aContent) {<a name=line.150></a>
+    JLabel sortBy = <span class='keyword'>new</span> JLabel(<span class='literal'>"Sort By:"</span>);<a name=line.151></a>
+    sortBy.setDisplayedMnemonic(KeyEvent.VK_S);<a name=line.152></a>
+    sortBy.setToolTipText(<span class='literal'>"Always descending order"</span>);<a name=line.153></a>
+    aContent.add(sortBy, getConstraints(<span class='literal'>0</span>, <span class='literal'>0</span>));<a name=line.154></a>
+    DefaultComboBoxModel&lt;QuoteField&gt;sortByModel = <span class='keyword'>new</span> DefaultComboBoxModel&lt;QuoteField&gt;(<a name=line.155></a>
+      QuoteField.values()<a name=line.156></a>
+    );<a name=line.157></a>
+    fSortField = <span class='keyword'>new</span> JComboBox&lt;QuoteField&gt;(sortByModel);<a name=line.158></a>
+    sortBy.setLabelFor(fSortField);<a name=line.159></a>
+    aContent.add(fSortField, getConstraints(<span class='literal'>0</span>, <span class='literal'>1</span>));<a name=line.160></a>
+  }<a name=line.161></a>
+<a name=line.162></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> addHorizontalVerticalLines(JPanel aContent) {<a name=line.163></a>
+    JLabel show = <span class='keyword'>new</span> JLabel(<span class='literal'>"Show:"</span>);<a name=line.164></a>
+    aContent.add(show, getConstraints(<span class='literal'>1</span>, <span class='literal'>0</span>));<a name=line.165></a>
+<a name=line.166></a>
+    fHorizontalLines = <span class='keyword'>new</span> JCheckBox(<span class='literal'>"Horizontal Lines"</span>);<a name=line.167></a>
+    fHorizontalLines.setMnemonic(KeyEvent.VK_H);<a name=line.168></a>
+    aContent.add(fHorizontalLines, getConstraints(<span class='literal'>1</span>, <span class='literal'>1</span>));<a name=line.169></a>
+<a name=line.170></a>
+    fVerticalLines = <span class='keyword'>new</span> JCheckBox(<span class='literal'>"Vertical Lines"</span>);<a name=line.171></a>
+    fVerticalLines.setMnemonic(KeyEvent.VK_V);<a name=line.172></a>
+    aContent.add(fVerticalLines, getConstraints(<span class='literal'>1</span>, <span class='literal'>2</span>, <span class='literal'>2</span>, <span class='literal'>1</span>));<a name=line.173></a>
+  }<a name=line.174></a>
+<a name=line.175></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> addRowHeight(JPanel aContent) {<a name=line.176></a>
+    JLabel rowHeight = <span class='keyword'>new</span> JLabel(<span class='literal'>"Row Height:"</span>);<a name=line.177></a>
+    rowHeight.setDisplayedMnemonic(KeyEvent.VK_R);<a name=line.178></a>
+    rowHeight.setToolTipText(<span class='literal'>"Height in pixels of table rows"</span>);<a name=line.179></a>
+    aContent.add(rowHeight, getConstraints(<span class='literal'>2</span>, <span class='literal'>0</span>));<a name=line.180></a>
+    fRowSizeModel = <span class='keyword'>new</span> SpinnerNumberModel(<a name=line.181></a>
+      INITIAL_ROW_HEIGHT, MIN_ROW_HEIGHT, MAX_ROW_HEIGHT, STEP_SIZE<a name=line.182></a>
+    );<a name=line.183></a>
+    JSpinner rowHeightSelector = <span class='keyword'>new</span> JSpinner(fRowSizeModel);<a name=line.184></a>
+    rowHeight.setLabelFor(rowHeightSelector);<a name=line.185></a>
+    aContent.add(rowHeightSelector, getConstraints(<span class='literal'>2</span>, <span class='literal'>1</span>));<a name=line.186></a>
+  }<a name=line.187></a>
+<a name=line.188></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> addUpdateFrequency(JPanel aContent) {<a name=line.189></a>
+    JLabel updateFreq = <span class='keyword'>new</span> JLabel(<span class='literal'>"Update Freq:"</span>);<a name=line.190></a>
+    updateFreq.setDisplayedMnemonic(KeyEvent.VK_U);<a name=line.191></a>
+    updateFreq.setToolTipText(<span class='literal'>"Refresh interval in minutes"</span>);<a name=line.192></a>
+    aContent.add(updateFreq, getConstraints(<span class='literal'>2</span>, <span class='literal'>2</span>));<a name=line.193></a>
+<a name=line.194></a>
+    <span class='keyword'>int</span> initialFreqValue = MIN_UPDATE_FREQ;<a name=line.195></a>
+    fUpdateFreqModel = <span class='keyword'>new</span> SpinnerNumberModel(<a name=line.196></a>
+      initialFreqValue, MIN_UPDATE_FREQ, MAX_UPDATE_FREQ, <span class='literal'>1</span><a name=line.197></a>
+    );<a name=line.198></a>
+    JSpinner updateFreqSelector = <span class='keyword'>new</span> JSpinner(fUpdateFreqModel);<a name=line.199></a>
+    updateFreq.setLabelFor(updateFreqSelector);<a name=line.200></a>
+    aContent.add(updateFreqSelector, getConstraints(<span class='literal'>2</span>, <span class='literal'>3</span>));<a name=line.201></a>
+  }<a name=line.202></a>
+<a name=line.203></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> addColumnOrder(JPanel aContent) {<a name=line.204></a>
+    JLabel columnOrder = <span class='keyword'>new</span> JLabel(<span class='literal'>"Column Order:"</span>);<a name=line.205></a>
+    columnOrder.setDisplayedMnemonic(KeyEvent.VK_C);<a name=line.206></a>
+    GridBagConstraints columnOrderConstraints = getConstraints(<span class='literal'>3</span>, <span class='literal'>0</span>);<a name=line.207></a>
+    columnOrderConstraints.anchor = GridBagConstraints.NORTH;<a name=line.208></a>
+    aContent.add(columnOrder, columnOrderConstraints);<a name=line.209></a>
+<a name=line.210></a>
+    fColumnOrderEditor = <span class='keyword'>new</span> OrderEditor(<span class='literal'>"Up"</span>, <span class='literal'>"Down"</span>);<a name=line.211></a>
+    <span class='comment'>// Demonstrates alternate ctor using icons:<a name=line.212></a>
+</span>    <span class='comment'>// fColumnOrderEditor = new OrderEditor(<a name=line.213></a>
+</span>    <span class='comment'>// UiUtil.getImageIcon("/toolbarButtonGraphics/navigation/Up"),<a name=line.214></a>
+</span>    <span class='comment'>// UiUtil.getImageIcon("/toolbarButtonGraphics/navigation/Down"),<a name=line.215></a>
+</span>    <span class='comment'>// UiConsts.ONE_SPACE * 15 );<a name=line.216></a>
+</span>    columnOrder.setLabelFor(fColumnOrderEditor);<a name=line.217></a>
+    GridBagConstraints orderEditorConstraints = UiUtil.getConstraints(<span class='literal'>3</span>, <span class='literal'>1</span>);<a name=line.218></a>
+    orderEditorConstraints.insets = <span class='keyword'>new</span> Insets(UiConsts.ONE_SPACE, <span class='literal'>0</span>, <span class='literal'>0</span>, <span class='literal'>0</span>);<a name=line.219></a>
+    aContent.add(fColumnOrderEditor, orderEditorConstraints);<a name=line.220></a>
+  }<a name=line.221></a>
+<a name=line.222></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> addRestore(JPanel aContent) {<a name=line.223></a>
+    JButton restore = <span class='keyword'>new</span> JButton(<span class='literal'>"Restore Defaults"</span>);<a name=line.224></a>
+    restore.setMnemonic(KeyEvent.VK_D);<a name=line.225></a>
+    restore.addActionListener(<span class='keyword'>new</span> ActionListener() {<a name=line.226></a>
+      <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> actionPerformed(ActionEvent event) {<a name=line.227></a>
+        matchGuiToDefaultPreferences();<a name=line.228></a>
+      }<a name=line.229></a>
+    });<a name=line.230></a>
+    GridBagConstraints constraints = UiUtil.getConstraints(<span class='literal'>3</span>, <span class='literal'>2</span>, <span class='literal'>2</span>, <span class='literal'>1</span>);<a name=line.231></a>
+    constraints.anchor = GridBagConstraints.SOUTH;<a name=line.232></a>
+    constraints.insets = <span class='keyword'>new</span> Insets(<span class='literal'>0</span>, <span class='literal'>0</span>, <span class='literal'>0</span>, <span class='literal'>0</span>);<a name=line.233></a>
+    aContent.add(restore, constraints);<a name=line.234></a>
+  }<a name=line.235></a>
+<a name=line.236></a>
+  <span class='comment'>/**<a name=line.237></a>
+   * Return a &lt;tt&gt;Set&lt;/tt&gt; of {@link QuoteField} objects, whose<a name=line.238></a>
+   * iteration order corresponds to the preferred column order.<a name=line.239></a>
+   */</span><a name=line.240></a>
+  <span class='keyword'>private</span> Set&lt;Object&gt; parseRawColumnOrder(String aRawColumnOrderPref) {<a name=line.241></a>
+    java.util.List&lt;String&gt; columnNames = Util.getListFromString(aRawColumnOrderPref);<a name=line.242></a>
+    Set&lt;Object&gt; result = <span class='keyword'>new</span> LinkedHashSet&lt;Object&gt;();<a name=line.243></a>
+    <span class='keyword'>for</span>(String fieldName: columnNames){<a name=line.244></a>
+      result.add(QuoteField.valueFrom(fieldName));<a name=line.245></a>
+    }<a name=line.246></a>
+    assert (result.size() == QuoteField.values().length);<a name=line.247></a>
+    <span class='keyword'>return</span> result;<a name=line.248></a>
+  }<a name=line.249></a>
+<a name=line.250></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> matchGuiToStoredPrefs() {<a name=line.251></a>
+    fHorizontalLines.setSelected(hasHorizontalLines());<a name=line.252></a>
+    fVerticalLines.setSelected(hasVerticalLines());<a name=line.253></a>
+    fRowSizeModel.setValue(<span class='keyword'>new</span> Integer(getRowHeight()));<a name=line.254></a>
+    fSortField.setSelectedItem(getSortField());<a name=line.255></a>
+    fColumnOrderEditor.setItems(getColumnOrder());<a name=line.256></a>
+    fUpdateFreqModel.setValue(<span class='keyword'>new</span> Integer(getUpdateFrequency()));<a name=line.257></a>
+  }<a name=line.258></a>
+<a name=line.259></a>
+  <span class='keyword'>private</span> GridBagConstraints getConstraints(<span class='keyword'>int</span> aY, <span class='keyword'>int</span> aX) {<a name=line.260></a>
+    GridBagConstraints result = UiUtil.getConstraints(aY, aX);<a name=line.261></a>
+    addBottom(result);<a name=line.262></a>
+    <span class='keyword'>return</span> result;<a name=line.263></a>
+  }<a name=line.264></a>
+<a name=line.265></a>
+  <span class='keyword'>private</span> GridBagConstraints getConstraints(<span class='keyword'>int</span> aY, <span class='keyword'>int</span> aX, <span class='keyword'>int</span> aWidth, <span class='keyword'>int</span> aHeight) {<a name=line.266></a>
+    GridBagConstraints result = UiUtil.getConstraints(aY, aX, aWidth, aHeight);<a name=line.267></a>
+    addBottom(result);<a name=line.268></a>
+    <span class='keyword'>return</span> result;<a name=line.269></a>
+  }<a name=line.270></a>
+<a name=line.271></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> addBottom(GridBagConstraints aConstraints) {<a name=line.272></a>
+    aConstraints.insets = <span class='keyword'>new</span> Insets(<span class='literal'>0</span>, <span class='literal'>0</span>, UiConsts.ONE_SPACE, UiConsts.ONE_SPACE);<a name=line.273></a>
+  }<a name=line.274></a>
+<a name=line.275></a>
+  <span class='comment'>/**<a name=line.276></a>
+   * Developer tool for removing old preferences and restarting from the beginning.<a name=line.277></a>
+   */</span><a name=line.278></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>void</span> main(String... aArgs) {<a name=line.279></a>
+    QuoteTablePreferencesEditor thing = <span class='keyword'>new</span> QuoteTablePreferencesEditor();<a name=line.280></a>
+    <span class='keyword'>try</span> {<a name=line.281></a>
+      thing.fPrefs.removeNode();<a name=line.282></a>
+    }<a name=line.283></a>
+    <span class='keyword'>catch</span> (BackingStoreException ex) {<a name=line.284></a>
+      fLogger.severe(<span class='literal'>"Cannot access preferences."</span>);<a name=line.285></a>
+    }<a name=line.286></a>
+    fLogger.severe(<span class='literal'>"Done."</span>);<a name=line.287></a>
+  }<a name=line.288></a>
+}<a name=line.289></a>
+ <a name=line.290></a>
+</PRE><a name=line.291></a>
+ </BODY><a name=line.292></a>
+<HTML><a name=line.293></a>

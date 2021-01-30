@@ -1,0 +1,366 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=34 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="lazy,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Lazy initialization</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Lazy initialization</div>
+
+<br>Lazy initialization is a performance optimization. 
+It's used when data is deemed to be 'expensive' for some reason.
+For example:
+<ul>
+<li>if the <code>hashCode</code> value for an object might not actually be needed by its caller, 
+always calculating the <code>hashCode</code> for all instances of the object may be felt to be unnecessary. 
+</li><li>since accessing a file system or network is relatively slow, such operations 
+should be put off until they are absolutely required.
+</li></ul>
+
+Lazy initialization has two objectives:
+<ul>
+ <li><i>delay</i> an expensive operation until it's absolutely necessary
+ </li><li><i>store</i> the result of that expensive operation, such that you won't need 
+ to repeat it again
+</li></ul>
+
+<p>As usual, the size of any performance gain, if any, is highly dependent on the
+problem, and in many cases may not be significant. As with any optimization,
+this technique should be used only if there is a clear and significant
+benefit. 
+
+</p><p>To avoid a <code>NullPointerException</code>, a class must 
+<a href="TopicAction3d35.html?Id=92">self-encapsulate</a> fields that have lazy initialization.
+That is, a class cannot refer <em>directly</em> to such fields, but must access them through a method.
+
+</p><p>The <a href="TopicAction78db.html?Id=28">hashCode</a> method of an 
+<a href="TopicActiond838.html?Id=29">immutable</a> Model Object is a common candidate for lazy initialization. 
+
+
+</p><p><b>Example 1</b>
+</p><p>In this example, there are two fields with lazy initialization - <code>fHashCode</code> and <code>fAwards</code>.
+<br></p><pre>
+<span class="keyword">import</span> java.util.*;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Athlete {
+
+  <span class="keyword">public</span> Athlete(Integer id){
+    <span class="comment">//a toy implementation:
+</span>    <span class="keyword">this</span>.id = id;
+    <span class="keyword">this</span>.name = <span class="literal">"Roger Bannister"</span>;
+    <span class="comment">//this.awards is not set here!
+</span>  }
+
+  <span class="comment">//..elided
+</span>
+  <span class="comment">/**
+   Lazy initialization is used here; this assumes that awards
+   may not always be of interest to the caller,
+   and that for some reason it is particularly expensive to
+   fetch the List of Awards.
+  */</span>
+  <span class="keyword">public</span> List&lt;String&gt; getAwards(){
+    <span class="keyword">if</span> (<span class="keyword">this</span>.awards == <span class="keyword">null</span>) {
+      <span class="comment">//the awards field has not yet been populated
+</span>      <span class="comment">//Here is a toy implementation
+</span>      List&lt;String&gt; awards = <span class="keyword">new</span> ArrayList&lt;&gt;();
+      awards.add(<span class="literal">"Gold Medal 2006"</span>);
+      awards.add(<span class="literal">"Bronze Medal 1998"</span>);
+      <span class="keyword">this</span>.awards = awards;
+    }
+    <span class="keyword">return</span> Collections.unmodifiableList(<span class="keyword">this</span>.awards);
+  }
+
+  <span class="comment">/**
+   This style applies only if the object is immutable.
+   
+   Another alternative is to calculate the hashCode once, when the 
+   object is initially constructed (again, applies only when object is 
+   immutable).
+  */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">int</span> hashCode(){
+    <span class="keyword">if</span> (hashCode == <span class="literal">0</span>) {
+      hashCode = Objects.hash(getSigFields());
+    }
+    <span class="keyword">return</span> hashCode;
+  }
+  
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">boolean</span> equals(Object aThat) {
+    <span class="keyword">if</span> (<span class="keyword">this</span> == aThat) <span class="keyword">return</span> <span class="keyword">true</span>;
+    <span class="keyword">if</span> (!(aThat <span class="keyword">instanceof</span> Athlete)) <span class="keyword">return</span> <span class="keyword">false</span>;
+    Athlete that = (Athlete)aThat;
+    <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="literal">0</span>; i &lt; <span class="keyword">this</span>.getSigFields().length; ++i){
+      <span class="keyword">if</span> (!Objects.equals(<span class="keyword">this</span>.getSigFields()[i], that.getSigFields()[i])){
+        <span class="keyword">return</span> <span class="keyword">false</span>;
+      }
+    }
+    <span class="keyword">return</span> <span class="keyword">true</span>;    
+  }
+
+  <span class="comment">// PRIVATE
+</span>  <span class="keyword">private</span> Integer id;
+  <span class="keyword">private</span> String name;
+  <span class="keyword">private</span> List&lt;String&gt; awards;
+  <span class="keyword">private</span> <span class="keyword">int</span> hashCode;
+  
+  <span class="keyword">private</span> Object[] getSigFields() {
+    <span class="comment">//self-encapusulated: awards is not referenced directly, 
+</span>    <span class="comment">//since it may be null:
+</span>    <span class="keyword">return</span> <span class="keyword">new</span> Object[] {id, name, getAwards()};
+  }
+} 
+</pre>
+
+
+<p></p><p><b>Example 2</b>
+</p><p>Here, the look up of the printers available to a desktop PC is treated as an expensive operation.
+<br></p><pre>
+<span class="keyword">import</span> java.util.Arrays;
+<span class="keyword">import</span> java.util.List;
+
+<span class="keyword">import</span> javax.print.DocFlavor;
+<span class="keyword">import</span> javax.print.PrintService;
+<span class="keyword">import</span> javax.print.PrintServiceLookup;
+<span class="keyword">import</span> javax.print.attribute.HashPrintRequestAttributeSet;
+<span class="keyword">import</span> javax.print.attribute.PrintRequestAttributeSet;
+<span class="keyword">import</span> javax.print.attribute.standard.OrientationRequested;
+<span class="keyword">import</span> javax.print.attribute.standard.Sides;
+
+<span class="comment">/** Printing services available to a desktop client. */</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Printers {
+
+  <span class="comment">/** Print some plain text (perhaps internally converted to PDF). */</span>
+  <span class="keyword">void</span> printSomething(String text, PrintService printer) {
+    <span class="comment">//...elided
+</span>  }
+
+  <span class="comment">/** Return the list of printers that can print PDFs (double-sided, portrait).*/</span>
+  List&lt;PrintService&gt; listAvailablePrinters(){
+    <span class="keyword">if</span>(availablePrinters == <span class="keyword">null</span>){
+      <span class="comment">//double-sided, portrait, for PDF files.
+</span>      PrintRequestAttributeSet attrs = <span class="keyword">new</span> HashPrintRequestAttributeSet();
+      attrs.add(Sides.DUPLEX);
+      attrs.add(OrientationRequested.PORTRAIT);
+      <span class="comment">//Expensive operation! This can take several seconds in some environments:
+</span>      availablePrinters = Arrays.asList(
+        PrintServiceLookup.lookupPrintServices(DocFlavor.INPUT_STREAM.PDF, attrs)
+      );
+    }
+    <span class="keyword">return</span> availablePrinters;
+  }
+  
+  <span class="comment">// PRIVATE
+</span>  
+  <span class="comment">/**
+   Looked up once, the first time it's needed, and then stored using a 
+   static reference. If it was a non-static reference, then 
+   the list of available printers would not be looked up just once, 
+   but perhaps many times (once per 'Printers' object, and not once per 
+   loaded 'Printers' class).
+   
+   Self-encapsulate:
+   If this class's implementation needs to reference this item, it must do 
+   so indirectly, by calling listAvailablePrinters().  
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> List&lt;PrintService&gt; availablePrinters;
+  
+}  
+</pre>
+
+
+<br><b>Example 3</b>
+<p></p><p>Lazy initialization is particularly useful for GUIs which take a long
+time to construct.
+</p><p>There are several policies for GUI construction which a design may follow:
+</p><ul>
+<li>
+always build - construct the window many times, whenever it's demanded,
+and do not cache the result.</li>
+
+<li>
+first-request build - construct the window once, when first requested.
+Cache the result for any further requests, should they occur.</li>
+
+<li>
+background build - construct the window once, in a low priority worker
+thread, when the system is initialized. Cache the result for any requests,
+should they occur.</li>
+</ul>
+Here's an example of the first-request style, in which the <code>fEditor</code>
+field has lazy initialization (see the <code>actionPerformed</code> method).
+<br><pre>
+<span class="keyword">package</span> hirondelle.stocks.preferences;
+
+<span class="keyword">import</span> java.awt.event.*;
+<span class="keyword">import</span> javax.swing.*;
+<span class="keyword">import</span> java.util.*;
+<span class="keyword">import</span> java.util.logging.*;
+
+<span class="keyword">import</span> hirondelle.stocks.util.Args;
+<span class="keyword">import</span> hirondelle.stocks.util.ui.StandardEditor;
+<span class="keyword">import</span> hirondelle.stocks.util.ui.UiUtil;
+<span class="keyword">import</span> hirondelle.stocks.preferences.PreferencesEditor;
+<span class="keyword">import</span> hirondelle.stocks.util.Util;
+
+<span class="comment">/**
+* Present dialog to allow update of user preferences.
+*
+* &lt;P&gt;Related preferences are grouped together and placed in 
+* a single pane of a &lt;tt&gt;JTabbedPane&lt;/tt&gt;, which corresponds to an 
+* implementation of {@link PreferencesEditor}. Values are pre-populated with 
+* current values for preferences.
+*
+*&lt;P&gt;Most preferences have default values. If so, a  
+* &lt;tt&gt;Restore Defaults&lt;/tt&gt; button is provided for that set of related 
+* preferences.
+*
+*&lt;P&gt;Preferences are not changed until the &lt;tt&gt;OK&lt;/tt&gt; button is pressed. 
+* Exception: the logging preferences take effect immediately, without the need 
+* for hitting &lt;tt&gt;OK&lt;/tt&gt;.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> EditUserPreferencesAction <span class="keyword">extends</span> AbstractAction {
+
+  <span class="comment">/**
+  * Constructor.
+  *  
+  * @param aFrame parent window to which this dialog is attached.
+  * @param aPrefEditors contains implementations of {@link PreferencesEditor}, 
+  * each of which is placed in a pane of a &lt;tt&gt;JTabbedPane&lt;/tt&gt;.
+  */</span>
+  <span class="keyword">public</span> EditUserPreferencesAction (JFrame aFrame, List&lt;PreferencesEditor&gt; aPrefEditors) {
+    <span class="keyword">super</span>(<span class="literal">"Preferences..."</span>, UiUtil.getEmptyIcon()); 
+    Args.checkForNull(aFrame);
+    Args.checkForNull(aPrefEditors);
+    fFrame = aFrame;
+    putValue(SHORT_DESCRIPTION, <span class="literal">"Update user preferences"</span>);
+    putValue(LONG_DESCRIPTION, <span class="literal">"Allows user input of preferences."</span>);
+    putValue(MNEMONIC_KEY, <span class="keyword">new</span> Integer(KeyEvent.VK_P));    
+    fPrefEditors = aPrefEditors;
+  }
+
+  <span class="comment">/** Display the user preferences dialog.  */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> actionPerformed(ActionEvent event) {
+    fLogger.info(<span class="literal">"Showing user preferences dialog."</span>);
+    <span class="comment">//lazy construction: fEditor is created only once, when this action 
+</span>    <span class="comment">//is explicitly invoked
+</span>    <span class="keyword">if</span> (fEditor == <span class="keyword">null</span>) {
+      fEditor = <span class="keyword">new</span> Editor(<span class="literal">"Edit Preferences"</span>, fFrame);
+    }
+    fEditor.showDialog();
+  }
+  
+  <span class="comment">// PRIVATE 
+</span>  <span class="keyword">private</span> JFrame fFrame;
+  <span class="keyword">private</span> java.util.List&lt;PreferencesEditor&gt; fPrefEditors;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Logger fLogger = Util.getLogger(EditUserPreferencesAction.<span class="keyword">class</span>);  
+  
+  <span class="comment">/**
+  * Specifying this as a field allows for "lazy" creation and use of the GUI, which is 
+  * of particular importance for a preferences dialog, since they are usually heavyweight, 
+  * and have a large number of components.
+  */</span>
+  <span class="keyword">private</span> Editor fEditor;
+  
+  <span class="comment">/**
+  * Return GUI for editing all preferences, pre-populated with current 
+  * values.
+  */</span>
+  <span class="keyword">private</span> JComponent getPrefEditors(){
+    JTabbedPane content = <span class="keyword">new</span> JTabbedPane();
+    content.setTabPlacement(JTabbedPane.LEFT);
+    <span class="keyword">int</span> idx = <span class="literal">0</span>;
+    <span class="keyword">for</span>(PreferencesEditor prefEditor: fPrefEditors) {
+      JComponent editorGui = prefEditor.getUI();
+      editorGui.setBorder(UiUtil.getStandardBorder());
+      content.addTab(prefEditor.getTitle() , editorGui);
+      content.setMnemonicAt(idx, prefEditor.getMnemonic());
+      ++idx;
+    }
+    <span class="keyword">return</span> content;
+  }
+  
+  <span class="comment">/** Called only when the user hits the OK button.  */</span>
+  <span class="keyword">private</span> <span class="keyword">void</span> saveSettings(){
+    fLogger.fine(<span class="literal">"User selected OK. Updating table preferences."</span>);
+    <span class="keyword">for</span>(PreferencesEditor prefEditor: fPrefEditors) {
+      prefEditor.savePreferences();
+    }
+  }
+  
+  <span class="comment">/**
+  * An example of a nested class which is nested because it is attached only 
+  * to the enclosing class, and it cannot act as superclass since multiple 
+  * inheritance of implementation is not possible. 
+  * 
+  * The implementation of this nested class is kept short by calling methods 
+  * of the enclosing class.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">class</span> Editor <span class="keyword">extends</span> StandardEditor { 
+    Editor(String aTitle, JFrame aParent){
+      <span class="keyword">super</span>(aTitle, aParent, StandardEditor.CloseAction.HIDE);
+    }
+    <span class="keyword">@Override</span> <span class="keyword">public</span> JComponent getEditorUI () {
+      JPanel content = <span class="keyword">new</span> JPanel();
+      content.setLayout(<span class="keyword">new</span> BoxLayout(content, BoxLayout.Y_AXIS));
+      content.add(getPrefEditors());
+      <span class="comment">//content.setMinimumSize(new Dimension(300,300));
+</span>      <span class="keyword">return</span> content;
+    }
+    <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> okAction() {
+      saveSettings();
+      dispose();
+    }
+  }  
+}
+ 
+</pre>
+
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction19ff.html?Id=11">Constructors in general</a> <br>
+  <a href="TopicAction78db.html?Id=28">Implementing hashCode</a> <br>
+  <a href="TopicAction3d35.html?Id=92">Self encapsulate fields</a> <br>
+  <a href="TopicAction7910.html?Id=150">Standardized dialogs</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=34 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

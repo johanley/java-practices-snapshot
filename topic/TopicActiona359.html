@@ -1,0 +1,192 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=260 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Open file in native directory</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Open file in native directory</div>
+
+<br>A directory containing Java <code>.class</code> files can also contain any other kind of file as well.
+If a text file or a binary file is only used by a single package, then the most natural home for 
+it is often the very same directory/package that uses it.
+This will tend to increase modularization and coherence.
+(See the <a href="TopicActionfc56.html?Id=205">package-by-feature</a> topic as well.)
+
+<p>Such files might be used for:
+</p><ul>
+ <li>configuration information
+ </li><li>splash screen images or icons
+ </li><li>SQL statements
+ </li><li>documentation or help files
+</li></ul>
+
+<p>At runtime, the most convenient way of accessing such files is with these methods:
+</p><ul>
+ <li><code>Class.<a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Class.html#getResourceAsStream(java.lang.String)">getResoureAsStream</a></code>
+ </li><li><code>Class.<a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Class.html#getResource(java.lang.String)">getResource</a></code>
+</li></ul>
+
+These methods use the current classloader in order to find files, so they have the most flexibility.
+The following example reads in a text file placed in the same directory as the running class.
+Note that the code references the file in the simplest possible way, using its simple file name,
+without any qualification. As long as the text file retains the same name, and is in the same directory 
+as the class, this code will work.
+<br><pre>
+<span class="keyword">import</span> java.io.BufferedReader;
+<span class="keyword">import</span> java.io.IOException;
+<span class="keyword">import</span> java.io.InputStream;
+<span class="keyword">import</span> java.io.InputStreamReader;
+<span class="keyword">import</span> java.net.URI;
+<span class="keyword">import</span> java.net.URISyntaxException;
+<span class="keyword">import</span> java.net.URL;
+<span class="keyword">import</span> java.nio.charset.Charset;
+<span class="keyword">import</span> java.nio.charset.StandardCharsets;
+<span class="keyword">import</span> java.nio.file.Files;
+<span class="keyword">import</span> java.nio.file.Path;
+<span class="keyword">import</span> java.nio.file.Paths;
+<span class="keyword">import</span> java.util.List;
+<span class="keyword">import</span> java.util.Objects;
+<span class="keyword">import</span> java.util.Scanner;
+
+<span class="comment">/** Read a text file that's in the same directory as this (.class) file. */</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> ReadNeighbouringTextFile {
+
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args) <span class="keyword">throws</span> IOException {
+    log(<span class="literal">"Classpath: "</span> + System.getProperty(<span class="literal">"java.class.path"</span>));
+    log(<span class="literal">"user.dir: "</span> + System.getProperty(<span class="literal">"user.dir"</span>));
+    ReadNeighbouringTextFile read = <span class="keyword">new</span> ReadNeighbouringTextFile();
+    read.readFileViaStream();
+    read.readFileasViaUrl();
+    <span class="comment">//read.readFileViaPath();
+</span>  }
+
+  <span class="keyword">void</span> readFileViaStream() <span class="keyword">throws</span> IOException {
+    log(<span class="literal">"Via stream..."</span>);
+    <span class="keyword">try</span> (
+      <span class="comment">//uses the class loader search mechanism:
+</span>      InputStream input = <span class="keyword">this</span>.getClass().getResourceAsStream(<span class="literal">"test.txt"</span>);
+      InputStreamReader isr = <span class="keyword">new</span> InputStreamReader(input, ENCODING);
+      BufferedReader reader = <span class="keyword">new</span> BufferedReader(isr);
+    ){
+      String line = <span class="keyword">null</span>;
+      <span class="keyword">while</span> ((line = reader.readLine()) != <span class="keyword">null</span>) {
+        <span class="comment">//process the line in some way
+</span>        log(line);
+      }      
+    }
+  }
+  
+  <span class="keyword">void</span> readFileasViaUrl() <span class="keyword">throws</span> IOException{
+    log(<span class="literal">"Via URL..."</span>);
+    <span class="comment">//this doesn't work in a Java Web Start context
+</span>    <span class="comment">//the URL points back to the server; it's not local
+</span>    <span class="comment">//uses the class loader search mechanism:
+</span>    URL url = <span class="keyword">this</span>.getClass().getResource(<span class="literal">"test.txt"</span>);
+    URI uri = <span class="keyword">null</span>;
+    <span class="keyword">try</span> {
+      uri = url.toURI();
+    }
+    <span class="keyword">catch</span>(URISyntaxException ex){
+      <span class="comment">//in practice this will be very rare
+</span>      ex.printStackTrace();
+    }
+    Path path = Paths.get(uri);    
+    
+    <span class="comment">//now that you have the path, it's just regular text file processing
+</span>    
+    <span class="comment">//this gets the whole content at once:
+</span>    List&lt;String&gt; lines = Files.readAllLines(path, ENCODING);
+    log(<span class="literal">"Number of lines in the file: "</span>  + lines.size());
+    
+    <span class="comment">//OR, use this style, to process each line one at a time
+</span>    <span class="keyword">try</span> (Scanner scanner =  <span class="keyword">new</span> Scanner(path, ENCODING.name())){
+      <span class="keyword">while</span> (scanner.hasNextLine()){
+        <span class="comment">//process each line in some way
+</span>        log(scanner.nextLine());
+      }      
+    }    
+  }
+  
+  <span class="comment">/**
+   Here, relative Path objects don't know about the file system in the same way that a 
+   classloader does. It only knows about the 'user.dir' directory, the base 
+   directory of the runtime; this style is much less flexible, and is not 
+   recommended.
+  */</span>
+  <span class="keyword">void</span> readFileViaPath() <span class="keyword">throws</span> IOException{
+    log(<span class="literal">"Via path (not recommended)..."</span>);
+    <span class="comment">//Succeeds: absolute reference
+</span>    <span class="comment">//Path path = Paths.get("C:\\myproj\\test-api\\bin\\test.txt"); 
+</span>    
+    <span class="comment">/*
+    * Relative reference.
+    * 
+    * Fails when the file is beside the .class file.
+    * Succeeds only when the test.txt file is in the 'user.dir' directory.
+    * 
+    * This means that relative paths don't use the classpath; they 
+    * only use the 'user.dir' System property.
+    */</span>
+    Path path = Paths.get(<span class="literal">"test.txt"</span>); 
+    
+    log(<span class="literal">"Path: "</span> + path);
+    log(<span class="literal">"Absolute: "</span> + path.isAbsolute());
+    List&lt;String&gt; lines = Files.readAllLines(path, ENCODING);
+    log(<span class="literal">"Number of lines in the file: "</span>  + lines.size());
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> Charset ENCODING = StandardCharsets.UTF_8;
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(Object msg){
+    System.out.println(Objects.toString(msg));
+  }
+} 
+</pre>
+
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction12d8.html?Id=42">Reading and writing text files</a> <br>
+  <a href="TopicActionfc56.html?Id=205">Package by feature, not layer</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=260 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

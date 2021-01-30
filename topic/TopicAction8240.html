@@ -1,0 +1,86 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=36 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="measure,performance,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Measure application performance</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Measure application performance</div>
+
+<br>Measure your application's size in memory and its <a href="TopicActiondd78.html?Id=85">execution speed</a>.
+<p>Measuring performance throughout construction can help to identify <em>major</em> performance problems as quickly as possible, which is almost always beneficial. 
+If a major problem becomes apparent, then some immediate redesign will likely be necessary.
+If no major problem is apparent, then, if needed, <em>minor</em> optimizations can be performed later, when construction is nearly complete.
+(Many would argue that worrying about <em>minor</em> optimizations during construction is not advisable, since optimizations can sometimes make code more obscure.)
+
+</p><p>These monitoring tools come with the JDK:
+</p><ul>
+ <li><a href="http://www.oracle.com/technetwork/java/javaseproducts/mission-control/java-mission-control-1998576.html">Java Mission Control</a>
+ </li><li><a href="http://docs.oracle.com/javase/8/docs/technotes/guides/visualvm/">Visual VM</a>
+ </li><li><a href="http://docs.oracle.com/javase/8/docs/technotes/tools/index.html#jconsole">JConsole</a> 
+</li></ul>
+
+<p>If the above tools aren't available, then you are stuck with more primitive means of measuring an application's 
+size in memory. They depend on your platform. For example:
+</p><ul>
+<li>NT: Task Manager, look for java.exe or javaw.exe</li>
+<li>Unix: get the process id "<code>ps -e | grep java</code>", pass it to
+<code>pmap</code>, as in "<code>pmap -x 6598</code>", and look for total KB entry in the Private column</li>
+</ul>
+
+<p>As well, the JDK itself comes with basic profiling tools. For example:
+</p><ul>
+<li><code>Runtime.<a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Runtime.html#freeMemory()">freeMemory</a></code>
+</li><li><code>Runtime.<a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Runtime.html#totalMemory()">totalMemory</a></code>
+</li><li><code>java -<a href="http://docs.oracle.com/javase/8/docs/technotes/tools/windows/java.html#nonstandard">Xprof</a> MyClass</code></li>
+<li><code>java -<a href="http://docs.oracle.com/javase/8/docs/technotes/samples/hprof.html">Xrunhprof</a>:[<em>options</em>] MyClass</code></li>
+</ul>
+
+Other tools include <code>vmstat</code> for Unix hosts, and <code>perfmon</code> for Windows hosts.
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActione704.html?Id=83">Get size of object in memory</a> <br>
+  <a href="TopicActiondd78.html?Id=85">Time execution speed</a> <br>
+  <a href="TopicActioncfcd.html?Id=98">Measure web app performance</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=36 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

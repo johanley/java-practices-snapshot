@@ -1,0 +1,90 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=285 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="module,modularity,package,package by feature,feature,god class,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Modularity and deletion</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Modularity and deletion</div>
+
+<br>
+In software, it's been recognized for a long time that <b>modularity is a guiding principle of lasting value</b>.
+
+<p>In practice, it usually makes sense to <b>use the deletion test for modularity</b>.
+It's a simple idea. 
+To determine if a feature or aspect of a program is modular, just ask yourself this question: 
+<em>How many steps does it take to delete this feature?</em>
+The fewer the steps, the more modular it is.
+If it takes only <em>one</em> step to delete a feature (usually by deleting a directory), 
+then you can say that the design has maximum modularity.
+
+</p><p>File systems are hierarchical, with directories within directories.
+Given this basic fact of life, it's reasonable to have (as much as possible) a 1-to-1 mapping between the features of a program and directories/packages.
+If this is done, the deletion of a feature can sometimes correspond simply to the deletion of a directory.
+(This won't always be possible, but it's good to keep this idea in mind as a guideline.)
+
+</p><p>A counter-example to this idea is what some call a <em>god class</em>.
+By definition, a god class is related to a large number of features.
+God classes are the opposite of modular, and should usually be avoided. 
+An example of a god class is a class that does nothing but hold a large number of String constants that have similar meaning. 
+Such a style emphasizes an implementation detail (<em>these are all similar Strings</em>) instead of emphasizing feature modularity (<em>String X is attached to feature Y</em>).
+In this case, when you need to delete a feature, you usually also need to edit the god class in order to remove implementation details related to the feature.  
+ 
+</p><p>
+Some aspects of a program may have a <em>cross-cutting</em> character, in the sense that most features are related to it somehow. 
+Take the example of security in an application (controlling which users/roles execute which code).
+
+</p><p>There seem to be two choices for implementing security:
+</p><ul>
+ <li> security is itself treated as a separate feature. 
+ In this case, your security implementation becomes a god class, since it will need knowledge of most of the other features.
+ Some would view this with distaste.
+ </li><li> each feature is responsible for its own security.  
+ In this case, the implementation is modular. 
+ Security becomes a part of each feature, and not separate from it.
+</li></ul>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActionfc56.html?Id=205">Package by feature, not layer</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=285 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+</html>

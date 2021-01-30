@@ -1,0 +1,101 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=40 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="constructor,design pattern,private,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Private constructor</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Private constructor</div>
+
+<br>Private constructors prevent a class from being explicitly instantiated
+by its callers.
+<p>There are some common cases where a private constructor can be useful:
+</p><ul>
+<li>
+classes containing only static utility methods</li>
+<li>
+classes containing <a href="TopicAction03b1.html?Id=2">only constants</a></li>
+<li>
+<a href="TopicAction2161.html?Id=1">type safe enumerations</a></li>
+<li>
+<a href="TopicAction4934.html?Id=46">singletons</a></li>
+</ul>
+
+These examples fall into two categories.
+
+<h4>Object construction is entirely forbidden</h4>
+No objects can be constructed, either by the caller or by the native class. 
+This is only suitable for classes that offer only <em>static</em> members to the caller.
+
+<p>In these cases, the lack of an accessbile constructor says to the caller: "There are no use cases for 
+this class where you need to build an object. You can only use static items. I am preventing you 
+from even <em>trying</em> to build an object of this class."
+See <a href="TopicAction03b1.html?Id=2">class for constants</a> for an illustration.
+
+</p><p>If the programmer does not provide a constructor for a class, then the
+system will always provide a default, <em>public</em> no-argument constructor. To disable
+this default constructor, simply add a <em>private</em> no-argument constructor to the class.
+This private constructor may be empty. Somewhat paradoxically, creation of objects by the caller is in effect
+disabled by the addition of this private no-argument constructor.
+
+</p><h4>Object construction is private only</h4>
+Objects can be constructed, but only internally. For some reason, a class needs to prevent the caller 
+from creating objects. 
+
+<p>In the case of a <a href="TopicAction4934.html?Id=46">singleton</a>, the policy is that only one object of that class is supposed to 
+exist. Creation of multiple objects of that class is forbidden.
+
+</p><p>In the case of JDK 1.4 <a href="TopicAction2161.html?Id=1">type-safe enumerations</a>, more than one object can be created, but again, there 
+is a limitation. Only a specific set of objects is permitted, one for each element of the enumeration.
+(For JDK 1.5 enums, the creation of such objects is done implicitly by the Java language, not explicitly by the 
+application programmer.)
+<br>
+</p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction2161.html?Id=1">Type Safe Enumerations</a> <br>
+  <a href="TopicAction03b1.html?Id=2">Class for constants</a> <br>
+  <a href="TopicAction8d16.html?Id=21">Factory methods</a> <br>
+  <a href="TopicAction4934.html?Id=46">Singleton</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=40 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

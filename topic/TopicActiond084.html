@@ -1,0 +1,172 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=62 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="random,threadlocalrandom,random number,generator,pseudo-random,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Generate random numbers</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Generate random numbers</div>
+
+<br>Various classes in the JDK can generate random (really pseudo-random) numbers:
+<ul>
+ <li><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/ThreadLocalRandom.html">ThreadLocalRandom</a></code>, the recommended and most modern class (from Java 7) 
+ </li><li><code><a href="https://docs.oracle.com/javase/10/docs/api/java/security/SecureRandom.html">SecureRandom</a></code>, a cryptographically strong random number generator
+ </li><li><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Random.html">Random</a></code>, the superclass of both <code>ThreadLocalRandom</code> and <code>SecureRandom</code>
+ </li><li><code>Math.<a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Math.html#random()">random</a></code>, a static method which generates <em>doubles</em> evenly distributed between 0 (inclusive) and 1 (exclusive).
+</li></ul>
+
+<p>To generate a series of random numbers as a unit, you need to use a <em>single</em> object.
+Do <em>not</em> create a new object for each new random number.
+
+</p><p>When methods in these classes accept a lower and upper bound, the lower bound is 
+<em>inclusive</em> and the upper bound is <em>exclusive</em>.
+
+</p><p><b>Example</b>
+<br></p><pre>
+<span class="keyword">import</span> java.util.concurrent.ThreadLocalRandom;
+
+<span class="comment">/** 
+ Generating random numbers with ThreadLocalRandom.
+ In Effective Java, Joshua Bloch recommends ThreadLocalRandom 
+ for most use cases (even for single-threaded code).
+ 
+ @since Java 7.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> RandomNumbers {
+  
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">void</span> main(String... args){
+    RandomNumbers prng = <span class="keyword">new</span> RandomNumbers();
+    prng.zeroToUpperBound(<span class="literal">100</span>);
+    prng.range(<span class="literal">10</span>, <span class="literal">21</span>);
+    prng.gaussian(<span class="literal">100.0</span>, <span class="literal">5.0</span>);
+    log(<span class="literal">"Done."</span>);
+  }
+  
+  <span class="comment">/** The upper bound is excluded. */</span>
+  <span class="keyword">void</span> zeroToUpperBound(<span class="keyword">long</span> upper){
+    log(<span class="literal">"Generating "</span> + MAX + <span class="literal">" random integers in the range 0.."</span> + (upper-<span class="literal">1</span>));
+    <span class="comment">//a single object is reused here
+</span>    ThreadLocalRandom generator = ThreadLocalRandom.current();
+    <span class="keyword">for</span> (<span class="keyword">int</span> idx = <span class="literal">1</span>; idx &lt;= MAX; ++idx){
+      <span class="keyword">long</span> random = generator.nextLong(upper); 
+      log(INDENT + random);
+    }
+  }
+  
+  <span class="comment">/** The lower bound is included, but the upper bound is excluded. */</span>
+  <span class="keyword">void</span> range(<span class="keyword">long</span> lower, <span class="keyword">long</span> upper){
+    log(
+      <span class="literal">"Generating "</span> + MAX + <span class="literal">" random integers in the range "</span> + 
+      lower + <span class="literal">".."</span> + (upper-<span class="literal">1</span>)
+    );
+    <span class="comment">//note the static factory method for getting an object; there's no constructor, 
+</span>    <span class="comment">//and there's no need to pass a seed
+</span>    ThreadLocalRandom generator = ThreadLocalRandom.current();
+    <span class="keyword">for</span> (<span class="keyword">int</span> idx = <span class="literal">1</span>; idx &lt;= MAX; ++idx){
+      <span class="keyword">long</span> random = generator.nextLong(lower, upper); 
+      log(INDENT + random);
+    }
+  }
+  
+  <span class="keyword">void</span> gaussian(<span class="keyword">double</span> mean, <span class="keyword">double</span> variance){
+    log(<span class="literal">"Generating "</span> + MAX + <span class="literal">" random doubles in a gaussian distribution."</span>);
+    log(<span class="literal">"Mean: "</span> + mean + <span class="literal">" Variance:"</span> + variance);
+    ThreadLocalRandom generator = ThreadLocalRandom.current();
+    <span class="keyword">for</span> (<span class="keyword">int</span> idx = <span class="literal">1</span>; idx &lt;= MAX; ++idx){
+      <span class="keyword">double</span> random = mean + generator.nextGaussian() * variance;
+      log(INDENT + random);
+    }
+  }
+  
+  <span class="comment">//PRIVATE
+</span>  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> MAX = <span class="literal">10</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String INDENT = <span class="literal">"  "</span>;
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(String aMessage){
+    System.out.println(aMessage);
+  }
+}
+ 
+</pre>
+
+Example run of this class:
+<p></p>
+<pre>
+Generating 10 random integers in the range 0..99
+  4
+  71
+  31
+  88
+  95
+  69
+  94
+  24
+  36
+  39
+Generating 10 random integers in the range 10..20
+  18
+  11
+  15
+  17
+  11
+  10
+  12
+  19
+  16
+  15
+Generating 10 random doubles in a gaussian distribution.
+Mean: 100.0 Variance:5.0
+  96.29657359305843
+  99.72442335141267
+  103.91992986911049
+  96.53271254805549
+  101.20312372014465
+  102.12709319015893
+  103.7626473084215
+  102.47094971891569
+  100.86789127025881
+  101.78107900928805
+Done.</pre>
+<p></p>
+
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=62 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

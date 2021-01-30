@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+  <channel>
+    <title>Java Practices</title>
+    <link>http://www.javapractices.com/</link>
+    <description>
+     Java techniques, examples, and practices.
+    </description>
+    <language>en</language>
+    <copyright>Hirondelle Systems</copyright>
+    <managingEditor>webmaster@javapractices.com (John O'Hanley)</managingEditor>
+    <webMaster>webmaster@javapractices.com (John O'Hanley)</webMaster>
+    <lastBuildDate>Sat, 15 Sep 2018 00:00:00 GMT</lastBuildDate>
+
+  <item>
+   <title>Model Objects</title>
+    <link>http://www.javapractices.com/topic/TopicAction.do?Id=187</link>
+    <description>
+      The class given as an example is improved, and more modern.
+    </description>
+  </item>
+  
+  <item>
+   <title>Implementing compareTo</title>
+    <link>http://www.javapractices.com/topic/TopicAction.do?Id=10</link>
+    <description>
+      The class given as an example is improved, and more modern.
+    </description>
+  </item>
+
+  
+ </channel>
+
+</rss>

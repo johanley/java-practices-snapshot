@@ -1,0 +1,135 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=273 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="stream,lambda,method reference,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Lambdas only for simple cases</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Lambdas only for simple cases</div>
+
+<br>
+Objects that implement <a href="https://docs.oracle.com/javase/10/docs/api/java/lang/FunctionalInterface.html">functional interfaces</a> can be made in 3 ways:
+<ul>
+ <li><a href="https://docs.oracle.com/javase/tutorial/java/javaOO/methodreferences.html">method reference expressions</a>
+ </li><li><a href="https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html">lambda expressions</a>
+ </li><li>by directly instantiating a class that implements the interface
+</li></ul> 
+
+<p>If the method already exists, then a method reference should always be preferred over a lambda.
+In addition, method references are usually preferred when one or more of these conditions apply: 
+
+</p><ul>
+ <li>the code is large and/or complex
+ </li><li>the code would benefit from having a <em>name</em>
+ </li><li>the code would benefit from javadoc
+</li></ul> 
+
+<p>Lambdas work best when the method doesn't currently exist, and all of these 
+conditions apply:
+</p><ul>
+ <li>the code is short (no more than a few lines)
+ </li><li>the code is simple
+ </li><li>the code wouldn't benefit much from having a name (lambdas are <em>anonymous</em> methods)
+ </li><li>the code wouldn't benefit much from javadoc (javadoc can't be attached to a lambda expression)
+</li></ul> 
+
+In short, lambdas work best only in simpler cases.
+
+<p><b>Example</b>
+<br></p><pre>
+<span class="keyword">import</span> java.util.Optional;
+<span class="keyword">import</span> java.util.stream.Stream;
+
+<span class="comment">/** @since Java 8 */</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> LambdaForSimpleCases {
+  
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args) {
+    LambdaForSimpleCases atoms = <span class="keyword">new</span> LambdaForSimpleCases();
+    atoms.findLightestUnstableElement();
+  }
+
+  <span class="comment">/**
+   Find the lightest element that's always unstable.
+  */</span>
+  <span class="keyword">void</span> findLightestUnstableElement(){
+    Optional&lt;Atom&gt; answer = Stream.of(Atom.values())
+      <span class="comment">//this method exists, so just use a method reference; don't use a lambda 
+</span>      .filter(Atom::isAlwaysUnstable) 
+      <span class="comment">//using a lambda; not very complex, and the method doesn't already exist
+</span>      .max((a,b) -&gt; b.numProtons.compareTo(a.numProtons))  
+    ;
+    answer.ifPresent(atom -&gt; log(<span class="literal">"Lightest unstable element:"</span>, <span class="literal">" "</span> + atom.getName()));
+  }
+  
+  <span class="comment">/**
+   Some data from the periodic table of the elements (incomplete!). 
+  */</span>
+  <span class="keyword">enum</span> Atom {
+    H(<span class="literal">"Hydrogen"</span>, <span class="literal">1</span>, <span class="keyword">false</span>),
+    Tc(<span class="literal">"Technetium"</span>, <span class="literal">43</span>, <span class="keyword">true</span>),
+    Au(<span class="literal">"Gold"</span>, <span class="literal">79</span>, <span class="keyword">false</span>),
+    Pb(<span class="literal">"Lead"</span>, <span class="literal">82</span>, <span class="keyword">false</span>),
+    Pu(<span class="literal">"Plutonium"</span>, <span class="literal">94</span>, <span class="keyword">true</span>),
+    Fm(<span class="literal">"Fermium"</span>, <span class="literal">100</span>, <span class="keyword">true</span>);
+    <span class="keyword">private</span> Atom(String name, Integer numProtons, Boolean isAlwaysUnstable){
+      <span class="keyword">this</span>.name = name;
+      <span class="keyword">this</span>.numProtons = numProtons;
+      <span class="keyword">this</span>.isAlwaysUnstable = isAlwaysUnstable;
+    }
+    Boolean isAlwaysUnstable() { <span class="keyword">return</span> isAlwaysUnstable; }
+    String getName() { <span class="keyword">return</span> name;  }
+    Integer getNumProtons() { <span class="keyword">return</span> numProtons; }
+    <span class="keyword">private</span> String name;
+    <span class="keyword">private</span> Integer numProtons;
+    <span class="keyword">private</span> Boolean isAlwaysUnstable;
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(Object... msgs){
+    Stream.of(msgs).forEach(System.out::println);
+  }
+} 
+</pre>
+
+<p></p>
+
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=273 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

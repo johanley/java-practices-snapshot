@@ -1,0 +1,186 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=49 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="synchronize,thread,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Synchronize access to mutable fields</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Synchronize access to mutable fields</div>
+
+<br>In a multi-threaded environment, accessing mutable data (data that can change) must always be 
+coordinated between readers and writers. 
+The task of making sure that readers and writers don't interfere with each other in undesirable ways is 
+called <em>synchronization</em>.
+Synchronization can be done with an explicit lock object, but a more common style is to use 
+the <i>intrinsic locks</i> implied by the <code>synchronized</code> keyword.
+
+<p>For example, in a multi-threaded environment, all <code>get</code> and <code>set</code> methods for 
+mutable fields should usually be <code>synchronized</code> methods. 
+This includes primitive fields.
+
+</p><p>Most classes do not need to be designed for operation in a multi-threaded environment, 
+and can ignore these considerations.
+
+</p><p>If an object does need to live in a multi-threaded environment, however, then a significant 
+amount of care must be taken to ensure that it is correctly designed.
+
+</p><p>If an object is <a href="TopicActiond838.html?Id=29">immutable</a>, then it's automatically
+<a href="TopicAction234f.html?Id=48">thread-safe</a>. If it's mutable, then extra steps
+must be taken to ensure thread-safety: every use of every mutable field
+must be synchronized in some way (usually with using the <code>synchronized</code> keyword).
+
+</p><p>Here, <i>mutable field</i> simply means a field which might change in any way, after the initial construction of the object. 
+(Objects are never shared between threads until after the object is fully created.) 
+For example,
+</p><ul>
+<li>
+an <code>int</code> field that changes its value some time after the constructor
+completes</li>
+
+<li>
+a <code>Date</code> field that changes state some time after the constructor
+completes, to represent a different date from the original</li>
+
+<li>
+any object field that is "pointed" to a new object, some time after the
+constructor completes</li>
+</ul>
+Remember that all <i>local</i> variables declared in the body of a method
+are never shared between threads, and so have no thread-safety considerations.
+<p>It's a misconception that all mutable primitives except <code>long</code>
+and <code>double</code> do not need <code>synchronized</code> access.
+
+</p><p><b>Example</b>
+
+</p><p>Note that even the <code>get</code> of the <code>int</code> field is a <code>synchronized</code>
+method.
+<br></p><pre>
+<span class="keyword">import</span> java.util.Date;
+
+<span class="comment">/**
+* This class is mutable, but thread-safe : the caller never
+* needs to perform external synchronization, except when multiple calls
+* need to be treated as a single unit.
+*
+* This class illustrates the three possible cases for fields :
+*&lt;ul&gt;
+* &lt;li&gt; a primitive (int)
+* &lt;li&gt; an immutable object (String)
+* &lt;li&gt; a mutable object (java.util.Date)
+*&lt;/ul&gt;
+* Note that in most new code, you should model dates with java.time, not 
+* with java.util.Date; here, java.util.Date is used only because it's 
+* convenient for exercising mutable objects.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> MutablePlanet {
+
+  <span class="keyword">public</span> MutablePlanet(<span class="keyword">int</span> id, String name, Date dateOfDiscovery) {
+     <span class="keyword">this</span>.id = id;
+     <span class="keyword">this</span>.name = name;
+     <span class="comment">//Make a private copy of the dateOfDiscovery argument.
+</span>     <span class="comment">//This is the only way to keep the this.dateOfDiscovery
+</span>     <span class="comment">//field private, and shields this class from any changes
+</span>     <span class="comment">//to the original dateOfDiscovery object which might be
+</span>     <span class="comment">//made by the caller.
+</span>     <span class="keyword">this</span>.dateOfDiscovery = <span class="keyword">new</span> Date(dateOfDiscovery.getTime());
+  }
+
+  <span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">int</span> getId() {
+     <span class="keyword">return</span> id;
+  }
+  <span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> setId(<span class="keyword">int</span> newId) {
+    id = newId;
+  }
+
+  <span class="keyword">public</span> <span class="keyword">synchronized</span> String getName() {
+    <span class="keyword">return</span> name;
+  }
+  <span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> setName(String newName) {
+    name = newName;
+  }
+
+  <span class="comment">/**
+  * Returns a defensive copy of the field.
+  * The caller of this method can do anything they want with the
+  * returned Date object, without affecting the internals of this
+  * class in any way.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">synchronized</span> Date getDateOfDiscovery() {
+    <span class="keyword">return</span> <span class="keyword">new</span> Date(dateOfDiscovery.getTime());
+  }
+  <span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> setDateOfDiscovery(Date newDiscoveryDate) {
+    <span class="comment">//change the state of the mutable Date field
+</span>    dateOfDiscovery.setTime(newDiscoveryDate.getTime());
+  }
+
+  <span class="comment">// PRIVATE
+</span>
+  <span class="comment">/**
+  * A primitive field.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">int</span> id;
+
+  <span class="comment">/**
+  * An immutable object field.
+  * Strings never alter state after construction.
+  */</span>
+  <span class="keyword">private</span> String name;
+
+  <span class="comment">/**
+  * A mutable object field.
+  * The state of a Date can change after construction.
+  */</span>
+  <span class="keyword">private</span> Date dateOfDiscovery;
+}
+ 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActiond838.html?Id=29">Immutable objects</a> <br>
+  <a href="TopicAction5ade.html?Id=35">Remember the types of intrinsic lock</a> <br>
+  <a href="TopicAction234f.html?Id=48">Document thread safety</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=49 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

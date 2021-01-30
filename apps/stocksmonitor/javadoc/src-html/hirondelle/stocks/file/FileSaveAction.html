@@ -1,0 +1,73 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/file/FileSaveAction.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:53:04 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+FileSaveAction.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.stocks.file;<a name=line.1></a>
+<a name=line.2></a>
+<span class='keyword'>import</span> java.awt.event.*;<a name=line.3></a>
+<span class='keyword'>import</span> javax.swing.*;<a name=line.4></a>
+<span class='keyword'>import</span> java.util.*;<a name=line.5></a>
+<span class='keyword'>import</span> hirondelle.stocks.portfolio.PortfolioDAO;<a name=line.6></a>
+<span class='keyword'>import</span> hirondelle.stocks.portfolio.CurrentPortfolio;<a name=line.7></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.ui.UiUtil;<a name=line.8></a>
+<span class='keyword'>import</span> java.util.logging.Logger;<a name=line.9></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Util;<a name=line.10></a>
+<a name=line.11></a>
+<span class='comment'>/**<a name=line.12></a>
+* Save the edits performed on the {@link CurrentPortfolio}, and update the display <a name=line.13></a>
+* to show that the &lt;tt&gt;CurrentPortfolio&lt;/tt&gt; no longer needs a save.<a name=line.14></a>
+*/</span><a name=line.15></a>
+<span class='keyword'>public</span> <span class='keyword'>final</span> <span class='keyword'>class</span> FileSaveAction <span class='keyword'>extends</span> AbstractAction <span class='keyword'>implements</span> Observer {<a name=line.16></a>
+<a name=line.17></a>
+  <span class='comment'>/**<a name=line.18></a>
+  * Constructor.<a name=line.19></a>
+  *  <a name=line.20></a>
+  * @param aCurrentPortfolio is to be saved by this action.<a name=line.21></a>
+  */</span><a name=line.22></a>
+  <span class='keyword'>public</span> FileSaveAction(CurrentPortfolio aCurrentPortfolio) {<a name=line.23></a>
+    <span class='keyword'>super</span>(<span class='literal'>"Save"</span>, UiUtil.getImageIcon(<span class='literal'>"/toolbarButtonGraphics/general/Save"</span>)); <a name=line.24></a>
+    fCurrentPortfolio = aCurrentPortfolio;<a name=line.25></a>
+    fCurrentPortfolio.addObserver(<span class='keyword'>this</span>);<a name=line.26></a>
+    putValue(SHORT_DESCRIPTION, <span class='literal'>"Save edits to the current portfolio"</span>);<a name=line.27></a>
+    putValue(<a name=line.28></a>
+      ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK)<a name=line.29></a>
+    );<a name=line.30></a>
+    putValue(LONG_DESCRIPTION, <span class='literal'>"Save edits to the current portfolio"</span>);<a name=line.31></a>
+    putValue(MNEMONIC_KEY, <span class='keyword'>new</span> Integer(KeyEvent.VK_S));    <a name=line.32></a>
+  }<a name=line.33></a>
+<a name=line.34></a>
+  <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> actionPerformed(ActionEvent e) {<a name=line.35></a>
+    fLogger.info(<span class='literal'>"Saving edits to the current portfolio."</span>);<a name=line.36></a>
+    PortfolioDAO portfolioDAO = <span class='keyword'>new</span> PortfolioDAO();<a name=line.37></a>
+    portfolioDAO.save(fCurrentPortfolio.getPortfolio());<a name=line.38></a>
+    fCurrentPortfolio.setNeedsSave(<span class='keyword'>false</span>);<a name=line.39></a>
+    fCurrentPortfolio.notifyObservers();<a name=line.40></a>
+  }  <a name=line.41></a>
+  <a name=line.42></a>
+  <span class='comment'>/**<a name=line.43></a>
+  * Synchronize the state of this object with the state of the <a name=line.44></a>
+  * &lt;tt&gt;CurrentPortfolio&lt;/tt&gt; passed to the constructor.<a name=line.45></a>
+  *<a name=line.46></a>
+  * This action is enabled only when the &lt;tt&gt;CurrentPortfolio&lt;/tt&gt; is titled and <a name=line.47></a>
+  * needs a save.<a name=line.48></a>
+  */</span><a name=line.49></a>
+  <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> update(Observable aPublisher, Object aData) {<a name=line.50></a>
+    setEnabled(fCurrentPortfolio.getNeedsSave() &amp;&amp; !fCurrentPortfolio.isUntitled());<a name=line.51></a>
+  } <a name=line.52></a>
+  <a name=line.53></a>
+  <span class='comment'>// PRIVATE <a name=line.54></a>
+</span>  <span class='keyword'>private</span> CurrentPortfolio fCurrentPortfolio;<a name=line.55></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> Logger fLogger = Util.getLogger(FileSaveAction.<span class='keyword'>class</span>);<a name=line.56></a>
+}<a name=line.57></a>
+ <a name=line.58></a>
+</PRE><a name=line.59></a>
+ </BODY><a name=line.60></a>
+<HTML><a name=line.61></a>

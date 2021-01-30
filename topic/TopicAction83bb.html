@@ -1,0 +1,374 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=79 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="console,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Console input</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Console input</div>
+
+<br>The <a href="https://docs.oracle.com/javase/10/docs/api/java/io/Console.html"><code>Console</code></a>
+class allows the user to interact with a simple console application, using textual commands that you define.
+
+<p>Here's a simple example of its use:
+
+<br></p><pre>
+<span class="keyword">import</span> java.util.Arrays;
+<span class="keyword">import</span> java.io.Console;
+
+<span class="comment">/**
+* Simple interactive console application.
+* Uses the java.io.Console class of Java 6.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Console6 {
+
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">void</span> main(String... args){
+    Console console = System.console();
+    <span class="comment">//read user name, using java.util.Formatter syntax :
+</span>    String username = console.readLine(<span class="literal">"User Name? "</span>);
+
+    <span class="comment">//read the password, without echoing the output 
+</span>    <span class="keyword">char</span>[] password = console.readPassword(<span class="literal">"Password? "</span>);
+
+    <span class="comment">//verify user name and password using some mechanism (elided)
+</span>
+    <span class="comment">//the javadoc for the Console class recommends "zeroing-out" the password 
+</span>    <span class="comment">//when finished verifying it :
+</span>    Arrays.fill(password, <span class="literal">' '</span>);
+
+    console.printf(<span class="literal">"Welcome, %1$s."</span>, username);
+    console.printf(NEW_LINE);
+
+    String className = console.readLine(<span class="literal">"Please enter a package-qualified class name:"</span>);
+    Class&lt;?&gt; theClass = <span class="keyword">null</span>;
+    <span class="keyword">try</span> {
+      theClass = Class.forName(className);
+      console.printf(<span class="literal">"The inheritance tree: %1$s"</span>, getInheritanceTree(theClass));
+    }
+    <span class="keyword">catch</span>(ClassNotFoundException ex){
+      console.printf(<span class="literal">"Cannot find that class."</span>);
+    }
+
+    <span class="comment">//this version just exits, without asking the user for more input
+</span>    console.printf(<span class="literal">"Bye."</span>);
+  }
+  
+  <span class="comment">// PRIVATE
+</span>  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String NEW_LINE = System.getProperty(<span class="literal">"line.separator"</span>);
+
+  <span class="keyword">private</span> <span class="keyword">static</span> String getInheritanceTree(Class&lt;?&gt; aClass){
+    StringBuilder superclasses = <span class="keyword">new</span> StringBuilder();
+    superclasses.append(NEW_LINE);
+    Class&lt;?&gt; theClass = aClass;
+    <span class="keyword">while</span> (theClass != <span class="keyword">null</span>) {
+      superclasses.append(theClass);
+      superclasses.append(NEW_LINE);
+      theClass = theClass.getSuperclass();
+    }
+    superclasses.append(NEW_LINE);
+    <span class="keyword">return</span> superclasses.toString();
+  }
+} 
+</pre>
+
+<p></p><p>An example run:
+</p><pre>
+&gt;java  Console6
+User Name? john
+Password?
+Welcome, john.
+Please enter a package-qualified class name:java.util.ArrayList
+The inheritance tree:
+class java.util.ArrayList
+class java.util.AbstractList
+class java.util.AbstractCollection
+class java.lang.Object
+
+Bye.
+</pre>
+
+<p><b>JDK &lt; 6</b>
+</p><p>The <code>Console</code> class was added in Java 6. 
+The following is an extended example of using an older version of the JDK. 
+Here, input is read from the console in a continuous loop. 
+As well, it has separated the problem into several parts, such that some parts can be 
+reused in other console applications.
+
+</p><p>As in the previous example, the user inputs a package-qualified class name, and the corresponding
+inheritance tree is displayed.
+</p><p>An example run:
+</p><p><code>&gt;java -cp . Console InheritanceInterpreter</code>
+<br><code>Please enter a class name&gt;as;k</code>
+<br><code>Invalid.&nbsp; Example:"java.lang.String"&gt;java.lang.String</code>
+<br><code>The inheritance tree:</code>
+<br><code>class java.lang.String</code>
+<br><code>class java.lang.Object</code>
+<br><code>Please enter a class name&gt;</code>
+<br><code>Invalid.&nbsp; Example:"java.lang.String"&gt;</code>
+<br><code>Invalid.&nbsp; Example:"java.lang.String"&gt;....</code>
+<br><code>Invalid.&nbsp; Example:"java.lang.String"&gt;a;lskf</code>
+<br><code>Invalid.&nbsp; Example:"java.lang.String"&gt;java.sql.SQLWarning</code>
+<br><code>The inheritance tree:</code>
+<br><code>class java.sql.SQLWarning</code>
+<br><code>class java.sql.SQLException</code>
+<br><code>class java.lang.Exception</code>
+<br><code>class java.lang.Throwable</code>
+<br><code>class java.lang.Object</code>
+<br><code>Please enter a class name&gt;java.util.GregorianCalendar</code>
+<br><code>The inheritance tree:</code>
+<br><code>class java.util.GregorianCalendar</code>
+<br><code>class java.util.Calendar</code>
+<br><code>class java.lang.Object</code>
+<br><code>Please enter a class name&gt;exit</code>
+</p><p><code>Bye.</code>
+
+<br></p><pre>
+<span class="keyword">import</span> java.io.BufferedReader;
+<span class="keyword">import</span> java.io.IOException;
+<span class="keyword">import</span> java.io.InputStreamReader;
+<span class="keyword">import</span> java.util.ArrayList;
+<span class="keyword">import</span> java.util.List;
+<span class="keyword">import</span> java.util.Objects;
+
+<span class="comment">/**
+* Sends text back and forth between the command line and an
+* Interpreter. 
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Console {
+
+  <span class="comment">/**
+  * Build and launch a specific &lt;code&gt;Interpreter&lt;/code&gt;, whose
+  * package-qualified name is passed in on the command line.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args) {
+    <span class="keyword">try</span> {
+      <span class="comment">//unchecked cast:
+</span>      Class&lt;Interpreter&gt; theClass = (Class&lt;Interpreter&gt;)Class.forName(args[<span class="literal">0</span>]);
+      Interpreter interpreter = theClass.getDeclaredConstructor().newInstance();
+      Console console = <span class="keyword">new</span> Console(interpreter);
+      console.run();
+    }
+    <span class="keyword">catch</span> (Exception ex){
+      error(ex + <span class="literal">" Cannot instantiate Interpreter."</span>);
+      error(<span class="literal">"Check class name, class path."</span>);
+    }
+  }
+
+  <span class="keyword">public</span> Console(Interpreter interpreter) {
+    <span class="keyword">this</span>.interpreter = Objects.requireNonNull(interpreter);
+  }
+
+  <span class="comment">/**
+  * Display a prompt, wait for a full line of input, and then parse
+  * the input using an Interpreter.
+  *
+  * Exit when &lt;code&gt;Interpreter.parseInput&lt;/code&gt; returns true.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">void</span> run() <span class="keyword">throws</span> IOException {
+    display(interpreter.getHelloPrompt());
+    <span class="comment">//pass each line of console input to the interpreter, 
+</span>    <span class="comment">//and display its result
+</span>    <span class="keyword">try</span> (
+      InputStreamReader in = <span class="keyword">new</span> InputStreamReader(System.in);
+      BufferedReader stdin = <span class="keyword">new</span> BufferedReader(in);
+    ){
+      <span class="keyword">boolean</span> hasRequestedQuit = <span class="keyword">false</span>;
+      <span class="keyword">try</span> {
+        <span class="keyword">while</span>(!hasRequestedQuit){
+          List&lt;Object&gt; result = <span class="keyword">new</span> ArrayList&lt;Object&gt;();
+          String line = stdin.readLine();
+          <span class="comment">//interpret the line of input;
+</span>          <span class="comment">//note that "result" is passed as an "out" parameter
+</span>          hasRequestedQuit = interpreter.parseInput(line, result);
+          display(result);
+        }
+      }
+      <span class="keyword">catch</span> (IOException ex) {
+        error(ex);
+      }
+    }
+    <span class="keyword">finally</span> {
+      display(BYE);
+    }
+  }
+  
+
+  <span class="comment">// PRIVATE
+</span>  <span class="keyword">private</span> Interpreter interpreter;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String BYE = <span class="literal">"Bye."</span>;
+
+  <span class="comment">/**
+  * Display some text to stdout.
+  * The result of toString() is used.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">void</span> display(Object thing){
+    System.out.println(thing.toString());
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> error(Object thing) {
+    System.err.println(thing);
+  }
+
+  <span class="comment">/**
+  * Display a List of objects as text in stdout, in the order returned
+  * by the iterator of aText.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">void</span> display(List&lt;Object&gt; text) {
+    text.forEach(p -&gt; display(p));
+  }
+} 
+</pre>
+
+<br><pre>
+<span class="keyword">import</span> java.util.*;
+
+<span class="comment">/**
+* Parse a line of text and return a result.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">interface</span> Interpreter {
+
+  <span class="comment">/**
+  * @param line is non-null.
+  * @param result is a non-null, empty List which acts as an "out"
+  * parameter; when returned, result must contain a non-null, non-empty
+  * List of items which all have a &lt;code&gt;toString&lt;/code&gt; method, to be used
+  * for displaying a result to the user.
+  *
+  * @return true if the user has requested to quit the Interpreter.
+  * @exception IllegalArgumentException if a param does not comply.
+  */</span>
+  <span class="keyword">boolean</span> parseInput(String line, List&lt;Object&gt; result);
+
+  <span class="comment">/**
+  * Return the text to be displayed upon start-up of the Interpreter.
+  */</span>
+  String getHelloPrompt();
+} 
+</pre>
+
+<br><pre>
+<span class="keyword">import</span> java.util.*;
+
+<span class="comment">/**
+* Given a package-qualified class name, return the names of the classes in
+* the inheritance tree.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> InheritanceInterpreter <span class="keyword">implements</span> Interpreter {
+
+  <span class="comment">/**
+  * @param aLine is a non-null name of a class.
+  * @param aResult is a non-null, empty List which acts as an "out"
+  * parameter; when returned, aResult must contain a non-null, non-empty
+  * List of class names which form the inheritance tree of the input class.
+  *
+  * @return true if the user has requeseted to quit the Interpreter.
+  * @exception IllegalArgumentException if a param does not comply.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">boolean</span> parseInput (String  aLine, <span class="keyword">final</span> List aResult) {
+    <span class="keyword">if</span> (aResult == <span class="keyword">null</span>) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="literal">"Result param cannot be null."</span>);
+    }
+    <span class="keyword">if</span> (!aResult.isEmpty()){
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="literal">"Result param must be empty."</span>);
+    }
+    <span class="keyword">if</span> (aLine == <span class="keyword">null</span>) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="literal">"Line must not be null."</span>);
+    }
+
+    <span class="keyword">boolean</span> hasRequestedQuit = aLine.trim().equalsIgnoreCase(fQUIT) ||
+                               aLine.trim().equalsIgnoreCase(fEXIT);
+    <span class="keyword">if</span> (hasRequestedQuit) {
+      aResult.add(fNEW_LINE);
+    }
+    <span class="keyword">else</span> {
+      <span class="keyword">try</span> {
+        Class theClass = Class.forName(aLine);
+        StringBuilder superclasses = <span class="keyword">new</span> StringBuilder();
+        superclasses.append(fHEADER);
+        superclasses.append(fNEW_LINE);
+        <span class="keyword">while</span> (theClass != <span class="keyword">null</span>) {
+          superclasses.append(theClass);
+          superclasses.append(fNEW_LINE);
+          theClass = theClass.getSuperclass();
+        }
+        aResult.add(superclasses);
+        aResult.add(fDEFAULT_PROMPT);
+      }
+      <span class="keyword">catch</span> (ClassNotFoundException ex){
+        <span class="comment">//recover by asking the user for corrected input
+</span>        aResult.clear();
+        aResult.add(fERROR_PROMPT);
+      }
+    }
+
+    assert !aResult.isEmpty(): <span class="literal">"Result must be non-empty."</span>;
+
+    <span class="keyword">return</span> hasRequestedQuit;
+  }
+
+  <span class="comment">/**
+  * Return the text to be displayed upon start-up of the Interpreter.
+  */</span>
+  <span class="keyword">public</span> String getHelloPrompt() {
+    <span class="keyword">return</span> fHELLO_PROMPT;
+  }
+
+  <span class="comment">// PRIVATE
+</span>  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String fHELLO_PROMPT = <span class="literal">"Please enter a class name&gt;"</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String fDEFAULT_PROMPT = <span class="literal">"Please enter a class name&gt;"</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String fERROR_PROMPT = <span class="literal">"Invalid.  Example:\"java.lang.String\"&gt;"</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String fHEADER = <span class="literal">"The inheritance tree:"</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String fQUIT = <span class="literal">"quit"</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String fEXIT = <span class="literal">"exit"</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String fNEW_LINE = System.getProperty(<span class="literal">"line.separator"</span>);
+} 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActione704.html?Id=83">Get size of object in memory</a> <br>
+  <a href="TopicActionddc6.html?Id=113">Construct Object using class name</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=79 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

@@ -1,0 +1,280 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=233 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:49 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Verify input with Model Objects</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Verify input with Model Objects</div>
+
+<br>
+Validation of user input is important for almost all applications. 
+There seems to be two places where you may implement such validation logic
+<ul>
+ <li>directly in the view-related classes
+ </li><li>not in the view, but in your Model Object instead
+</li></ul>
+
+<p>Implementing validation in the Model Object has some strong advantages:
+</p><ul>
+ <li>the Model Object is the <a href="TopicAction0ec8.html?Id=209">natural home for such logic</a>
+ </li><li>since the code is not tied to the GUI, it is much simpler to test using tools such as <a href="TopicActiond5a5.html?Id=33">JUnit</a>
+ </li><li>complex validations that depend on more than one input item are handled just as easily as any other validation
+</li></ul>
+
+<p><b>Example</b>
+
+</p><p>Here's a Model Object class named 
+<code><a href="../apps/movies/javadoc/src-html/hirondelle/movies/edit/Movie.html">Movie</a></code>. 
+It performs all its validation in its constructors.
+If a problem occurs, a checked exception named <code>InvalidUserInput</code> is thrown.
+<br></p><pre>
+<span class="comment">/**
+ Data-centric class encapsulating all fields related to movies (a 'model object'). 
+ 
+ &lt;P&gt;This class exists  in order to encapsulate, validate, and sort movie information.
+  This class is used both to validate user input, and act as a 'transfer object' when 
+  interacting with the database.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Movie <span class="keyword">implements</span> Comparable&lt;Movie&gt;{
+
+  <span class="comment">/**
+   Constructor taking regular Java objects natural to the domain.
+   
+   @param aId optional, the database identifier for the movie. This 
+   item is optional since, for 'add' operations, it has yet to be 
+   assigned by the database.
+   @param aTitle has content, name of the movie
+   @param aDateViewed optional, date the movie was screened by the user
+   @param aRating optional, in range 0.0 to 10.0
+   @param aComment optional, any comment on the movie
+  */</span>
+  Movie(
+    String aId, String aTitle, Date aDateViewed, BigDecimal aRating, String aComment
+  ) <span class="keyword">throws</span> InvalidInputException {
+    fId = aId;
+    fTitle = aTitle;
+    fDateViewed = aDateViewed;
+    fRating = aRating;
+    fComment = aComment;
+    validateState();
+  }
+  
+  <span class="comment">/**
+   Constructor which takes all parameters as &lt;em&gt;text&lt;/em&gt;.
+   
+   &lt;P&gt;Raw user input is usually in the form of &lt;em&gt;text&lt;/em&gt;.
+   This constructor &lt;em&gt;first&lt;/em&gt; parses such text into the required 'base objects' - 
+   {@link Date}, {@link BigDecimal} and so on. If those parse operations &lt;em&gt;fail&lt;/em&gt;,
+   then the user is shown an error message. If N such errors are present in user input, 
+   then  N &lt;em&gt;separate&lt;/em&gt; message will be presented for each failure, one by one.
+   
+   &lt;P&gt;If all such parse operations &lt;em&gt;succeed&lt;/em&gt;, then the "regular" constructor 
+   {@link #Movie(String, String, Date, BigDecimal, String)}
+   will then be called. It's important to note that this call to the second constructor 
+   can in turn result in &lt;em&gt;another&lt;/em&gt; error message being shown to the 
+   user (just one this time). 
+ */</span>
+  Movie(
+    String aId, String aTitle, String aDateViewed, String aRating, String aComment
+  ) <span class="keyword">throws</span> InvalidInputException {
+      <span class="keyword">this</span>(
+        aId, aTitle, Util.parseDate(aDateViewed, <span class="literal">"Date Viewed"</span>), 
+        Util.parseBigDecimal(aRating, <span class="literal">"Rating"</span>), aComment
+      );
+  }
+  
+  String getId(){ <span class="keyword">return</span> fId; }
+  String getTitle(){ <span class="keyword">return</span> fTitle; }
+  Date getDateViewed(){ <span class="keyword">return</span> fDateViewed; }
+  BigDecimal getRating(){ <span class="keyword">return</span> fRating; }
+  String getComment(){ <span class="keyword">return</span> fComment; }
+
+  <span class="comment">//elided...
+</span>  
+  <span class="comment">// PRIVATE
+</span>  <span class="keyword">private</span> String fId;
+  <span class="keyword">private</span> <span class="keyword">final</span> String fTitle;
+  <span class="keyword">private</span> <span class="keyword">final</span> Date fDateViewed;
+  <span class="keyword">private</span> <span class="keyword">final</span> BigDecimal fRating;
+  <span class="keyword">private</span> <span class="keyword">final</span> String fComment;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> BigDecimal TEN = <span class="keyword">new</span> BigDecimal(<span class="literal">"10.0"</span>);
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> EQUAL = <span class="literal">0</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> DESCENDING = -<span class="literal">1</span>;
+
+  <span class="comment">//elided...
+</span>  
+  <span class="keyword">private</span> <span class="keyword">void</span> validateState() <span class="keyword">throws</span> InvalidInputException {
+    InvalidInputException ex = <span class="keyword">new</span> InvalidInputException();
+    
+    <span class="keyword">if</span>(! Util.textHasContent(fTitle)) {
+      ex.add(<span class="literal">"Title must have content"</span>);
+    }
+    <span class="keyword">if</span> (fRating != <span class="keyword">null</span>){
+      <span class="keyword">if</span> (fRating.compareTo(BigDecimal.ZERO) &lt; <span class="literal">0</span>) {
+        ex.add(<span class="literal">"Rating cannot be less than 0."</span>);
+      }
+      <span class="keyword">if</span> (fRating.compareTo(TEN) &gt; <span class="literal">0</span>) {
+        ex.add(<span class="literal">"Rating cannot be greater than 10."</span>);
+      }
+    }
+    <span class="keyword">if</span> (ex.hasErrors()) {
+      <span class="keyword">throw</span> ex;
+    }
+  }
+} 
+</pre>
+
+
+The user edits Movie data using a dialog (not listed here). 
+When the user hits a button, execution passes to the following <code>MovieController</code> class. 
+The <code>actionPerformed</code> method first attempts to build a <code>Movie</code> object from user input. 
+If a problem is detected, then an error message is displayed to the user. 
+<br><pre>
+<span class="keyword">package</span> hirondelle.movies.edit;
+
+<span class="keyword">import</span> hirondelle.movies.exception.InvalidInputException;
+<span class="keyword">import</span> hirondelle.movies.main.MainWindow;
+<span class="keyword">import</span> hirondelle.movies.util.Edit;
+<span class="keyword">import</span> hirondelle.movies.util.Util;
+
+<span class="keyword">import</span> java.awt.event.ActionEvent;
+<span class="keyword">import</span> java.awt.event.ActionListener;
+<span class="keyword">import</span> java.util.logging.Logger;
+
+<span class="keyword">import</span> javax.swing.JOptionPane;
+
+<span class="comment">/**
+ Add a new {@link Movie} to the database, or change an existing one. 
+ 
+ &lt;P&gt;It's important to note that this class uses most of the other classes in 
+ this feature to get its job done (it doesn't use the &lt;tt&gt;Action&lt;/tt&gt; classes):
+ &lt;ul&gt;
+   &lt;li&gt;it gets user input from the view - {@link MovieView}
+   &lt;li&gt;it validates user input using the model - {@link Movie}
+   &lt;li&gt;it persists the data using the Data Access Object  - {@link MovieDAO}
+ &lt;/ul&gt;
+*/</span>
+<span class="keyword">final</span> <span class="keyword">class</span> MovieController <span class="keyword">implements</span> ActionListener {
+  
+  <span class="comment">/**
+   Constructor.
+   @param aView user interface
+   @param aEdit identifies what type of edit - add or change 
+  */</span>
+  MovieController(MovieView aView, Edit aEdit){
+    fView = aView;
+    fEdit = aEdit;
+  }
+  
+  <span class="comment">/**
+   Attempt to add a new {@link Movie}, or edit an existing one.
+   
+   &lt;P&gt;If the input is invalid, then inform the user of the problem(s).
+   If the input is valid, then add or change the &lt;tt&gt;Movie&lt;/tt&gt;, close the dialog, 
+   and update the main window's display.  
+  */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> actionPerformed(ActionEvent aEvent){
+    fLogger.fine(<span class="literal">"Editing movie "</span> + fView.getTitle());
+    <span class="keyword">try</span> {
+      createValidMovieFromUserInput();
+    }
+    <span class="keyword">catch</span>(InvalidInputException ex){
+      informUserOfProblems(ex);
+    }
+    <span class="keyword">if</span> ( isUserInputValid() ){
+      <span class="keyword">if</span>( Edit.ADD == fEdit ) {
+        fLogger.fine(<span class="literal">"Add operation."</span>);
+        fDAO.add(fMovie);
+      }
+      <span class="keyword">else</span> <span class="keyword">if</span> (Edit.CHANGE == fEdit) {
+        fLogger.fine(<span class="literal">"Change operation."</span>);
+        fDAO.change(fMovie);
+      }
+      <span class="keyword">else</span> {
+        <span class="keyword">throw</span> <span class="keyword">new</span> AssertionError();
+      }
+      fView.closeDialog();
+      MainWindow.getInstance().refreshView();
+    }
+  }
+
+  <span class="comment">// PRIVATE 
+</span>  <span class="keyword">private</span> <span class="keyword">final</span> MovieView fView;
+  <span class="keyword">private</span> Movie fMovie;
+  <span class="keyword">private</span> Edit fEdit;
+  <span class="keyword">private</span> MovieDAO fDAO = <span class="keyword">new</span> MovieDAO();
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Logger fLogger = Util.getLogger(MovieController.<span class="keyword">class</span>);
+  
+  <span class="keyword">private</span> <span class="keyword">void</span> createValidMovieFromUserInput() <span class="keyword">throws</span> InvalidInputException {
+    fMovie = <span class="keyword">new</span> Movie(
+      fView.getId(), fView.getTitle(), fView.getDateViewed(), 
+      fView.getRating(), fView.getComment()
+    );
+  }
+
+  <span class="keyword">private</span> <span class="keyword">boolean</span> isUserInputValid(){
+    <span class="keyword">return</span> fMovie != <span class="keyword">null</span>;
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">void</span> informUserOfProblems(InvalidInputException aException) {
+    Object[] messages = aException.getErrorMessages().toArray();
+    JOptionPane.showMessageDialog(
+      fView.getDialog(), messages, 
+      <span class="literal">"Movie cannot be saved"</span>, JOptionPane.ERROR_MESSAGE
+    );
+  }
+} 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActiond838.html?Id=29">Immutable objects</a> <br>
+  <a href="TopicActiond5a5.html?Id=33">Use a testing framework (JUnit)</a> <br>
+  <a href="TopicActioncded.html?Id=151">Verify input with regular expressions</a> <br>
+  <a href="TopicAction11fc.html?Id=167">Input dialogs</a> <br>
+  <a href="TopicAction0ec8.html?Id=209">Validation belongs in a Model Object</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=233 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:49 GMT -->
+</html>

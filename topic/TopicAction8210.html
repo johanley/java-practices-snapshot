@@ -1,0 +1,118 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=231 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:49 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Minimal Swing application</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Minimal Swing application</div>
+
+<br>Here's a simple, minimal Swing application. 
+Such a class is useful when you need to quickly exercise or test a specific technique.
+Simply edit the class to exercise the desired part of the Swing API.
+<br><pre>
+<span class="keyword">import</span> java.awt.event.ActionEvent;
+<span class="keyword">import</span> java.awt.event.ActionListener;
+<span class="keyword">import</span> javax.swing.JButton;
+<span class="keyword">import</span> javax.swing.JFrame;
+<span class="keyword">import</span> javax.swing.JLabel;
+<span class="keyword">import</span> javax.swing.JPanel;
+<span class="keyword">import</span> javax.swing.JOptionPane;
+
+<span class="comment">/** 
+ Simple harness for testing GUI code.
+ 
+ &lt;P&gt;To use this class, edit the code to suit your needs.  
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> MinimalSwingApplication {
+  
+  <span class="comment">/** 
+   Build and display minimal GUI.
+   
+   &lt;P&gt;The GUI has a label and an OK button.
+   The OK button launches a simple message dialog.
+   No menu is included.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... aArgs){
+    MinimalSwingApplication app = <span class="keyword">new</span> MinimalSwingApplication();
+    app.buildAndDisplayGui();
+  }
+  
+  <span class="comment">// PRIVATE
+</span>
+  <span class="keyword">private</span> <span class="keyword">void</span> buildAndDisplayGui(){
+    JFrame frame = <span class="keyword">new</span> JFrame(<span class="literal">"Test Frame"</span>); 
+    buildContent(frame);
+    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    frame.pack();
+    frame.setVisible(<span class="keyword">true</span>);
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">void</span> buildContent(JFrame aFrame){
+    JPanel panel = <span class="keyword">new</span> JPanel();
+    panel.add(<span class="keyword">new</span> JLabel(<span class="literal">"Hello"</span>));
+    JButton ok = <span class="keyword">new</span> JButton(<span class="literal">"OK"</span>);
+    ok.addActionListener(<span class="keyword">new</span> ShowDialog(aFrame));
+    panel.add(ok);
+    aFrame.getContentPane().add(panel);      
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">class</span> ShowDialog <span class="keyword">implements</span> ActionListener {
+    <span class="comment">/** Defining the dialog's owner JFrame is highly recommended. */</span>
+    ShowDialog(JFrame aFrame){
+      fFrame = aFrame;
+    }
+    <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> actionPerformed(ActionEvent aEvent) {
+      JOptionPane.showMessageDialog(fFrame, <span class="literal">"This is a dialog"</span>);
+    }
+    <span class="keyword">private</span> JFrame fFrame;
+  }
+}
+ 
+</pre>
+
+Less trivial Swing applications are also <a href="../source/SourceAction.html">available for download</a>.
+<br>
+<p></p>
+
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=231 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:49 GMT -->
+</html>

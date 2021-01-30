@@ -1,0 +1,158 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=38 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="portability,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Do not break portability</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Do not break portability</div>
+
+<br>Portability across different operating systems is one of the principal advantages of using Java.
+
+<p>Here are some ways to ensure your application remains portable:
+</p><ul>
+
+<li>almost never hard code new-line characters such as <code>\r</code> or <code>\n</code>. Instead, 
+use the <code>System.<a href="https://docs.oracle.com/javase/10/docs/api/java/lang/System.html#getProperty(java.lang.String)">getProperty(String)</a></code>
+method to refer to items which depend on the system, such as line terminators and path separators.
+</li>
+
+
+<li>don't use hard-coded file names and paths - use the 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/nio/file/Path.html">Path</a></code> class,
+and allow file locations to be configured during deployment, or at runtime.</li>
+
+<li>
+remember that some systems have case-sensitive file names (Unix), while
+others do not (Windows).</li>
+
+<li>
+be very wary of <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Runtime.html">Runtime</a>.exec</code>
+and <code>Method.<a href="https://docs.oracle.com/javase/10/docs/api/java/lang/reflect/Method.html#invoke(java.lang.Object,java.lang.Object...)">invoke</a></code>.</li>
+
+<li>
+don't rely on thread scheduling and <a href="TopicAction8b10.html?Id=53">thread priorities</a> to define program logic.</li>
+
+<li>
+don't use <code>native</code> methods.</li>
+
+<li>
+don't hard-code sizes and positions of GUI elements - use a <code><a href="https://docs.oracle.com/javase/10/docs/api/java/awt/LayoutManager.html">LayoutManager</a></code>
+instead.</li>
+
+<li>
+don't rely on a specific screen resolution - use <code>java.awt.Toolkit.<a href="https://docs.oracle.com/javase/10/docs/api/java/awt/Toolkit.html#getScreenResolution()">getScreenResolution</a></code>
+instead. For web apps, <a href="http://www.w3.org/TR/css3-mediaqueries/">CSS media queries</a> can help you adapt to a wide range of screen sizes.</li>
+
+<li>
+don't hard-code colors using numeric values - use the symbolic constants
+in <code>java.awt.<a href="https://docs.oracle.com/javase/10/docs/api/java/awt/Color.html">Color</a></code>
+and <code>java.awt.<a href="https://docs.oracle.com/javase/10/docs/api/java/awt/SystemColor.html">SystemColor</a></code>
+instead.</li>
+
+<li>
+don't hard-code text sizes.</li>
+
+
+</ul>
+
+<p>Common <code>System.getProperty(String)</code> items can be placed in a general purpose 
+<a href="TopicAction03b1.html?Id=2">constants class</a>:
+<br></p><pre>
+<span class="comment">/**
+* Collected constants of very general utility.
+*
+* All constants must be immutable.
+* No instances of this class can be constructed.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Consts {
+
+  <span class="comment">/**
+  * Prevent object construction outside of this class.
+  */</span>
+  <span class="keyword">private</span> Consts(){
+    <span class="comment">//empty
+</span>  }
+
+  <span class="comment">/**
+  * Only refer to primitives and immutable objects.
+  *
+  * Arrays present a problem since arrays are always mutable.
+  * DO NOT USE public static final array fields.
+  * One style is to instead use an unmodifiable List, built in a
+  * static initializer block.
+  *
+  * Another style is to use a private array and wrap it up like so:
+  * &lt;pre&gt;
+  *  private static final Vehicle[] PRIVATE_VEHICLES = {...};
+  *  public static final List VEHICLES =
+  *         Collections.unmodifiableList(Arrays.asList(PRIVATE_VEHICLES));
+  * &lt;/pre&gt;
+  */</span>
+
+  <span class="comment">//characters
+</span>  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String NEW_LINE = System.getProperty(<span class="literal">"line.separator"</span>);
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String FILE_SEPARATOR = System.getProperty(<span class="literal">"file.separator"</span>);
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String PATH_SEPARATOR = System.getProperty(<span class="literal">"path.separator"</span>);
+
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String EMPTY_STRING = <span class="literal">""</span>;
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String SPACE = <span class="literal">" "</span>;
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String PERIOD = <span class="literal">"."</span>;
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String TAB = <span class="literal">"\t"</span>;
+
+  <span class="comment">//algebraic signs
+</span>  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> POSITIVE = <span class="literal">1</span>;
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> NEGATIVE = -<span class="literal">1</span>;
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String PLUS_SIGN = <span class="literal">"+"</span>;
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String NEGATIVE_SIGN = <span class="literal">"-"</span>;
+} 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction03b1.html?Id=2">Class for constants</a> <br>
+  <a href="TopicAction8b10.html?Id=53">Thread priorities are not portable</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=38 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

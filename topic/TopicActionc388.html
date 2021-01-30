@@ -1,0 +1,110 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=16 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="catch,exception,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Avoid empty catch blocks</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Avoid empty catch blocks</div>
+
+<br>Most contend that it's usually a very bad idea to have an empty catch
+block.
+<p>When the exception occurs, nothing happens, and the program fails for
+unknown reasons.
+</p><p><b>Example</b>
+</p><p>The "tried our best" comments below are an example of what <i>not</i>
+to do :
+<br></p><pre>
+<span class="keyword">import</span> java.io.*;
+<span class="keyword">import</span> java.util.*;
+<span class="keyword">import</span> java.nio.file.*;
+
+<span class="comment">/** How NOT to implement a catch.  */</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> BadCatch {
+
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... arguments) {
+    List&lt;String&gt; quarks = Arrays.asList(
+      <span class="literal">"up"</span>, <span class="literal">"down"</span>, <span class="literal">"charm"</span>, <span class="literal">"strange"</span>, <span class="literal">"top"</span>, <span class="literal">"bottom"</span>
+    );   
+
+    <span class="comment">//serialize the List
+</span>    Path path = Paths.get(<span class="literal">"quarks.ser"</span>);
+    <span class="keyword">try</span>(
+      ObjectOutputStream output = <span class="keyword">new</span> ObjectOutputStream(Files.newOutputStream(path))
+    ){
+      output.writeObject(quarks);
+    }
+    <span class="keyword">catch</span> (IOException ex) {
+      <span class="comment">//TRIED OUR BEST
+</span>    }
+  }
+} 
+</pre>
+
+In general, when a exception occurs, it can be thrown up to the caller, or 
+it can be caught in a <code>catch</code> block. When catching an exception, some 
+options include:
+<p></p><ul>
+<li>inform the user (strongly recommended)
+</li><li>log the problem, using the <a href="TopicAction2316.html?Id=143">JDK logging</a> services, or similar tool
+</li><li>send an email describing the problem to an administrator 
+</li></ul>
+
+<p>Deciding what exactly to do seems to depend on the nature of the problem. If there's an 
+actual bug in the program - a defect that needs to be fixed - then one might do all three of the above. 
+In this case, the end user should likely be shown a generic "Sorry, we goofed" message, not a stack 
+trace. It's usually considered bad form to display a stack trace to a non-technical end user, or if 
+exposing a stack trace may be a security risk.
+
+</p><p>If the exception does <em>not</em> represent a bug, then different behavior may be appropriate. For example, if a 
+problem with user input is detected and an exception is thrown as a result, then merely informing the user 
+of the problem might be all that is required. 
+
+<br>
+</p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction2316.html?Id=143">Logging messages</a> <br>
+  <a href="TopicAction56bf.html?Id=227">Avoid basic style errors</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=16 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+</html>

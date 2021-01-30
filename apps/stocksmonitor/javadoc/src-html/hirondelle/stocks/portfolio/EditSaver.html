@@ -1,0 +1,84 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/portfolio/EditSaver.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:35 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+EditSaver.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.stocks.portfolio;<a name=line.1></a>
+<a name=line.2></a>
+<span class='keyword'>import</span> javax.swing.*;<a name=line.3></a>
+<span class='keyword'>import</span> java.awt.event.*;<a name=line.4></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Args;<a name=line.5></a>
+<a name=line.6></a>
+<span class='comment'>/**<a name=line.7></a>
+* Allow the user the choice of saving edits to the {@link CurrentPortfolio}.<a name=line.8></a>
+*/</span><a name=line.9></a>
+<span class='keyword'>public</span> <span class='keyword'>final</span> <span class='keyword'>class</span> EditSaver {<a name=line.10></a>
+<a name=line.11></a>
+  <span class='comment'>/**<a name=line.12></a>
+  * Constructor.<a name=line.13></a>
+  *  <a name=line.14></a>
+  * @param aSaveAction performed if the user decides to save edits and the<a name=line.15></a>
+  * &lt;tt&gt;CurrentPortfolio&lt;/tt&gt; has a title.<a name=line.16></a>
+  * @param aSaveAsAction performed if the user decides to save edits and the<a name=line.17></a>
+  * &lt;tt&gt;CurrentPortfolio&lt;/tt&gt; does not have a title.<a name=line.18></a>
+  * @param aFrame parent window to which this dialog belongs.<a name=line.19></a>
+  */</span><a name=line.20></a>
+  <span class='keyword'>public</span> EditSaver(Action aSaveAction, Action aSaveAsAction, JFrame aFrame) {<a name=line.21></a>
+    Args.checkForNull(aSaveAction);<a name=line.22></a>
+    Args.checkForNull(aSaveAsAction);<a name=line.23></a>
+    Args.checkForNull(aFrame);<a name=line.24></a>
+    fSaveAction = aSaveAction;<a name=line.25></a>
+    fSaveAsAction = aSaveAsAction;<a name=line.26></a>
+    fFrame = aFrame;<a name=line.27></a>
+  }<a name=line.28></a>
+<a name=line.29></a>
+  <span class='comment'>/**<a name=line.30></a>
+   * Save &lt;tt&gt;aCurrentPortfolio&lt;/tt&gt;, if necessary.<a name=line.31></a>
+   *  <a name=line.32></a>
+   * &lt;P&gt;If &lt;tt&gt;aCurrentPortfolio&lt;/tt&gt;<a name=line.33></a>
+   * has no unsaved edits, or if the user does not wish to save edits, then do nothing.<a name=line.34></a>
+   * Otherwise, perform either &lt;tt&gt;SaveAction&lt;/tt&gt; or &lt;tt&gt;SaveAsAction&lt;/tt&gt;,<a name=line.35></a>
+   * according to whether &lt;tt&gt;aCurrentPortfoilo&lt;/tt&gt; is titled or untitled,<a name=line.36></a>
+   * respectively.<a name=line.37></a>
+   * <a name=line.38></a>
+   * @param aEvent is passed to either &lt;tt&gt;SaveAction&lt;/tt&gt; or<a name=line.39></a>
+   * &lt;tt&gt;SaveAsAction&lt;/tt&gt;.<a name=line.40></a>
+   */</span><a name=line.41></a>
+  <span class='keyword'>public</span> <span class='keyword'>void</span> save(CurrentPortfolio aCurrentPortfolio, ActionEvent aEvent) {<a name=line.42></a>
+    <span class='keyword'>if</span> (!aCurrentPortfolio.getNeedsSave()) <span class='keyword'>return</span>;<a name=line.43></a>
+    <span class='keyword'>if</span> (!userWantsToSaveEdits(aCurrentPortfolio)) <span class='keyword'>return</span>;<a name=line.44></a>
+<a name=line.45></a>
+    <span class='keyword'>if</span> (aCurrentPortfolio.isUntitled()) {<a name=line.46></a>
+      fSaveAsAction.actionPerformed(aEvent);<a name=line.47></a>
+    }<a name=line.48></a>
+    <span class='keyword'>else</span> {<a name=line.49></a>
+      fSaveAction.actionPerformed(aEvent);<a name=line.50></a>
+    }<a name=line.51></a>
+  }<a name=line.52></a>
+<a name=line.53></a>
+  <span class='comment'>// PRIVATE <a name=line.54></a>
+</span>  <span class='keyword'>private</span> Action fSaveAction;<a name=line.55></a>
+  <span class='keyword'>private</span> Action fSaveAsAction;<a name=line.56></a>
+  <span class='keyword'>private</span> JFrame fFrame;<a name=line.57></a>
+<a name=line.58></a>
+  <span class='keyword'>private</span> <span class='keyword'>boolean</span> userWantsToSaveEdits(CurrentPortfolio aCurrentPortfolio) {<a name=line.59></a>
+    StringBuilder message = <span class='keyword'>new</span> StringBuilder(<span class='literal'>"Do you want to save the edits for the &#092;""</span>);<a name=line.60></a>
+    message.append(aCurrentPortfolio.getName());<a name=line.61></a>
+    message.append(<span class='literal'>"&#092;" portfolio?"</span>);<a name=line.62></a>
+    <span class='keyword'>int</span> result = JOptionPane.showConfirmDialog(<a name=line.63></a>
+      fFrame, message.toString(), <span class='literal'>"Confirm Save Edits"</span>, JOptionPane.YES_NO_OPTION<a name=line.64></a>
+    );<a name=line.65></a>
+    <span class='keyword'>return</span> (result == JOptionPane.YES_OPTION ? <span class='keyword'>true</span> : <span class='keyword'>false</span>);<a name=line.66></a>
+  }<a name=line.67></a>
+}<a name=line.68></a>
+ <a name=line.69></a>
+</PRE><a name=line.70></a>
+ </BODY><a name=line.71></a>
+<HTML><a name=line.72></a>

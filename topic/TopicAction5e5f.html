@@ -1,0 +1,119 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=88 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="collection,index,iterate,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Iterate without an index</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Iterate without an index</div>
+
+<br>Many programmers have a strong preference for using a 
+<a href="http://docs.oracle.com/javase/1.5.0/docs/guide/language/foreach.html">for-each</a>
+loop or an 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Iterator.html">Iterator</a></code> 
+instead of a <code>for</code>-loop. 
+
+<p>The traditional <code>for</code>-loop always uses an explicit loop index - an integer that identifies 
+each iteration.
+The problem is that loop indexes have always been a fruitful source of error. 
+For example, 
+<a href="http://en.wikipedia.org/wiki/Off-by-one_error">off-by-one errors</a>
+are very common in programming, and they are often related to these loop indexes. 
+In addition, the (somewhat unnatural) computer science tradition of starting loop indexes 
+from <code>0</code> instead of <code>1</code> often contributes to these sorts of bugs.
+
+</p><p>Since they are more error prone, <code>for</code>-loops with indexes should generally be avoided, 
+in favor of the more robust, compact, and elegant <code>for-each</code> loop.
+
+</p><p><b>Example</b>
+<br></p><pre>
+<span class="keyword">import</span> java.util.*;
+
+<span class="comment">/** Different iteration styles. */</span>
+<span class="keyword">public</span> <span class="keyword">class</span> IterateNoIndex {
+   
+  <span class="comment">/** 
+  * Iterating without an index is more compact and less 
+  * error prone. 
+  */</span>
+   <span class="keyword">public</span> <span class="keyword">void</span> withoutIndex(){
+
+     <span class="comment">//for-each loop is usually preferred
+</span>     List&lt;String&gt; trees = Arrays.asList(<span class="literal">"Maple"</span>, <span class="literal">"Birch"</span>, <span class="literal">"Poplar"</span>);
+     <span class="keyword">for</span>(String tree: trees){
+       log(tree);
+     }
+     
+     <span class="comment">//Iterators are not as compact as a for-each loop
+</span>     <span class="comment">//but sometimes you need them: removing/replacing items,
+</span>     <span class="comment">//and 'parallel' iterations across two data structures
+</span>     Iterator&lt;String&gt; iter = trees.iterator();
+     <span class="keyword">while</span> (iter.hasNext()) {
+       log(iter.next());
+     }
+   }
+   
+   <span class="comment">/** Iterating with an index is more error prone. */</span>
+   <span class="keyword">public</span> <span class="keyword">void</span> withIndex(){
+     <span class="comment">//traditional for-loop
+</span>     <span class="keyword">for</span>(<span class="keyword">int</span> idx=<span class="literal">0</span>; idx &lt; <span class="literal">10</span>; ++idx){
+       log(<span class="literal">"Iteration..."</span> + idx);
+     }
+   }
+   
+   <span class="comment">// PRIVATE
+</span>   <span class="keyword">private</span> <span class="keyword">void</span> log(String aMessage){
+     System.out.println(aMessage);
+   }
+}
+ 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction852c.html?Id=125">Ways of iterating</a> <br>
+  <a href="TopicAction23e0.html?Id=196">Use for each liberally</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=88 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+</html>

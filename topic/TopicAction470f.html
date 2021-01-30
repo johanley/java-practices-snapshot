@@ -1,0 +1,161 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=261 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Nest classes with care</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Nest classes with care</div>
+
+<br>In Java, you can nest classes within other classes. This feature is very useful when you need it, 
+but it can be easily abused. 
+
+<p>When you have a choice, you should declare your nested classes as <code>static</code>.
+The reason is that non-static nested classes (inner classes) are tightly coupled to the enclosing parent,
+while static nested classes aren't. 
+This extra coupling can sometimes cause problems. 
+In general, static nested classes are safer than non-static ones, and less prone to error.
+
+</p><p>Secondly, you should very rarely use deep levels of nesting. 
+
+</p><p>The terminology for nested classes is a bit confusing. 
+Here's a reminder of the hierarchy:
+
+</p><pre>
+<b>nested</b> class
+  <b>static</b>
+  <b>inner</b> class (non-static)
+    regular, not within a method or constructor
+    inside a method or constructor
+      <b>anonymous</b>
+      <b>local</b>
+</pre>
+
+Some more reminders:
+<ul>
+ <li>static - not tied to a parent instance (but can see the private fields of a parent, if it 
+ has an object reference)
+ </li><li>non-static (inner class) - always tied to a parent instance
+ </li><li>anonymous - no access modifiers; no <code>extends</code> or <code>implements</code>; no constructor
+ </li><li>local - never static; no access modifiers; can access only <code>final</code> items that are in scope; this is
+  the rarest form of nested class.
+</li></ul>
+Here's a class which sketches all the different types of nested class:
+<br><pre>
+<span class="keyword">import</span> java.math.BigDecimal;
+<span class="keyword">import</span> java.util.Date;
+<span class="keyword">import</span> java.util.List;
+<span class="keyword">import</span> java.util.Timer;
+<span class="keyword">import</span> java.util.TimerTask;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> MakeMovie {
+
+  <span class="comment">/**
+    Static, since has no need of being attached to a parent instance.
+   */</span>
+  <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">class</span> Actor {
+    Actor(String name){
+      <span class="keyword">this</span>.name = name;
+    }
+    String getName(){ 
+      <span class="keyword">return</span> name; 
+    }
+    <span class="keyword">private</span> String name;
+  }
+
+  <span class="comment">/**
+    Non-static (inner) class, since casting will need to know about the 
+    movie's data - its name, director, and budget.
+  */</span>
+  <span class="keyword">final</span> <span class="keyword">class</span> Casting {
+    <span class="keyword">void</span> chooseFrom(List&lt;Actor&gt; actors){
+      <span class="comment">//can reference the parent's data directly:
+</span>      <span class="keyword">if</span>(director.equals(<span class="literal">"Stanley Kubrick"</span>)){
+        <span class="comment">//elided...
+</span>      }
+    }
+    List&lt;Actor&gt; getSelectedCast(){ 
+      <span class="keyword">return</span> selectedCast; 
+    }
+    <span class="comment">//static void doThis(){} //does not compile, since static
+</span>    <span class="keyword">private</span> List&lt;Actor&gt; selectedCast;
+  }
+  
+  <span class="keyword">void</span> wrapParty(){
+    Timer timer = <span class="keyword">new</span> Timer();
+    <span class="comment">//anonymous class - the implementation of TimerTask
+</span>    <span class="comment">//this is usually how anonymous classes are used - to define a single method
+</span>    timer.schedule(
+      <span class="keyword">new</span> TimerTask(){ 
+        <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> run() {
+          <span class="comment">//elided...
+</span>        };
+      },
+      <span class="keyword">new</span> Date()
+    );
+  }
+
+  <span class="keyword">void</span> shootScene(<span class="keyword">final</span> <span class="keyword">int</span> sceneNumber){
+    <span class="comment">//local class - this style seems to be rather rare
+</span>    <span class="keyword">class</span> Camera {
+      <span class="keyword">void</span> shoot(){
+        <span class="comment">//won't compile unless sceneNumber is final:
+</span>        System.out.println(sceneNumber);
+      }
+    }
+    Camera camera = <span class="keyword">new</span> Camera();
+    camera.shoot();
+  }
+  
+  <span class="comment">//elided...
+</span>
+  <span class="keyword">private</span> String movieName;
+  <span class="keyword">private</span> String director;
+  <span class="keyword">private</span> BigDecimal budget;
+
+} 
+</pre>
+
+<p></p>
+
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=261 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

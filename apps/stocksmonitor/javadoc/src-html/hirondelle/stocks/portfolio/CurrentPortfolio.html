@@ -1,0 +1,167 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/portfolio/CurrentPortfolio.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:53:04 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+CurrentPortfolio.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.stocks.portfolio;<a name=line.1></a>
+<a name=line.2></a>
+<span class='keyword'>import</span> java.util.Observable;<a name=line.3></a>
+<span class='keyword'>import</span> java.util.*;<a name=line.4></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Args;<a name=line.5></a>
+<span class='keyword'>import</span> hirondelle.stocks.quotes.Stock;<a name=line.6></a>
+<a name=line.7></a>
+<span class='comment'>/**<a name=line.8></a>
+ * The central abstraction of this package, representing the current selection of <a name=line.9></a>
+ * stocks of interest to the end user <a name=line.10></a>
+ * (a {@link hirondelle.stocks.portfolio.Portfolio}).<a name=line.11></a>
+ * <a name=line.12></a>
+ * &lt;P&gt;&lt;tt&gt;CurrentPortfolio&lt;/tt&gt; may be used as an example implementation for any<a name=line.13></a>
+ * application which edits one item at a time.<a name=line.14></a>
+ * <a name=line.15></a>
+ * &lt;p&gt;The {@link #isUntitled} and {@link #getNeedsSave} properties are particularly<a name=line.16></a>
+ * significant. They influence the file menu actions. For example, a<a name=line.17></a>
+ * &lt;tt&gt;CurrentPortfolio&lt;/tt&gt; for which {@link #isUntitled} is true cannot be deleted.<a name=line.18></a>
+ * <a name=line.19></a>
+ * &lt;p&gt;&lt;tt&gt;CurrentPortfolio&lt;/tt&gt; is an {@link java.util.Observable}. To minimize spurious<a name=line.20></a>
+ * updates, related {@link java.util.Observer} objects need to call<a name=line.21></a>
+ * {@link java.util.Observable#notifyObservers()} explicitly. This is important in this<a name=line.22></a>
+ * application, since quotes are fetched from the web each time the current portfolio is<a name=line.23></a>
+ * updated, and this is a relatively expensive operation.<a name=line.24></a>
+ */</span><a name=line.25></a>
+<span class='keyword'>public</span> <span class='keyword'>final</span> <span class='keyword'>class</span> CurrentPortfolio <span class='keyword'>extends</span> Observable {<a name=line.26></a>
+<a name=line.27></a>
+  <span class='comment'>/**<a name=line.28></a>
+   * Constructor.<a name=line.29></a>
+   *  <a name=line.30></a>
+   * @param aPortfolio is the set of stocks of current interest to the user; no <a name=line.31></a>
+   * defensive copy is made of &lt;tt&gt;aPortfolio&lt;/tt&gt;.<a name=line.32></a>
+   * @param aNeedsSave is true only if this &lt;tt&gt;CurrentPortfolio&lt;/tt&gt; <a name=line.33></a>
+   * has been edited by the end user, and these edits have not yet been saved.<a name=line.34></a>
+   */</span><a name=line.35></a>
+  <span class='keyword'>public</span> CurrentPortfolio(Portfolio aPortfolio, NeedsSave aNeedsSave) {<a name=line.36></a>
+    Args.checkForNull(aPortfolio);<a name=line.37></a>
+    fPortfolio = aPortfolio;<a name=line.38></a>
+    fNeedsSave = aNeedsSave.getValue();<a name=line.39></a>
+    <span class='comment'>// upon construction of the main window, an update is desired in order to<a name=line.40></a>
+</span>    <span class='comment'>// synch the gui with the current portfolio. This update is called explicitly.<a name=line.41></a>
+</span>    <span class='comment'>// Thus, setChanged needs to be set here, since it's default value is false.<a name=line.42></a>
+</span>    setChanged();<a name=line.43></a>
+  }<a name=line.44></a>
+<a name=line.45></a>
+  <span class='comment'>/**<a name=line.46></a>
+  * Enumeration for the two states of &lt;tt&gt;aNeedsSave&lt;/tt&gt; passed to the constructor.<a name=line.47></a>
+  * Use of an enumeration forces the caller to create a constructor call which has<a name=line.48></a>
+  * high clarity.<a name=line.49></a>
+  */</span><a name=line.50></a>
+  <span class='keyword'>public</span> <span class='keyword'>enum</span> NeedsSave {<a name=line.51></a>
+    TRUE(<span class='keyword'>true</span>),<a name=line.52></a>
+    FALSE(<span class='keyword'>false</span>);<a name=line.53></a>
+    <span class='keyword'>boolean</span> getValue() {<a name=line.54></a>
+      <span class='keyword'>return</span> fToggle;<a name=line.55></a>
+    }<a name=line.56></a>
+    <span class='keyword'>private</span> <span class='keyword'>final</span> <span class='keyword'>boolean</span> fToggle;<a name=line.57></a>
+    <span class='keyword'>private</span> NeedsSave(<span class='keyword'>boolean</span> aToggle) {<a name=line.58></a>
+      fToggle = aToggle;<a name=line.59></a>
+    }<a name=line.60></a>
+  }<a name=line.61></a>
+<a name=line.62></a>
+  <span class='comment'>/**<a name=line.63></a>
+   * Revert to an untitled &lt;tt&gt;Portfolio&lt;/tt&gt; which does not need a save.<a name=line.64></a>
+   */</span><a name=line.65></a>
+  <span class='keyword'>public</span> <span class='keyword'>void</span> clear() {<a name=line.66></a>
+    setPortfolio(Portfolio.getUntitledPortfolio());<a name=line.67></a>
+    setNeedsSave(<span class='keyword'>false</span>);<a name=line.68></a>
+  }<a name=line.69></a>
+<a name=line.70></a>
+  <span class='comment'>/**<a name=line.71></a>
+   * Return &lt;tt&gt;true&lt;/tt&gt; only if the current &lt;tt&gt;Portfolio&lt;/tt&gt; has never been<a name=line.72></a>
+   * saved under a user-specified name, neither in this session, nor in any other. Such a<a name=line.73></a>
+   * &lt;tt&gt;Portfolio&lt;/tt&gt; appears as untitled in the display.<a name=line.74></a>
+   */</span><a name=line.75></a>
+  <span class='keyword'>public</span> <span class='keyword'>boolean</span> isUntitled() {<a name=line.76></a>
+    <span class='keyword'>return</span> fPortfolio.isUntitled();<a name=line.77></a>
+  }<a name=line.78></a>
+<a name=line.79></a>
+  <span class='comment'>/**<a name=line.80></a>
+   * Return the {@link Portfolio} of current interest to the user.<a name=line.81></a>
+   */</span><a name=line.82></a>
+  <span class='keyword'>public</span> Portfolio getPortfolio() {<a name=line.83></a>
+    <span class='keyword'>return</span> fPortfolio;<a name=line.84></a>
+  }<a name=line.85></a>
+<a name=line.86></a>
+  <span class='comment'>/**<a name=line.87></a>
+   * Change the {@link Portfolio} of current interest to the user.<a name=line.88></a>
+   */</span><a name=line.89></a>
+  <span class='keyword'>public</span> <span class='keyword'>void</span> setPortfolio(Portfolio aPortfolio) {<a name=line.90></a>
+    Args.checkForNull(aPortfolio);<a name=line.91></a>
+    fPortfolio = aPortfolio;<a name=line.92></a>
+    setChanged();<a name=line.93></a>
+  }<a name=line.94></a>
+<a name=line.95></a>
+  <span class='comment'>/**<a name=line.96></a>
+   * Return the name of this &lt;tt&gt;CurrentPortfolio&lt;/tt&gt;.<a name=line.97></a>
+   */</span><a name=line.98></a>
+  <span class='keyword'>public</span> String getName() {<a name=line.99></a>
+    <span class='keyword'>return</span> fPortfolio.getName();<a name=line.100></a>
+  }<a name=line.101></a>
+<a name=line.102></a>
+  <span class='comment'>/**<a name=line.103></a>
+   * Change the name of this &lt;tt&gt;CurrentPortfolio&lt;/tt&gt;.<a name=line.104></a>
+   * @param aName has the same conditions as <a name=line.105></a>
+   * {@link hirondelle.stocks.portfolio.Portfolio#setName(String)}.<a name=line.106></a>
+   */</span><a name=line.107></a>
+  <span class='keyword'>public</span> <span class='keyword'>void</span> setName(String aName) {<a name=line.108></a>
+    fPortfolio.setName(aName);<a name=line.109></a>
+    setChanged();<a name=line.110></a>
+  }<a name=line.111></a>
+<a name=line.112></a>
+  <span class='comment'>/**<a name=line.113></a>
+   * Return the {@link hirondelle.stocks.quotes.Stock} objects in this<a name=line.114></a>
+   * &lt;tt&gt;CurrentPortfolio&lt;/tt&gt;.<a name=line.115></a>
+   */</span><a name=line.116></a>
+  <span class='keyword'>public</span> Set&lt;Stock&gt; getStocks() {<a name=line.117></a>
+    <span class='keyword'>return</span> fPortfolio.getStocks();<a name=line.118></a>
+  }<a name=line.119></a>
+<a name=line.120></a>
+  <span class='comment'>/**<a name=line.121></a>
+   * Change the stocks in this &lt;tt&gt;CurrentPortfolio&lt;/tt&gt;.<a name=line.122></a>
+   * @param aStocks has the same conditions as<a name=line.123></a>
+   * {@link hirondelle.stocks.portfolio.Portfolio#setStocks(Set)}<a name=line.124></a>
+   */</span><a name=line.125></a>
+  <span class='keyword'>public</span> <span class='keyword'>void</span> setStocks(Set&lt;Stock&gt; aStocks) {<a name=line.126></a>
+    fPortfolio.setStocks(aStocks);<a name=line.127></a>
+    setChanged();<a name=line.128></a>
+  }<a name=line.129></a>
+<a name=line.130></a>
+  <span class='comment'>/**<a name=line.131></a>
+   * Return &lt;tt&gt;true&lt;/tt&gt; only if this &lt;tt&gt;CurrentPortfolio&lt;/tt&gt; has unsaved<a name=line.132></a>
+   * edits.<a name=line.133></a>
+   */</span><a name=line.134></a>
+  <span class='keyword'>public</span> <span class='keyword'>boolean</span> getNeedsSave() {<a name=line.135></a>
+    <span class='keyword'>return</span> fNeedsSave;<a name=line.136></a>
+  }<a name=line.137></a>
+<a name=line.138></a>
+  <span class='comment'>/**<a name=line.139></a>
+   * Indicate that this &lt;tt&gt;CurrentPortfolio&lt;/tt&gt; either does or does not have any<a name=line.140></a>
+   * unsaved edits.<a name=line.141></a>
+   */</span><a name=line.142></a>
+  <span class='keyword'>public</span> <span class='keyword'>void</span> setNeedsSave(<span class='keyword'>boolean</span> aNeedsSave) {<a name=line.143></a>
+    fNeedsSave = aNeedsSave;<a name=line.144></a>
+    setChanged();<a name=line.145></a>
+  }<a name=line.146></a>
+<a name=line.147></a>
+  <span class='comment'>// PRIVATE <a name=line.148></a>
+</span>  <span class='keyword'>private</span> Portfolio fPortfolio;<a name=line.149></a>
+  <span class='keyword'>private</span> <span class='keyword'>boolean</span> fNeedsSave;<a name=line.150></a>
+}<a name=line.151></a>
+ <a name=line.152></a>
+</PRE><a name=line.153></a>
+ </BODY><a name=line.154></a>
+<HTML><a name=line.155></a>

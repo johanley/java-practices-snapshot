@@ -1,0 +1,186 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=22 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="field,private,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Fields should usually be private</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Fields should usually be private</div>
+
+<br>Fields should be declared <code>private</code> unless there is a good 
+reason for <em>not</em> doing so. 
+
+<p>One of the guiding principles of lasting value in programming is 
+"<a href="TopicAction23a3.html?Id=123">Minimize ripple effects</a> by keeping secrets." When a field is 
+<code>private</code>, the caller <b>cannot usually</b> get <em>inappropriate direct access</em> to the field. 
+
+</p><p>To clarify, there are three possibilities for a <code>private</code> field:
+</p><ul>
+<li>primitive data such as <code>int</code>, <code>boolean</code>, and so on. 
+</li><li><a href="TopicActiond838.html?Id=29">immutable objects</a> such as <code>String</code> and <code>BigDecimal</code>, whose 
+data never changes.
+</li><li>mutable objects, whose data can change (that is, they can change <em>state</em>). These 
+need special care, and often need a <a href="TopicAction79f1.html?Id=15">defensive copy</a>. It's easy 
+to forget this. <span class="highlight">You should always remember that mutable object fields are 'hot spots' 
+in your code, and need special care.</span>
+</li></ul>
+
+<p>It's only the last case - the mutable object <code>private</code> field  - where 
+<em>inappropriate direct access</em> to a <code>private</code> field is possible. 
+Here's an illustration:
+
+</p><p><b>Example 1</b>
+<br></p><pre>
+<span class="keyword">import</span> java.util.Date;
+
+<span class="comment">/**
+* Planet is an immutable class, since there is no way to change
+* its state after construction.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Planet {
+
+  <span class="keyword">public</span> Planet (<span class="keyword">double</span> mass, String name, Date dateOfDiscovery) {
+     <span class="keyword">this</span>.mass = mass;
+     <span class="keyword">this</span>.name = name;
+     <span class="comment">//make a private copy of aDateOfDiscovery
+</span>     <span class="comment">//this is the only way to keep the fDateOfDiscovery
+</span>     <span class="comment">//field private, and shields this class from any changes that 
+</span>     <span class="comment">//the caller may make to the original aDateOfDiscovery object
+</span>     <span class="keyword">this</span>.dateOfDiscovery = <span class="keyword">new</span> Date(dateOfDiscovery.getTime());
+  }
+
+  <span class="comment">/**
+  * Returns a primitive value.
+  *
+  * The caller can do whatever they want with the return value, without 
+  * affecting the internals of this class. Why? Because this is a primitive 
+  * value. The caller sees its "own" double that simply has the
+  * same value as fMass.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">double</span> getMass() {
+    <span class="keyword">return</span> mass;
+  }
+
+  <span class="comment">/**
+  * Returns an immutable object.
+  *
+  * The caller gets a direct reference to the internal field. But this is not 
+  * dangerous, since String is immutable and cannot be changed.
+  */</span>
+  <span class="keyword">public</span> String getName() {
+    <span class="keyword">return</span> name;
+  }
+
+<span class="comment">//  /**
+</span><span class="comment">//  * Returns a mutable object - likely bad style.
+</span><span class="comment">//  *
+</span><span class="comment">//  * The caller gets a direct reference to the internal field. This is usually dangerous, 
+</span><span class="comment">//  * since the Date object state can be changed both by this class and its caller.
+</span><span class="comment">//  * That is, this class is no longer in complete control of dateOfDiscovery.
+</span><span class="comment">//  */
+</span><span class="comment">//  public Date getDateOfDiscovery() {
+</span><span class="comment">//    return dateOfDiscovery;
+</span><span class="comment">//  }
+</span>
+  <span class="comment">/**
+  * Returns a mutable object - good style.
+  * 
+  * Returns a defensive copy of the field.
+  * The caller of this method can do anything they want with the
+  * returned Date object, without affecting the internals of this
+  * class in any way. Why? Because they do not have a reference to 
+  * fDate. Rather, they are playing with a second Date that initially has the 
+  * same data as fDate.
+  */</span>
+  <span class="keyword">public</span> Date getDateOfDiscovery() {
+    <span class="keyword">return</span> <span class="keyword">new</span> Date(dateOfDiscovery.getTime());
+  }
+
+  <span class="comment">// PRIVATE
+</span>
+  <span class="comment">/**
+  * Final primitive data is always immutable.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">double</span> mass;
+
+  <span class="comment">/**
+  * An immutable object field. (String objects never change state.)
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">final</span> String name;
+
+  <span class="comment">/**
+  * A mutable object field. In this case, the state of this mutable field
+  * is to be changed only by this class. (In other cases, it makes perfect
+  * sense to allow the state of a field to be changed outside the native
+  * class; this is the case when a field acts as a "pointer" to an object
+  * created elsewhere.)
+  *
+  * java.util.Date is used here only because its convenient for illustrating 
+  * a point about mutable objects. In new code, you should use 
+  * java.time classes, not java.util.Date.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">final</span> Date dateOfDiscovery;
+}
+ 
+</pre>
+
+The above class uses a <a href="TopicAction79f1.html?Id=15">defensive copy</a> as part of its design, 
+but there are cases in which defensive copies aren't desired. The point is that for mutable fields,
+you need to know the difference, and make the appropriate choice.
+
+<p></p><p><b>Example 2</b>
+
+</p><p>This is a counter-example.
+
+</p><p>A common exception to this rule is that primitive constants and <i>immutable</i>
+objects can be declared as <code>public static final</code> fields. For example, see
+<a href="TopicAction03b1.html?Id=2">class for constants</a>.
+<br>
+</p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction79f1.html?Id=15">Defensive copying</a> <br>
+  <a href="TopicActiond838.html?Id=29">Immutable objects</a> <br>
+  <a href="TopicAction23a3.html?Id=123">Minimize ripple effects</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=22 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

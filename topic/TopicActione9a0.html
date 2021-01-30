@@ -1,0 +1,131 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=275 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="collectors,static import,stream,lambda,method reference,functional interface,functional,style,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Static import of Collectors</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Static import of Collectors</div>
+
+<br>
+
+When working with streams, the 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/stream/Collectors.html">Collectors</a></code>
+class is often used for the last (or <em>terminal</em>) operation. 
+Since the <code>Collectors</code> class is so commonly used with streams, it's 
+reasonable to expect that the maintainer of your code will be familiar with it.
+
+<p>One of the advantages of code written in the functional programming style is that 
+it's terse, and reads at a high level. 
+Using a static import for the static methods of <code>Collectors</code> will 
+help you retain that concision. 
+
+</p><p>So, habitually using a static import for the <code>Collectors</code> class seems like 
+a good practice.
+
+</p><p><b>Example</b>
+<br></p><pre>
+<span class="comment">//these methods are commonly used with streams
+</span><span class="keyword">import</span> <span class="keyword">static</span> java.util.stream.Collectors.*;
+<span class="comment">//import java.util.stream.Collectors;
+</span>
+<span class="keyword">import</span> java.util.List;
+<span class="keyword">import</span> java.util.function.Predicate;
+<span class="keyword">import</span> java.util.function.ToIntFunction;
+<span class="keyword">import</span> java.util.stream.Stream;
+
+<span class="comment">/** @since Java 8 */</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> StaticImportCollectors {
+  
+  <span class="comment">/** Filter the Atoms somehow, and return them in a List. */</span>
+  List&lt;Atom&gt; filter(Predicate&lt;Atom&gt; predicate){
+    <span class="keyword">return</span> Stream.of(Atom.values())
+      .filter(predicate)
+      .collect(toList()) <span class="comment">//WITH the static import of Collectors
+</span>      <span class="comment">//.collect(Collectors.toList()) //WITHOUT the static import
+</span>    ;
+  }
+  
+  <span class="comment">/** 
+   Filter the Atoms somehow, and summarize by turning each Atom into 
+   an int of some sort, and then summing the int's. 
+  */</span>
+  <span class="keyword">int</span> filterAndSum(Predicate&lt;Atom&gt; predicate, ToIntFunction&lt;Atom&gt; summarizer){
+    <span class="keyword">int</span> result = Stream.of(Atom.values())
+      .filter(predicate)
+      .collect(summingInt(summarizer)) <span class="comment">//WITH the static import of Collectors
+</span>      <span class="comment">//.collect(Collectors.summingInt(summarizer)) //WITHOUT the static import
+</span>    ;
+    <span class="keyword">return</span> result;
+  }
+
+  <span class="comment">/**
+   Some data from the periodic table of the elements (incomplete!). 
+  */</span>
+  <span class="keyword">enum</span> Atom {
+    H(<span class="literal">"Hydrogen"</span>, <span class="literal">1</span>, <span class="keyword">false</span>),
+    Tc(<span class="literal">"Technetium"</span>, <span class="literal">43</span>, <span class="keyword">true</span>),
+    Au(<span class="literal">"Gold"</span>, <span class="literal">79</span>, <span class="keyword">false</span>),
+    Pb(<span class="literal">"Lead"</span>, <span class="literal">82</span>, <span class="keyword">false</span>),
+    Pu(<span class="literal">"Plutonium"</span>, <span class="literal">94</span>, <span class="keyword">true</span>),
+    Fm(<span class="literal">"Fermium"</span>, <span class="literal">100</span>, <span class="keyword">true</span>);
+    <span class="keyword">private</span> Atom(String name, Integer numProtons, Boolean isAlwaysUnstable){
+      <span class="keyword">this</span>.name = name;
+      <span class="keyword">this</span>.numProtons = numProtons;
+      <span class="keyword">this</span>.isAlwaysUnstable = isAlwaysUnstable;
+    }
+    Boolean isAlwaysUnstable() { <span class="keyword">return</span> isAlwaysUnstable; }
+    String getName() { <span class="keyword">return</span> name;  }
+    Integer getNumProtons() { <span class="keyword">return</span> numProtons; }
+    <span class="keyword">private</span> String name;
+    <span class="keyword">private</span> Integer numProtons;
+    <span class="keyword">private</span> Boolean isAlwaysUnstable;
+  }
+} 
+</pre>
+
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActionda46.html?Id=195">Use static imports rarely</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=275 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

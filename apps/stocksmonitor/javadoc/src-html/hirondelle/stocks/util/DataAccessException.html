@@ -1,0 +1,48 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/util/DataAccessException.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:35 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+DataAccessException.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.stocks.util;<a name=line.1></a>
+<a name=line.2></a>
+<span class='comment'>/**<a name=line.3></a>
+* Hides low-level exceptions in a higher-level abstraction, to hide details<a name=line.4></a>
+* regarding the data storage mechanism. <a name=line.5></a>
+* See &lt;a href=http://www.javapractices.com/Topic77.cjp&gt;Data Exception Wrapping&lt;/a&gt;<a name=line.6></a>
+* topic for discussion.<a name=line.7></a>
+*<a name=line.8></a>
+*&lt;P&gt; Every constructor maps to a corresponding &lt;tt&gt;Exception&lt;/tt&gt; constructor.<a name=line.9></a>
+* See &lt;tt&gt;Exception&lt;/tt&gt; for all conditions on constructor arguments.<a name=line.10></a>
+*<a name=line.11></a>
+* &lt;P&gt;&lt;tt&gt;Throwable.getStackTrace&lt;/tt&gt; returns all underlying exceptions.<a name=line.12></a>
+* &lt;tt&gt;Throwable.getCause&lt;/tt&gt; returns the underlying cause.<a name=line.13></a>
+*/</span><a name=line.14></a>
+<span class='keyword'>public</span> <span class='keyword'>final</span> <span class='keyword'>class</span> DataAccessException <span class='keyword'>extends</span> Exception { <a name=line.15></a>
+<a name=line.16></a>
+  <span class='keyword'>public</span> DataAccessException(){<a name=line.17></a>
+    <span class='keyword'>super</span>();<a name=line.18></a>
+  }<a name=line.19></a>
+<a name=line.20></a>
+  <span class='keyword'>public</span> DataAccessException(String aMessage) {<a name=line.21></a>
+    <span class='keyword'>super</span>(aMessage);<a name=line.22></a>
+  }<a name=line.23></a>
+<a name=line.24></a>
+  <span class='keyword'>public</span> DataAccessException(String aMessage, Throwable aThrowable){<a name=line.25></a>
+    <span class='keyword'>super</span>(aMessage, aThrowable);<a name=line.26></a>
+  }<a name=line.27></a>
+<a name=line.28></a>
+  <span class='keyword'>public</span> DataAccessException(Throwable aThrowable){<a name=line.29></a>
+    <span class='keyword'>super</span>(aThrowable);<a name=line.30></a>
+  }<a name=line.31></a>
+} <a name=line.32></a>
+ <a name=line.33></a>
+</PRE><a name=line.34></a>
+ </BODY><a name=line.35></a>
+<HTML><a name=line.36></a>

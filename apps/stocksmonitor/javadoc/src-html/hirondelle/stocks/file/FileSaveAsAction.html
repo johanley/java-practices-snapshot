@@ -1,0 +1,116 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/file/FileSaveAsAction.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:37 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+FileSaveAsAction.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.stocks.file;<a name=line.1></a>
+<a name=line.2></a>
+<span class='keyword'>import</span> java.awt.event.*;<a name=line.3></a>
+<span class='keyword'>import</span> javax.swing.*;<a name=line.4></a>
+<span class='keyword'>import</span> hirondelle.stocks.portfolio.PortfolioDAO;<a name=line.5></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Consts;<a name=line.6></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Args;<a name=line.7></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.ui.UiUtil;<a name=line.8></a>
+<span class='keyword'>import</span> hirondelle.stocks.portfolio.CurrentPortfolio;<a name=line.9></a>
+<span class='keyword'>import</span> java.util.logging.Logger;<a name=line.10></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Util;<a name=line.11></a>
+<a name=line.12></a>
+<span class='comment'>/**<a name=line.13></a>
+* Store the {@link CurrentPortfolio} under a new unique name, and <a name=line.14></a>
+* display it to the user as the &lt;tt&gt;CurrentPortfolio&lt;/tt&gt;, which does not <a name=line.15></a>
+* need a save, and which reflects the new name just entered.<a name=line.16></a>
+*<a name=line.17></a>
+* &lt;P&gt;This action is always enabled.<a name=line.18></a>
+*/</span><a name=line.19></a>
+<span class='keyword'>public</span> <span class='keyword'>final</span> <span class='keyword'>class</span> FileSaveAsAction <span class='keyword'>extends</span> AbstractAction {<a name=line.20></a>
+<a name=line.21></a>
+  <span class='comment'>/**<a name=line.22></a>
+  * Constructor.<a name=line.23></a>
+  *  <a name=line.24></a>
+  * @param aCurrentPortfolio is to be saved by this action.<a name=line.25></a>
+  * @param aFrame the parent window<a name=line.26></a>
+  */</span><a name=line.27></a>
+  <span class='keyword'>public</span> FileSaveAsAction(CurrentPortfolio aCurrentPortfolio, JFrame aFrame) {<a name=line.28></a>
+    <span class='keyword'>super</span>(<span class='literal'>"Save As..."</span>, UiUtil.getImageIcon(<span class='literal'>"/toolbarButtonGraphics/general/SaveAs"</span>)); <a name=line.29></a>
+    Args.checkForNull(aCurrentPortfolio);<a name=line.30></a>
+    Args.checkForNull(aFrame);<a name=line.31></a>
+    fCurrentPortfolio = aCurrentPortfolio;<a name=line.32></a>
+    fFrame = aFrame;<a name=line.33></a>
+    putValue(SHORT_DESCRIPTION, <span class='literal'>"Save the current portfolio under a new name"</span>);<a name=line.34></a>
+    putValue(LONG_DESCRIPTION, <span class='literal'>"Save the current portfolio under a new given name"</span>);<a name=line.35></a>
+    putValue(MNEMONIC_KEY, <span class='keyword'>new</span> Integer(KeyEvent.VK_A) );    <a name=line.36></a>
+  }<a name=line.37></a>
+<a name=line.38></a>
+  <span class='comment'>/**<a name=line.39></a>
+  * Allow user to input a new name for the current portfolio. <a name=line.40></a>
+  *<a name=line.41></a>
+  * &lt;P&gt;The name must have a non-zero trimmed length, and must be unique.<a name=line.42></a>
+  * If the name entered by the user does not comply, then they are <a name=line.43></a>
+  * informed and asked to re-input.<a name=line.44></a>
+  */</span><a name=line.45></a>
+  <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> actionPerformed(ActionEvent e) {<a name=line.46></a>
+    fLogger.info(<span class='literal'>"Saving the current portfolio under a new name."</span>);    <a name=line.47></a>
+    fPortfolioDAO = <span class='keyword'>new</span> PortfolioDAO();<a name=line.48></a>
+    showDialog();<a name=line.49></a>
+  }  <a name=line.50></a>
+<a name=line.51></a>
+  <span class='comment'>// PRIVATE <a name=line.52></a>
+</span>  <a name=line.53></a>
+  <span class='keyword'>private</span> CurrentPortfolio fCurrentPortfolio;<a name=line.54></a>
+  <span class='keyword'>private</span> PortfolioDAO fPortfolioDAO;<a name=line.55></a>
+  <span class='keyword'>private</span> JFrame fFrame;<a name=line.56></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> Logger fLogger = Util.getLogger(FileSaveAsAction.<span class='keyword'>class</span>);<a name=line.57></a>
+  <a name=line.58></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> showDialog(){<a name=line.59></a>
+    String newName = Consts.EMPTY_STRING; <a name=line.60></a>
+    <span class='keyword'>while</span> ( isInvalid(newName) ) {<a name=line.61></a>
+      newName = askForNewName();<a name=line.62></a>
+      <span class='keyword'>if</span> (newName == <span class='keyword'>null</span>) <span class='keyword'>return</span>;<a name=line.63></a>
+      <span class='keyword'>if</span> (isInvalid(newName)) {<a name=line.64></a>
+        String title = UiUtil.getDialogTitle(<span class='literal'>"Invalid Input"</span>);<a name=line.65></a>
+        String message = <a name=line.66></a>
+          <span class='literal'>"New name must have content, and must not "</span> + <a name=line.67></a>
+          <span class='literal'>"duplicate a known Portfolio name."</span><a name=line.68></a>
+        ;<a name=line.69></a>
+        JOptionPane.showMessageDialog(<a name=line.70></a>
+          fFrame, message, title, JOptionPane.INFORMATION_MESSAGE<a name=line.71></a>
+        );<a name=line.72></a>
+      }<a name=line.73></a>
+    }<a name=line.74></a>
+    savePortfolio(newName);<a name=line.75></a>
+  }<a name=line.76></a>
+<a name=line.77></a>
+  <span class='comment'>/**<a name=line.78></a>
+  * Returns the user input for the new Portfolio name.<a name=line.79></a>
+  * <a name=line.80></a>
+  * If user hits Cancel button or closes the frame, then null is returned. If <a name=line.81></a>
+  * the user hits OK without performing any input, then an empty String is returned.<a name=line.82></a>
+  */</span><a name=line.83></a>
+  <span class='keyword'>private</span> String askForNewName(){<a name=line.84></a>
+    String title = UiUtil.getDialogTitle(<span class='literal'>"Save As"</span>);<a name=line.85></a>
+    <span class='keyword'>return</span> JOptionPane.showInputDialog(<a name=line.86></a>
+      fFrame, <span class='literal'>"File Name:"</span>, title, JOptionPane.QUESTION_MESSAGE<a name=line.87></a>
+    );<a name=line.88></a>
+  }<a name=line.89></a>
+<a name=line.90></a>
+  <span class='keyword'>private</span> <span class='keyword'>boolean</span> isInvalid( String aNewName ){<a name=line.91></a>
+    <span class='keyword'>return</span> ! fPortfolioDAO.isValidCandidateName(aNewName);<a name=line.92></a>
+  }<a name=line.93></a>
+<a name=line.94></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> savePortfolio(String aNewName ){<a name=line.95></a>
+    fCurrentPortfolio.setName( aNewName );<a name=line.96></a>
+    fCurrentPortfolio.setNeedsSave(<span class='keyword'>false</span>);<a name=line.97></a>
+    fPortfolioDAO.saveAs(fCurrentPortfolio.getPortfolio());<a name=line.98></a>
+    fCurrentPortfolio.notifyObservers();<a name=line.99></a>
+  }<a name=line.100></a>
+} <a name=line.101></a>
+</PRE><a name=line.102></a>
+ </BODY><a name=line.103></a>
+<HTML><a name=line.104></a>

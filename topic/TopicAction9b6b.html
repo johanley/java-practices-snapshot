@@ -1,0 +1,182 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=177 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="JSP,servlet,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Pre populate forms</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Pre populate forms</div>
+
+<br>Pre-populating form elements is a very common and important task in
+a web application. If pre-population is implemented effectively, then a
+web app becomes both simpler and more robust.
+
+<p>Forms are used for two kinds of operations: editing the database, and
+defining search criteria.
+
+</p><p>When editing the database, there are two use cases for forms:
+</p><ul>
+<li>
+the "add" use case, where a new record is added to the datastore - here,
+input items are initially blank, or have default initial values set in
+their static HTML.</li>
+
+<li>
+the "change" use case, where an already existing record is to be edited
+by the user - here, input items are <em>not</em> initially blank, but are dynamically
+pre-populated with the current values fetched from the database.</li>
+</ul>
+
+<p>In both cases, the user makes entries in the form, and then submits it for processing, using a <code>POST</code>.
+If an error is detected, then there is a "return to sender" operation, and
+the HTML form is redisplayed, with all its items dynamically pre-populated,
+showing their most recently entered values. Appropriate error messages are also
+displayed.
+
+</p><p>(For forms used for input of search criteria, the behavior is similar to the "add" use case 
+described above, with the important difference that the form uses <code>GET</code> instead of <code>POST</code>.)
+
+</p><p>How can this behavior be implemented most effectively?
+</p><p>One method uses a single custom 
+<a href="http://www.web4j.com/web4j/javadoc/hirondelle/web4j/ui/tag/Populate.html"><code>Populate</code></a> tag, 
+and is <span class="highlight">guided by the idea that adding pre-population to a form should have
+an absolutely minimal affect on the markup used in the case of a regular, static HTML form</span>.
+This seems very effective, since
+</p><ul>
+<li>
+web page authors do not need to learn anything new, since <i>forms remain
+almost exactly as they are in the static case</i></li>
+
+<li>
+it radically minimizes the effort needed to implement pre-population</li>
+
+<li>
+it reuses request parameters which are already present <i>and</i> already
+in the form needed for ultimate display</li>
+
+<li>
+it couples HTML forms to the details of a domain object only through
+a simple naming convention, which maps the names of input controls to the
+<code>getXXX</code> methods of the domain object</li>
+
+<li>
+implementations of domain classes need to handle only the case of <i>valid</i>
+data, so they become smaller and simpler, a <a href="TopicAction0d31.html?Id=6">class
+invariant</a> is easy to define, and they can be <a href="TopicActiond838.html?Id=29">immutable objects</a></li>
+</ul>
+An inferior style, commonly seen in frameworks such as Struts and Java
+Server Faces, replaces the standard HTML tags such as <code>&lt;INPUT&gt;</code>
+and
+<code>&lt;SELECT&gt;</code> with a parallel collection of custom tags. Such
+a style has these disadvantages:
+<ul>
+<li>
+the form needs radical alteration from the style used in a simple, static
+HTML form</li>
+
+<li>
+any prototype written in HTML must be either discarded or altered radically</li>
+
+<li>
+the web page author is forced to learn the details of multiple custom tags,
+which are different for each framework</li>
+
+<li>
+if the framework is changed, then another set of custom tags must be learned</li>
+
+<li>
+pre-population is more of a programming task than a rendering task, but
+in this style the page author is mainly responsible for its implementation</li>
+</ul>
+
+<h4>Example</h4>
+
+<p>The <a href="TopicAction5f31.html?Id=188">web4j</a> framework implements such a <code><a href="http://www.web4j.com/web4j/javadoc/hirondelle/web4j/ui/tag/Populate.html">Populate</a></code>
+tag. Here, a JSP uses the <code>&lt;w:populate&gt;</code> tag to wrap the controls of a &lt;FORM&gt; tag that may need dynamic population.
+Note how the <code>&lt;w:populate&gt;</code> tag simply wraps the body of the form, and represents an absolutely minimal
+change to the style used in a simple, static HTML form.
+
+</p><pre>
+&lt;w:populate using="itemForEdit"&gt;
+ &lt;form action='MemberAction.do' method="post"&gt;
+  &lt;input name="Id" type="hidden"&gt;
+  &lt;table align="center"&gt;
+   &lt;tr&gt;
+    &lt;td&gt;&lt;label&gt;Name&lt;/label&gt; *&lt;/td&gt;
+    &lt;td&gt;&lt;input name="Name" type="text"&gt;&lt;/td&gt;
+   &lt;/tr&gt;
+   &lt;tr&gt;
+    &lt;td&gt;&lt;label&gt;Is Active?&lt;/label&gt;&lt;/td&gt;
+    &lt;td&gt;&lt;input name="Is Active" type="checkbox" value="true"&gt;&lt;/td&gt;
+   &lt;/tr&gt;
+   &lt;tr&gt;
+    &lt;td&gt;&lt;label&gt;Disposition&lt;/label&gt;&lt;/td&gt;
+    &lt;td&gt;
+     &lt;select name="Disposition"&gt;
+      &lt;option&gt; &lt;/option&gt;
+      &lt;c:forEach var="item" items="${dispositions}"&gt;
+        &lt;option value="${item.id}"&gt;${item}&lt;/option&gt;
+      &lt;/c:forEach&gt;
+     &lt;/select&gt;
+    &lt;/td&gt;
+   &lt;/tr&gt;
+
+   &lt;tr&gt;
+    &lt;td align="center" colspan=2&gt;
+     &lt;input type="submit" value="add.edit.button"&gt;
+    &lt;/td&gt;
+   &lt;/tr&gt;
+  &lt;/table&gt;
+  &lt;tags:hiddenOperationParam/&gt;
+
+ &lt;/form&gt;
+&lt;/w:populate&gt;
+</pre>
+
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction159e.html?Id=175">Prefer JSTL tags</a> <br>
+  <a href="TopicAction5f31.html?Id=188">A Web App Framework   WEB4J</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=177 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

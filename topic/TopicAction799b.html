@@ -1,0 +1,156 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=127 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="connection,database,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Get database connection</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Get database connection</div>
+
+<br>There are two sources of database connections - either a 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/javax/sql/DataSource.html">DataSource</a></code>
+or a 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/sql/DriverManager.html">DriverManager</a></code>.
+
+<p>If available, JNDI and the <code>DataSource</code> interface should
+be used to get a <code><a href="https://docs.oracle.com/javase/10/docs/api/java/sql/Connection.html">Connection</a></code>
+instead of <code>DriverManager</code>. The JNDI style is typical when using
+an application server or a web container. (For example, the popular <a href="http://jakarta.apache.org/tomcat/">Tomcat</a>
+product includes JNDI services and connection pools.)
+
+</p><p><span class="highlight">Always remember that database connections need to be properly released!</span>
+
+</p><p>Options for specifying the connection parameters include:
+</p><ul>
+<li>
+server configuration settings (likely the most common style)</li>
+
+<li>
+direct user input for user name and password</li>
+
+<li>
+a properties file, web.xml file, or <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/ResourceBundle.html">ResourceBundle</a></code>
+to keep parameters out of compiled code</li>
+
+<li>
+the <code>jdbc.drivers</code> property of the <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/System.html">System</a></code>
+class</li>
+</ul>
+<b>Example</b>
+<p>Here's a reminder of the basics of getting a <code>Connection</code>.
+<br></p><pre>
+<span class="keyword">import</span> java.sql.*;
+<span class="keyword">import</span> javax.naming.*;
+<span class="keyword">import</span> javax.sql.*;
+
+<span class="comment">/** 
+ Get a connection to a database.
+ Callers need to close the connection when finished.  
+*/</span>
+<span class="keyword">final</span> <span class="keyword">class</span> GetConnection {
+
+  <span class="comment">/** Preferred style, using JNDI and Datasource. */</span>
+  Connection getJNDIConnection(){
+    String DATASOURCE_CONTEXT = <span class="literal">"java:comp/env/jdbc/blah"</span>;
+    Connection result = <span class="keyword">null</span>;
+    <span class="keyword">try</span> {
+      Context initialContext = <span class="keyword">new</span> InitialContext();
+      <span class="comment">//cast is necessary
+</span>      DataSource datasource = (DataSource)initialContext.lookup(DATASOURCE_CONTEXT);
+      <span class="keyword">if</span> (datasource != <span class="keyword">null</span>) {
+        result = datasource.getConnection();
+      }
+      <span class="keyword">else</span> {
+        log(<span class="literal">"Failed to lookup datasource."</span>);
+      }
+    }
+    <span class="keyword">catch</span> (NamingException ex) {
+      log(<span class="literal">"Cannot get connection: "</span> + ex);
+    }
+    <span class="keyword">catch</span>(SQLException ex){
+      log(<span class="literal">"Cannot get connection: "</span> + ex);
+    }
+    <span class="keyword">return</span> result;
+  }
+
+  <span class="comment">/** Using DriverManager, not JNDI. */</span>
+  Connection getSimpleConnection() {
+    <span class="comment">//See your driver documentation for the proper format of this string :
+</span>    String DB_CONN_STRING = <span class="literal">"jdbc:mysql://localhost:3306/airplanes"</span>;
+    <span class="comment">//Provided by your driver documentation. In this case, a MySql driver is used : 
+</span>    String DRIVER_CLASS_NAME = <span class="literal">"org.gjt.mm.mysql.Driver"</span>;
+    String USER_NAME = <span class="literal">"bob"</span>;
+    String PASSWORD = <span class="literal">"cyclotronhydrantgracefulogre"</span>;
+    
+    Connection result = <span class="keyword">null</span>;
+    <span class="keyword">try</span> {
+      Class.forName(DRIVER_CLASS_NAME).getDeclaredConstructor().newInstance();
+    }
+    <span class="keyword">catch</span> (Exception ex){
+      log(<span class="literal">"Check classpath. Cannot load db driver: "</span> + DRIVER_CLASS_NAME);
+    }
+
+    <span class="keyword">try</span> {
+      result = DriverManager.getConnection(DB_CONN_STRING, USER_NAME, PASSWORD);
+    }
+    <span class="keyword">catch</span> (SQLException e){
+      log( <span class="literal">"Driver loaded, but cannot connect to db: "</span> + DB_CONN_STRING);
+    }
+    <span class="keyword">return</span> result;
+  }
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(Object thing){
+    System.out.println(thing);
+  }
+}
+ 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction693b.html?Id=43">Recovering resources</a> <br>
+  <a href="TopicAction12eb.html?Id=75">Connection pools</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=127 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+</html>

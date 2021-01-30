@@ -1,0 +1,175 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=126 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="declare,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Don't declare local variables before use</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Don't declare local variables before use</div>
+
+<br>Most local variables are declared and initialized on the same line,
+at the point in the method where both its initial value is available and
+the variable itself is immediately useful.
+<p>Declaring local variables without using them immediately may unnecessarily
+increase their scope. This decreases legibility, and increases the likelihood
+of error.
+</p><p>There are two common cases where a local variable is assigned some default initial 
+value (typically <code>null, 0, false, </code>or an empty <code>String</code>):
+</p><ul>
+<li>variables which need to be visible outside of a <code>try</code> block, and
+are thus declared and initialized just before the <code>try</code> block (in modern code 
+using try-with-resources, this is now relatively rare)</li>
+<li>some loop variables, which are initialized to some default value just before the loop</li>
+</ul>
+<b>Example</b>
+<p>Here, <code>input</code> and <code>output</code> are examples of local variables
+being initialized to <code>null</code>, since they need to be visible in both
+the <code>try</code> and <code>finally</code> blocks. 
+
+</p><p>As well, <code>line</code> is an example of a loop variable declared and
+initialized outside the loop.
+
+</p><p>Note that this example uses JDK 6, simply to illustrate the point. 
+In JDK 7, <a href="http://docs.oracle.com/javase/8/docs/technotes/guides/language/try-with-resources.html">try-with-resources</a> 
+would be used to automatically close streams, and the issue 
+of stream references being initialized to <code>null</code> would not occur.
+
+<br></p><pre>
+<span class="keyword">import</span> java.io.*;
+
+<span class="comment">/** JDK 6 or before. */</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> ReadWriteTextFile {
+
+  <span class="comment">/**
+  * Fetch the entire contents of a text file, and return it in a String.
+  * This style of implementation does not throw Exceptions to the caller.
+  *
+  * @param file is a file which already exists and can be read.
+  */</span>
+  <span class="keyword">static</span> <span class="keyword">public</span> String getContents(File file) {
+    <span class="comment">//...checks on aFile are elided
+</span>    StringBuilder contents = <span class="keyword">new</span> StringBuilder();
+    
+    <span class="keyword">try</span> {
+      <span class="comment">//use buffering, reading one line at a time
+</span>      <span class="comment">//FileReader always assumes default encoding is OK!
+</span>      BufferedReader input =  <span class="keyword">new</span> BufferedReader(<span class="keyword">new</span> FileReader(file));
+      <span class="keyword">try</span> {
+        String line = <span class="keyword">null</span>; <span class="comment">//not declared within while loop
+</span>        <span class="comment">/*
+        * readLine is a bit quirky :
+        * it returns the content of a line MINUS the newline.
+        * it returns null only for the END of the stream.
+        * it returns an empty String if two newlines appear in a row.
+        */</span>
+        <span class="keyword">while</span> (( line = input.readLine()) != <span class="keyword">null</span>){
+          contents.append(line);
+          contents.append(System.getProperty(<span class="literal">"line.separator"</span>));
+        }
+      }
+      <span class="keyword">finally</span> {
+        input.close();
+      }
+    }
+    <span class="keyword">catch</span> (IOException ex){
+      ex.printStackTrace();
+    }
+    
+    <span class="keyword">return</span> contents.toString();
+  }
+
+  <span class="comment">/**
+  * Change the contents of text file in its entirety, overwriting any
+  * existing text.
+  *
+  * This style of implementation throws all exceptions to the caller.
+  *
+  * @param file is an existing file which can be written to.
+  * @throws IllegalArgumentException if param does not comply.
+  * @throws FileNotFoundException if the file does not exist.
+  * @throws IOException if problem encountered during write.
+  */</span>
+  <span class="keyword">static</span> <span class="keyword">public</span> <span class="keyword">void</span> setContents(
+     File file, String contents
+  ) <span class="keyword">throws</span> FileNotFoundException, IOException {
+    <span class="keyword">if</span> (file == <span class="keyword">null</span>) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="literal">"File should not be null."</span>);
+    }
+    <span class="keyword">if</span> (!file.exists()) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> FileNotFoundException (<span class="literal">"File does not exist: "</span> + file);
+    }
+    <span class="keyword">if</span> (!file.isFile()) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="literal">"Should not be a directory: "</span> + file);
+    }
+    <span class="keyword">if</span> (!file.canWrite()) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="literal">"File cannot be written: "</span> + file);
+    }
+
+    <span class="comment">//use buffering
+</span>    Writer output = <span class="keyword">new</span> BufferedWriter(<span class="keyword">new</span> FileWriter(file));
+    <span class="keyword">try</span> {
+      <span class="comment">//FileWriter always assumes default encoding is OK!
+</span>      output.write( contents );
+    }
+    <span class="keyword">finally</span> {
+      output.close();
+    }
+  }
+
+  <span class="comment">/** Simple test harness.   */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main (String... arguments) <span class="keyword">throws</span> IOException {
+    File testFile = <span class="keyword">new</span> File(<span class="literal">"C:\\Temp\\blah.txt"</span>);
+    System.out.println(<span class="literal">"Original file contents: "</span> + getContents(testFile));
+    setContents(testFile, <span class="literal">"The content of this file has been overwritten..."</span>);
+    System.out.println(<span class="literal">"New file contents: "</span> + getContents(testFile));
+  }
+} 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction9b86.html?Id=14">Initializing fields to 0 false null is redundant</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=126 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

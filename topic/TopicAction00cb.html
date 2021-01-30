@@ -1,0 +1,164 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=219 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Consider Controllers for redirects</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Consider Controllers for redirects</div>
+
+<br>
+HTTP provides <a href="http://en.wikipedia.org/wiki/URL_redirection#HTTP_status_codes_3xx">redirection headers</a>.
+A main use case for these headers is to instruct browsers that a page has moved to a new URL, either temporarily or permanently.
+When a page is moved, any links to the old URL will be broken, unless a redirect is provided.
+
+<p>Here's a snippet which performs a permanent redirection, using an <code>HttpServletResponse</code> object:
+</p><pre>
+aResponse.<a href="https://docs.oracle.com/javaee/7/api/javax/servlet/http/HttpServletResponse.html#setStatus-int-">setStatus</a>(HttpServletResponse.SC_MOVED_PERMANENTLY);
+aResponse.<a href="https://docs.oracle.com/javaee/7/api/javax/servlet/http/HttpServletResponse.html#setHeader-java.lang.String-java.lang.String-">setHeader</a>("Location", "www.javapractices.com/source/SourceAction.do");
+</pre>
+
+In the case of a <em>temporary</em> redirection, another style can be used instead, if desired: 
+<pre>
+aResponse.<a href="https://docs.oracle.com/javaee/7/api/javax/servlet/http/HttpServletResponse.html#sendRedirect-java.lang.String-">sendRedirect</a>("www.javapractices.com/source/SourceAction.do");
+</pre>
+
+<p>Using a Controller servlet to perform redirections is often an attractive option. 
+
+</p><p><b>Example</b>
+
+</p><p>The Servlet API allows for <code>welcome-file</code> entries in <code>web.xml</code>.
+These items handle requests which specify only a <em>directory</em>, instead of a specific file or action.
+
+</p><p>A common requirement is to serve welcome files using a servlet instead of a static page.
+It's true that a static page can indeed perform a redirect. However, that style seems to be slower.
+As well, it forces the quick display of an intermediate page before the "real" one, which seems to be a less pleasing experience for the user.
+
+</p><p>The javapractices.com site uses a redirection Controller to serve its home page. 
+Here are the relevant entries in its <code>web.xml</code>:
+
+</p><pre>
+&lt;servlet&gt;
+ &lt;servlet-name&gt;RedirectWelcomeFile&lt;/servlet-name&gt;
+ &lt;description&gt;
+  Redirects directory requests to the home page Action.
+ &lt;/description&gt;
+ &lt;servlet-class&gt;hirondelle.jp.redirect.WelcomeFileController&lt;/servlet-class&gt;
+  &lt;init-param&gt;  
+   &lt;param-name&gt;Destination&lt;/param-name&gt;
+   &lt;param-value&gt;http://www.javapractices.com/home/HomeAction.do&lt;/param-value&gt;
+    &lt;description&gt;
+     The URL of the home page, as an Action.
+    &lt;/description&gt;
+  &lt;/init-param&gt;  
+ &lt;/servlet&gt;
+
+&lt;servlet-mapping&gt;
+ &lt;servlet-name&gt;RedirectWelcomeFile&lt;/servlet-name&gt;
+ &lt;url-pattern&gt;/welcome&lt;/url-pattern&gt;
+&lt;/servlet-mapping&gt;
+
+&lt;!-- the welcome-file points to the servlet, not to a file --&gt;
+&lt;!-- note the slash does not appear here --&gt;
+&lt;welcome-file-list&gt;
+ &lt;welcome-file&gt;welcome&lt;/welcome-file&gt;
+&lt;/welcome-file-list&gt;
+</pre>
+
+The actual Controller class is fairly simple. 
+Note that it reads in the <code>Destination</code> setting from <code>web.xml</code> :
+<br><pre>
+<span class="keyword">package</span> hirondelle.jp.redirect;
+
+<span class="keyword">import</span> hirondelle.web4j.util.Util;
+<span class="keyword">import</span> java.io.IOException;
+<span class="keyword">import</span> java.util.logging.Logger;
+<span class="keyword">import</span> javax.servlet.ServletConfig;
+<span class="keyword">import</span> javax.servlet.ServletException;
+<span class="keyword">import</span> javax.servlet.http.HttpServlet;
+<span class="keyword">import</span> javax.servlet.http.HttpServletRequest;
+<span class="keyword">import</span> javax.servlet.http.HttpServletResponse;
+
+<span class="comment">/**
+* Redirect requests for the home page to a specific Action.
+* 
+* &lt;P&gt;Configuration in web.xml :&lt;br&gt;
+* This Controller servlet is mapped to '/welcome', and a corresponding welcome-file entry 
+* is listed as 'welcome', without the leading slash.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> WelcomeFileController  <span class="keyword">extends</span> HttpServlet {
+  
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> init(ServletConfig aConfig) <span class="keyword">throws</span> ServletException {
+    <span class="keyword">super</span>.init(aConfig);
+    fLogger.config(<span class="literal">"WelcomeFile Controller - starting."</span>);
+    fDestination = aConfig.getInitParameter(<span class="literal">"Destination"</span>);
+    <span class="keyword">if</span> ( ! Util.textHasContent(fDestination) ) {
+      fLogger.severe(<span class="literal">"Destination URL needed, but not configured in web.xml."</span>);
+    }
+  }
+  
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> destroy(){
+    fLogger.config(<span class="literal">"WelcomeFile Controller - ending."</span>);
+  }
+  
+  <span class="keyword">@Override</span> <span class="keyword">protected</span> <span class="keyword">void</span> doGet(
+    HttpServletRequest aRequest, HttpServletResponse aResponse
+  ) <span class="keyword">throws</span> ServletException, IOException {
+    fLogger.fine(<span class="literal">"Redirecting directory request to new location : "</span> + fDestination);
+    aResponse.setContentType(<span class="literal">"text/html"</span>);
+    aResponse.sendRedirect(fDestination);
+  }
+  
+  <span class="comment">// PRIVATE //
+</span>  <span class="keyword">private</span> String fDestination;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Logger fLogger = Util.getLogger(WelcomeFileController.<span class="keyword">class</span>);
+}
+ 
+</pre>
+
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction8130.html?Id=181">Forward versus redirect</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=219 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+</html>

@@ -1,0 +1,80 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=277 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="standard functional interface,predicate,consumer,supplier,function,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Prefer standard functional interfaces</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Prefer standard functional interfaces</div>
+
+<br>
+
+For many cases, instead of defining your own functional interfaces, you can use the 
+<a href="https://docs.oracle.com/javase/10/docs/api/java/util/function/package-summary.html">standard functional interfaces</a> 
+defined by the JDK:
+<ul>
+ <li>with repeated use, they become familiar to maintainers, and act as a quick way of communicating behavior
+ </li><li>they often include useful default methods
+</li></ul>
+
+There are a large number of standard functional interfaces. 
+They're generic, so they can handle any type.
+The 6 most commonly-used ones likely cover the majority of cases:
+
+<p></p><table class="report">
+ <tbody><tr><th>Interface </th><th>Method 
+ </th></tr><tr><td><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/function/Predicate.html">Predicate&lt;T&gt;</a></code> </td><td> <code>boolean test(T thing)</code>
+ </td></tr><tr><td><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/function/Consumer.html">Consumer&lt;T&gt;</a></code> </td><td> <code>void accept(T thing)</code>
+ </td></tr><tr><td><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/function/Supplier.html">Supplier&lt;T&gt;</a></code> </td><td> <code>T get()</code>
+ </td></tr><tr><td><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/function/Function.html">Function&lt;T,R&gt;</a></code> </td><td> <code>R apply(T thing)</code>
+ </td></tr><tr><td><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/function/UnaryOperator.html">UnaryOperator&lt;T&gt;</a></code> </td><td> <code>T apply(T thing)</code>
+ </td></tr><tr><td><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/function/BinaryOperator.html">BinayOperator&lt;T&gt;</a></code> </td><td> <code>T apply(T thing1, T thing2)</code>
+</td></tr></tbody></table>
+
+<p>You should be familiar with the above core functional interfaces. 
+Whenever you <em>can</em> use them, you probably <em>should</em> use them.
+</p><p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction7f07.html?Id=276">Annotate functional interfaces</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=277 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

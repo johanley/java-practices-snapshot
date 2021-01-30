@@ -1,0 +1,132 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=148 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="swing,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Look and Feel guidelines</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Look and Feel guidelines</div>
+
+<br>The <a href="http://www.oracle.com/technetwork/java/jlf-135985.html">Java
+Look And Feel Design Guidelines</a> published by Oracle have many useful recommendations
+regarding user interfaces.
+<p>Some important points:
+</p><ul>
+<li>
+changing look and feel is meant as a design tool, not as a runtime tool;
+that is, Oracle recommends that applications should <i>not</i> allow the end
+user to change the look and feel at runtime.</li>
+
+<li>
+labels should always have an associated mnemonic, to allow navigation through
+the keyboard (<code>Alt+F</code>, for example) instead of the mouse. Two
+common exceptions are the default button (activated by hitting Enter or
+Return) and the Cancel button (activated by hitting Escape) - these should
+<i>not</i>
+have an associated mnemonic.</li>
+
+<li>
+choose mnemonics according to the <a href="http://www.oracle.com/technetwork/java/hig-136903.html#51461">typical
+menu styles</a>, if possible; otherwise, select the first letter, a prominent
+consonant, or a prominent vowel, in that order of preference.</li>
+
+<li>
+use the <code>JLabel.setLabelFor</code> method to associate a mnemonic with
+an element which would not otherwise have one, for example a <code>JTextField</code>.</li>
+
+<li>
+<a href="http://www.oracle.com/technetwork/java/appendix-141053.html#47001">common
+shortcut keys</a> (<code>Ctrl-N</code> for&nbsp;<code>File-&gt; New</code>,
+for example) usually have the Ctrl key as a modifier.</li>
+
+<li>
+the spacing of elements should be multiples of 6 pixels (6N) ; if one of
+the elements has a white border, then the spacing should be one pixel less
+(6N - 1).</li>
+
+<li>
+dialog title bars should contain the application name, for example "MyApp:
+Preferences", and "MyApp: About".</li>
+
+<li>
+<code>JOptionPane</code> messages should begin with a short, bold header on
+a single line (this can be implemented using HTML tags <code>&lt;b&gt;</code>
+and <code>&lt;br&gt;</code>).</li>
+
+<li>
+Oracle publishes a useful <a href="http://www.oracle.com/technetwork/java/index-138612.html">graphics
+repository</a></li>
+</ul>
+<a href="http://www.oracle.com/technetwork/java/hig-141354.html#44394">Menus</a>
+<ul>
+<li>
+<a href="http://www.oracle.com/technetwork/java/hig-136903.html#51461">typical
+menu style</a> follows the order File, Object, Edit, Format, View, and Help. 
+Any further menus are placed immediately before Help.</li>
+
+<li>
+menu titles should be a single word, while menu items may have more than
+one word</li>
+
+<li>
+ellipses (...) are used only when further user input is required</li>
+</ul>
+<a href="http://www.oracle.com/technetwork/java/hig-141321.html#78052">Capitalization</a>
+<ul>
+<li>
+almost all short textual items (menus, buttons, labels, for example) should
+have headline capitalization, where all words are capitalized except for
+common words with up to three letters (a, an, the, and, or, so, yet, etc.), 
+<i>and</i> do not appear as the first or last word.</li>
+
+<li>
+if the text is not short, then the capitalization used in ordinary prose
+(sentence capitalization) should be used instead.</li>
+</ul>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction7910.html?Id=150">Standardized dialogs</a> <br>
+  <a href="TopicAction06a5.html?Id=158">Change theme</a> <br>
+  <a href="TopicAction11fc.html?Id=167">Input dialogs</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=148 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+</html>

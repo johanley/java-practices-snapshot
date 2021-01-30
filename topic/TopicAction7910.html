@@ -1,0 +1,257 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=150 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="dialog,swing,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Standardized dialogs</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Standardized dialogs</div>
+
+<br>Inconsistencies in a user interface usually decrease the perceived quality of an application.
+So, it's probably a good idea to standardize the layout, appearance, and behavior of all
+the dialogs in your application.
+<p><b>Example</b>
+</p><p>Here's a class which acts as a template for all dialogs having&nbsp;<code>OK</code>
+and&nbsp;<code>Cancel</code> buttons. It standardizes these items:
+</p><ul>
+<li>
+the form of the dialog title</li>
+
+<li>
+the dialog icon</li>
+
+<li>
+the layout and spacing of principal elements</li>
+
+<li>
+the centering behavior</li>
+
+<li>
+the resizing behavior</li>
+</ul>
+
+Note the two abstract methods that must be implemented by its subclasses: <code>getEditorUI</code> and <code>okAction</code>.
+The other methods are <a href="TopicAction18c3.html?Id=89">declared as final</a>.
+
+<p>The callers of this class don't usually need to subclass it directly, at the top level.
+Rather, a private, nested class <a href="TopicAction5982.html?Id=228">can be used instead</a>.
+
+<br></p><pre>
+<span class="keyword">package</span> hirondelle.stocks.util.ui;
+
+<span class="keyword">import</span> java.util.*;
+<span class="keyword">import</span> javax.swing.*;
+<span class="keyword">import</span> java.awt.event.*;
+
+<span class="keyword">import</span> hirondelle.stocks.util.Args;
+
+<span class="comment">/**
+* Abstract Base Class for a dialog with standard layout, buttons, and behavior.
+* (The name &lt;tt&gt;StandardEditor&lt;/tt&gt; was chosen since almost all non-trivial 
+* dialogs allow the user to edit data in some way.)
+*
+* &lt;P&gt;Use of this class will apply a standard appearance to 
+* dialogs in the application.
+*
+* &lt;P&gt; Subclasses implement the body of the dialog (wherein business objects 
+* are manipulated), and the action taken by the &lt;tt&gt;OK&lt;/tt&gt; button. 
+*
+* &lt;P&gt;Services of a &lt;tt&gt;StandardEditor&lt;/tt&gt; include: 
+*&lt;ul&gt;
+* &lt;li&gt;centering on the parent frame
+* &lt;li&gt;reusing the parent's icon
+* &lt;li&gt;standard layout and border spacing, based on Java Look and Feel guidelines.
+* &lt;li&gt;uniform naming style for dialog title, with the application name appearing first
+* &lt;li&gt;&lt;tt&gt;OK&lt;/tt&gt; and &lt;tt&gt;Cancel&lt;/tt&gt; buttons at the bottom of the dialog - 
+* &lt;tt&gt;OK&lt;/tt&gt; is the default, and the &lt;tt&gt;Escape&lt;/tt&gt; key activates 
+* &lt;tt&gt;Cancel&lt;/tt&gt; (the latter works only if the dialog receives the escape 
+* keystroke, and not one of its components)
+* &lt;li&gt;disabling of resizing
+*&lt;/ul&gt;
+*
+* &lt;P&gt;The &lt;tt&gt;Escape&lt;/tt&gt; key does not always work (for example, when a 
+* &lt;tt&gt;JTable&lt;/tt&gt; row has the focus)
+*/</span>
+<span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">class</span> StandardEditor {
+  
+  <span class="comment">/**
+  * Constructor.
+  * @param aTitle text which appears in the title bar after the name of 
+  * the application; must have content.
+  * @param aParent window to which this dialog is attached.
+  * @param aCloseAction sets the behaviour of the dialog upon close.
+  */</span>
+  <span class="keyword">protected</span> StandardEditor (String aTitle, JFrame aParent, CloseAction aCloseAction) {
+    Args.checkForContent(aTitle);
+    Args.checkForNull(aParent);
+    fTitle = aTitle;
+    fParent = aParent;
+    fCloseAction = aCloseAction.getValue();
+  }
+  
+  <span class="comment">/**
+  * Forces calls to constructor to have greater clarity, by using an
+  * enumeration instead of integers.
+  */</span>
+  <span class="keyword">protected</span> <span class="keyword">enum</span> CloseAction {
+    DISPOSE(JDialog.DISPOSE_ON_CLOSE),
+    HIDE(JDialog.HIDE_ON_CLOSE);
+    <span class="keyword">int</span> getValue(){
+      <span class="keyword">return</span> fAction;
+    }
+    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">int</span> fAction;
+    <span class="keyword">private</span> CloseAction(<span class="keyword">int</span> aAction){
+      fAction = aAction;
+    }
+  }
+  
+  <span class="comment">/**
+  * Display this &lt;tt&gt;StandardEditor&lt;/tt&gt; to the user.
+  *
+  * &lt;P&gt;Follows the Java Look and Feel guidelines for spacing elements.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">void</span> showDialog(){
+    <span class="keyword">boolean</span> isModal = <span class="keyword">true</span>;
+    fDialog = <span class="keyword">new</span> JDialog(fParent, UiUtil.getDialogTitle(fTitle), isModal);
+    fDialog.setDefaultCloseOperation(fCloseAction);
+    fDialog.setResizable(<span class="keyword">false</span>);
+    addCancelByEscapeKey();
+    
+    JPanel standardLayout = <span class="keyword">new</span> JPanel();
+    standardLayout.setLayout(<span class="keyword">new</span> BoxLayout(standardLayout, BoxLayout.Y_AXIS));
+    standardLayout.setBorder(UiUtil.getStandardBorder());
+    standardLayout.add(getEditorUI());
+    standardLayout.add(getCommandRow());
+    
+    fDialog.getContentPane().add(standardLayout);
+    
+    UiUtil.centerOnParentAndShow(fDialog);
+  }
+
+  <span class="comment">/** Close the editor dialog.  */</span>
+  <span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">void</span> dispose(){
+    fDialog.dispose();
+  }
+  
+  <span class="comment">/**
+  * Return the GUI which allows the user to manipulate the business 
+  * objects related to this dialog; this GUI will be placed above the 
+  * &lt;tt&gt;OK&lt;/tt&gt; and &lt;tt&gt;Cancel&lt;/tt&gt; buttons, in a standard manner.
+  */</span>
+  <span class="keyword">protected</span> <span class="keyword">abstract</span> JComponent getEditorUI();
+  
+  <span class="comment">/**
+  * The action taken when the user hits the &lt;tt&gt;OK&lt;/tt&gt; button.
+  */</span>
+  <span class="keyword">protected</span> <span class="keyword">abstract</span> <span class="keyword">void</span> okAction();
+  
+  <span class="comment">// PRIVATE
+</span>  <span class="keyword">private</span> <span class="keyword">final</span> String fTitle;
+  <span class="keyword">private</span> <span class="keyword">final</span> JFrame fParent;
+  <span class="keyword">private</span> JDialog fDialog;
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">int</span> fCloseAction;
+  
+  <span class="comment">/**
+  * Return a standardized row of command buttons, right-justified and 
+  * all of the same size, with OK as the default button, and no mnemonics used, 
+  * as per the Java Look and Feel guidelines. 
+  */</span>
+  <span class="keyword">private</span> JComponent getCommandRow() {
+    JButton ok = <span class="keyword">new</span> JButton(<span class="literal">"OK"</span>);
+    ok.addActionListener( <span class="keyword">new</span> ActionListener() {
+      <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> actionPerformed(ActionEvent event) {
+        okAction();
+      }
+    });
+    fDialog.getRootPane().setDefaultButton( ok );
+    JButton cancel = <span class="keyword">new</span> JButton(<span class="literal">"Cancel"</span>);
+    cancel.addActionListener( <span class="keyword">new</span> ActionListener() {
+      <span class="keyword">public</span> <span class="keyword">void</span> actionPerformed(ActionEvent event) {
+        closeDialog();
+      }
+    });
+    List&lt;JComponent&gt; buttons = <span class="keyword">new</span> ArrayList&lt;&gt;();
+    buttons.add(ok);
+    buttons.add(cancel);
+    <span class="keyword">return</span> UiUtil.getCommandRow(buttons);
+  }
+
+  <span class="comment">/**
+  * Force the escape key to call the same action as pressing the Cancel button.
+  *
+  * &lt;P&gt;This does not always work. See class comment.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">void</span> addCancelByEscapeKey(){
+    String CANCEL_ACTION_KEY = <span class="literal">"CANCEL_ACTION_KEY"</span>;
+    <span class="keyword">int</span> noModifiers = <span class="literal">0</span>;
+    KeyStroke escapeKey = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, noModifiers, <span class="keyword">false</span>);
+    InputMap inputMap = 
+      fDialog.getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+    ;
+    inputMap.put(escapeKey, CANCEL_ACTION_KEY);
+    AbstractAction cancelAction = <span class="keyword">new</span> AbstractAction(){
+      <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> actionPerformed(ActionEvent e){
+        closeDialog();
+      }
+    }; 
+    fDialog.getRootPane().getActionMap().put(CANCEL_ACTION_KEY, cancelAction);
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">void</span> closeDialog(){
+    fDialog.dispose();
+  }
+}
+ 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction18c3.html?Id=89">Overridable methods need special care</a> <br>
+  <a href="TopicAction992c.html?Id=148">Look and Feel guidelines</a> <br>
+  <a href="TopicAction2994.html?Id=152">Swing utility tasks</a> <br>
+  <a href="TopicAction11fc.html?Id=167">Input dialogs</a> <br>
+  <a href="TopicAction5982.html?Id=228">Don't subclass JDialog or JFrame</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=150 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+</html>

@@ -1,0 +1,108 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=100 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="API,assertion,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Assert is for private arguments only</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Assert is for private arguments only</div>
+
+<br>Most validity checks in a program are checks on parameters passed to
+non-private methods. <i>The</i> <code>assert</code> <i>keyword is not meant
+for these types of validations</i>. (Some may find this surprising; here
+is the Oracle <a href="http://www.oracle.com/us/technologies/java/assertions-139853.html">guideline</a>.)
+
+<p>Assertions can be disabled. Since checks on parameters to non-private
+methods implement the requirements demanded of the caller, turning off
+such checks at runtime would mean that part of the <a href="TopicAction63b6.html?Id=194">contract</a>
+is no longer being enforced.
+
+</p><p>Conversely, checks on arguments to private methods can indeed use <code>assert</code>.
+These checks are made to verify assumptions about internal implementation
+details, and not to check that the caller has followed the requirements
+of a non-private method's contract.
+
+</p><p>In addition, if an <code>AssertionError</code> can be thrown by a method,
+then this fact should <i>not</i> appear in the method's javadoc comment.
+The specification of a method's behaviour should never mention assertions,
+since assertions can be disabled.
+
+</p><p><b>Example</b>
+<br></p><pre>
+<span class="keyword">import</span> java.util.Objects;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> SpaceShuttle {
+
+  <span class="comment">/**
+  * The non-nullity of name is part of the contract of the
+  * constructor.
+  *
+  * @param name is non-null.
+  */</span>
+  <span class="keyword">public</span> SpaceShuttle(String name) {
+    <span class="comment">//WRONG way:
+</span>    assert name != <span class="keyword">null</span> : <span class="literal">"Name must not be null"</span>;
+    <span class="comment">//RIGHT way:
+</span>    <span class="keyword">this</span>.name = Objects.requireNonNull(name);
+  }
+
+  <span class="keyword">public</span> String getName() {
+    <span class="keyword">return</span> name;
+  }
+  
+  <span class="comment">//..elided
+</span>
+  <span class="comment">// PRIVATE 
+</span>  <span class="keyword">private</span> <span class="keyword">final</span> String name;
+}
+ 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction5d11.html?Id=5">Validate method arguments</a> <br>
+  <a href="TopicAction63b6.html?Id=194">Design by Contract</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=100 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+</html>

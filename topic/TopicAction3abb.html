@@ -1,0 +1,358 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=153 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:38 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="thread,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Swing threads</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Swing threads</div>
+
+<br><b>Event Dispatch Thread</b>
+<p>In a Swing application, most of the processing takes place in a single,
+special thread called the <a href="http://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">event dispatch thread</a> (EDT).
+</p><p>This thread becomes active after a component becomes <i>realized</i>: either 
+<code>pack</code>, <code>show</code>, or <code>setVisible(true)</code> has been
+called. When a top level window is realized, all of its components are
+also realized. Swing is mostly single-threaded: <span class="highlight">almost all calls to
+realized components should execute in the event dispatch thread</span>. The
+thread-safe exceptions are:
+</p><ul>
+<li>
+some methods of <code><a href="https://docs.oracle.com/javase/10/docs/api/javax/swing/JComponent.html">JComponent</a></code>: <code>repaint</code>, <code>revalidate</code>, <code>invalidate</code></li>
+
+<li>
+all <code>addXXXListener</code> and <code>removeXXXListener</code> methods</li>
+
+<li>
+all methods explicitly documented as thread-safe</li>
+</ul>
+<b>Worker Threads Keep GUIs Responsive</b>
+<p>If a task needs a relatively long time to complete, then performing
+that task in the event dispatch thread will cause the user interface to
+become unresponsive for the duration of the task - the GUI becomes "locked".
+Since this is undesirable, such tasks are usually performed outside the
+event dispatch thread, on what is commonly referred to as a <i>worker thread</i>.
+</p><p>When a worker thread completes its task, it needs a special mechanism
+for updating realized GUI components, since, as stated above, realized
+components almost always need to be updated only from the event dispatch
+thread. 
+
+</p><p>With modern JDK's, the most common way of doing this is the 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/javax/swing/SwingWorker.html">SwingWorker</a></code>
+class, introduced in JSE 6. It should be used if available. 
+
+</p><p>For using timers, see this related <a href="TopicAction6407.html?Id=160">topic</a>.
+
+</p><p><b>Example 1</b>
+</p><p>The <a href="../apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/quotes/FetchQuotesAction.html"><code>FetchQuotesAction</code></a> 
+fetches stock price information. This is a good example of an operation which should be on a separate thread.
+Since it's not known how long it will take, or even if a good web connection is present, it's an 
+operation which could very easily lock the GUI.
+
+</p><p>Below are the pertinent parts of its code. Note how a <code>SwingWorker</code> is divided into two 
+parts: <code>doInBackground</code> does the main work and returns any needed data, 
+and <code>done</code> first calls <code>get</code> to access the data, and then updates the user interface.
+<br></p><pre>
+<span class="comment">/**
+* Fetch current quote data for the {@link CurrentPortfolio} from a data 
+* source on the web.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> FetchQuotesAction <span class="keyword">extends</span> AbstractAction <span class="keyword">implements</span> Observer {
+
+  <span class="comment">//elided...
+</span>
+  <span class="comment">/** 
+   Fetch quotes from the web for the &lt;tt&gt;CurrentPortfolio&lt;/tt&gt;.
+   This is called either explicitly, or periodically, by a Timer.
+  */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> actionPerformed(ActionEvent e) {
+    fLogger.info(<span class="literal">"Fetching quotes from web."</span>);
+    fSummaryView.showStatusMessage(<span class="literal">"Fetching quotes..."</span>);
+    SwingWorker&lt;List&lt;Quote&gt;, Void&gt; hardWorker = <span class="keyword">new</span> HardWorker();
+    hardWorker.execute();
+  }
+  
+  <span class="comment">/**
+  * The set of {@link Stock} objects in which the user 
+  * is currently interested.
+  */</span>
+  <span class="keyword">private</span> CurrentPortfolio fCurrentPortfolio;
+
+  <span class="comment">/**
+  * GUI element which is updated whenever a new set of quotes is obtained.
+  */</span>
+  <span class="keyword">private</span> SummaryView fSummaryView;
+
+  <span class="comment">//elided...
+</span>  
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">class</span> HardWorker <span class="keyword">extends</span> SwingWorker&lt;java.util.List&lt;Quote&gt;, Void&gt; {
+    <span class="keyword">@Override</span>  <span class="keyword">protected</span> List&lt;Quote&gt; doInBackground() <span class="keyword">throws</span> Exception {
+      List&lt;Quote&gt; result = <span class="keyword">null</span>;
+      <span class="keyword">try</span> {
+        result = fCurrentPortfolio.getPortfolio().getQuotes();
+      }
+      <span class="keyword">catch</span>(DataAccessException ex){
+        ex.printStackTrace();
+      }
+      <span class="keyword">return</span> result;
+    }
+    <span class="keyword">@Override</span> <span class="keyword">protected</span> <span class="keyword">void</span> done() {
+      <span class="keyword">try</span> {
+        <span class="comment">//get the data fetched above, in doInBackground()
+</span>        List&lt;Quote&gt; quotes = get();
+        <span class="keyword">if</span> (quotes != <span class="keyword">null</span>){
+          showUpdated(quotes);
+        }
+        <span class="keyword">else</span> {
+          fSummaryView.showStatusMessage(<span class="literal">"Failed - Please connect to the web."</span>);
+        }
+      }
+      <span class="keyword">catch</span> (Exception ex) {
+        ex.printStackTrace();
+      }
+    }
+  }
+}
+ 
+</pre>
+
+<p></p><p><b>JDK &lt; 6</b>
+</p><p>Other techniques are needed when using older versions of the JDK.
+Two methods of the <code><a href="https://docs.oracle.com/javase/10/docs/api/java/awt/EventQueue.html">EventQueue</a></code>
+class, <code>invokeLater</code> and <code>invokeAndWait</code>, are provided for
+this purpose (<code><a href="https://docs.oracle.com/javase/10/docs/api/javax/swing/SwingUtilities.html">SwingUtilities</a></code>
+has synonymous methods as well). Sun recommends using <code>invokeLater</code>
+as the usual preferred style.
+
+</p><p>When using threads in this way, it is usually a good idea to use <em>daemon</em> threads,
+not <em>user</em> threads, whenever possible: daemon threads will not prevent an
+application from terminating. Since threads are user threads by default,
+an explicit call to 
+<code>Thread.<a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Thread.html#setDaemon(boolean)">setDaemon</a>(true)</code>
+is required.
+
+</p><p>The remaining examples use JSE 1.5.
+
+</p><p><b>Example 2</b>
+</p><p>The <a href="TopicAction028c.html?Id=149">Splash Screen</a> topic (and in particular
+its <code>Launcher</code> class) is a good example of using a worker thread.
+Here, the status of the launch thread as a worker thread is exploited to
+show a splash screen to the user, but only until the main window has finished
+loading.
+</p><p><b>Example 3</b>
+</p><p>The <code>ColorTip</code> class, shown below, changes the background color
+of a component for a short, fixed interval of time, as a simple way of
+calling attention to that component.
+</p><p>Its worker thread does not work very hard - it sleeps a lot. The calls
+to <code>sleep</code> do not cause the GUI to become unresponsive, however,
+since these calls do not take place in the event dispatch thread.
+</p><p><code>ColorTip</code> has three <code>private</code>, <code>Runnable</code> nested
+classes :
+</p><ul>
+<li>
+<code>Worker</code> - inserts specific time intervals between changing colors</li>
+
+<li>
+<code>ChangeColor</code> - updates the GUI by changing the background color of
+a target component</li>
+
+<li>
+<code>RevertColor</code> - updates the GUI by changing the background color back
+to its original color</li>
+</ul>
+<br><pre>
+<span class="keyword">package</span> hirondelle.stocks.quotes;
+
+<span class="keyword">import</span> hirondelle.stocks.util.Args;
+<span class="keyword">import</span> hirondelle.stocks.util.Consts;
+<span class="keyword">import</span> hirondelle.stocks.util.Util;
+
+<span class="keyword">import</span> java.awt.Color;
+<span class="keyword">import</span> java.awt.EventQueue;
+<span class="keyword">import</span> java.util.logging.Logger;
+
+<span class="keyword">import</span> javax.swing.JComponent;
+
+<span class="comment">/**
+* Calls user's attention to an aspect of the GUI (much like a 
+* &lt;tt&gt;ToolTip&lt;/tt&gt;) by changing the background color of a 
+* component (typically a &lt;tt&gt;JLabel&lt;/tt&gt;) for a few seconds; 
+* the component will always revert to its original background color 
+* after a short time has passed. This is done once, without repeating.
+*
+* &lt;p&gt;Example use case:
+&lt;pre&gt;
+ //no initial delay, and show the new color for 2 seconds only
+ ColorTip tip = new ColorTip(0, 2, someLabel, temporaryColor);
+ tip.start();
+&lt;/pre&gt;
+* 
+* Uses a daemon thread, so this class will not prevent a program from 
+* terminating. Will not lock the GUI.
+*/</span>
+<span class="keyword">final</span> <span class="keyword">class</span> ColorTip {
+  
+  <span class="comment">/**
+  * Constructor. 
+  *  
+  * @param aInitialDelay number of seconds to wait before changing the 
+  * background color of &lt;tt&gt;aComponent&lt;/tt&gt;, and must be in range 0..60 (inclusive).
+  * @param aActivationInterval number of seconds to display &lt;tt&gt;aTempColor&lt;/tt&gt;, 
+  * and must be in range 1..60 (inclusive).
+  * @param aComponent GUI item whose background color will be changed.
+  * @param aTempColor background color which &lt;tt&gt;aComponent&lt;/tt&gt; will take for 
+  * &lt;tt&gt;aActivationInterval&lt;/tt&gt; seconds.
+  */</span>
+  ColorTip (
+    <span class="keyword">int</span> aInitialDelay, <span class="keyword">int</span> aActivationInterval, JComponent aComponent, Color aTempColor
+   ) {
+    Args.checkForRange(aInitialDelay, <span class="literal">0</span>, Consts.SECONDS_PER_MINUTE);
+    Args.checkForRange(aActivationInterval, <span class="literal">1</span>, Consts.SECONDS_PER_MINUTE);
+    Args.checkForNull(aTempColor);
+    fInitialDelay = aInitialDelay;
+    fActivationInterval = aActivationInterval;
+    fComponent = aComponent;
+    fTemporaryColor = aTempColor;
+    fOriginalColor = aComponent.getBackground();
+    fOriginalOpacity = aComponent.isOpaque();
+  }
+
+  <span class="comment">/**
+  * Temporarily change the background color of the component, without interfering with 
+  * the user's control of the gui, and without preventing program termination.
+  *
+  * &lt;P&gt;If the target temporary color is the same as the current background color, then 
+  * do nothing. (This condition occurs when two &lt;tt&gt;ColorTip&lt;/tt&gt; objects are 
+  * altering the same item at nearly the same time, such that they "overlap".)
+  */</span>
+  <span class="keyword">void</span> start(){
+    <span class="keyword">if</span> (isSameColor()) <span class="keyword">return</span>;
+    <span class="comment">/*
+     * The use of a low-level Thread, instead of a more modern class, is unusual here.
+     * It's acceptable since other tools aren't a great match for this task, which is to 
+     * go back and forth TWICE (wait, color-on, wait, color-off) between a worker thread
+     * and the Event Dispatch Thread; that's not a good match for either SwingWorker 
+     * or javax.swing.Timer.
+     */</span>
+    Thread thread = <span class="keyword">new</span> Thread(<span class="keyword">new</span> Worker());
+    thread.setDaemon(<span class="keyword">true</span>);
+    thread.start();
+  }
+  
+  <span class="comment">// PRIVATE 
+</span>  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">int</span> fInitialDelay;
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">int</span> fActivationInterval;
+  <span class="keyword">private</span> <span class="keyword">final</span> JComponent fComponent;
+  <span class="keyword">private</span> <span class="keyword">final</span> Color fTemporaryColor;
+  <span class="keyword">private</span> <span class="keyword">final</span> Color fOriginalColor;
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">int</span> fCONVERSION_FACTOR = Consts.MILLISECONDS_PER_SECOND;
+  
+  <span class="comment">/**
+  * Stores the original value of the opaque property of fComponent.
+  *  
+  * Changes to the background color of a component 
+  * take effect only if the component is in charge of drawing its background.
+  * This is defined by the opaque property, which needs to be true for these
+  * changes to take effect.
+  *
+  * &lt;P&gt;If fComponent is not opaque, then this property is temporarily
+  * changed by this class in order to change the background color.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">boolean</span> fOriginalOpacity;
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Logger fLogger = Util.getLogger(ColorTip.<span class="keyword">class</span>);
+
+  <span class="comment">/**
+  * Return true only if fTemporaryColor is the same as the fOriginalColor. 
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">boolean</span> isSameColor(){
+    <span class="keyword">return</span> fTemporaryColor.equals(fOriginalColor);
+  }
+  
+  <span class="comment">/** 
+   The sleeping done by this class is NOT done on the Event Dispatch Thread; 
+   that would lock the GUI. 
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">class</span> Worker <span class="keyword">implements</span> Runnable {
+    <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> run(){
+      <span class="keyword">try</span> {
+        fLogger.fine(<span class="literal">"Initial Sleeping..."</span>);
+        Thread.sleep(fCONVERSION_FACTOR * fInitialDelay);
+        EventQueue.invokeLater(<span class="keyword">new</span> ChangeColor());
+        fLogger.fine(<span class="literal">"Activation Sleeping..."</span>);
+        Thread.sleep(fCONVERSION_FACTOR * fActivationInterval);
+        EventQueue.invokeLater(<span class="keyword">new</span> RevertColor());
+      }
+      <span class="keyword">catch</span> (InterruptedException ex) {
+        fLogger.severe(<span class="literal">"Cannot sleep."</span>);
+      }
+      fLogger.fine(<span class="literal">"Color worker done."</span>);
+    }
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">class</span> ChangeColor <span class="keyword">implements</span> Runnable {
+    <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> run(){
+      <span class="keyword">if</span> (! fOriginalOpacity) {
+        fComponent.setOpaque(<span class="keyword">true</span>);
+      }
+      fComponent.setBackground(fTemporaryColor);
+    }
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">class</span> RevertColor <span class="keyword">implements</span> Runnable {
+    <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> run(){
+      fComponent.setBackground(fOriginalColor);
+      fComponent.setOpaque(fOriginalOpacity);
+    }
+  }
+}
+ 
+</pre>
+
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction028c.html?Id=149">Splash screen</a> <br>
+  <a href="TopicAction6407.html?Id=160">Timers</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=153 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:40 GMT -->
+</html>

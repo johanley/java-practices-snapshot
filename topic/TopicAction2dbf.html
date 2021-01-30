@@ -1,0 +1,119 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=184 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="database,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Simplify database operations</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Simplify database operations</div>
+
+<br>
+Since fetch and edit operations are such common tasks in many applications, it's beneficial if  
+these tasks can be made as simple and compact as possible. 
+Even when using tools on top of JDBC, there are very often ways of simplifying code and removing repetition.
+
+<p>If you find that your data access code is becoming repetitive, look for ways to remove the 
+repetition - utility classes, <a href="TopicActione01b.html?Id=164">template methods</a>, and so on.
+
+</p><p><b>Example</b>
+
+</p><p>The <code><a href="http://www.web4j.com/fish/javadoc/hirondelle/fish/main/member/MemberDAO.html">MemberDAO</a></code> 
+class is taken from one of the <a href="TopicAction5f31.html?Id=188">WEB4J</a> example applications. 
+This example is already quite compact. The methods are short, and read at a high level.
+If you look closely, however, you can see that one item is still repeated.
+Can you spot it? It's rather subtle. (See answer below.)
+<br></p><pre>
+<span class="comment">/** Data Access Object (DAO) for {@link Member} objects. */</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> MemberDAO {
+  
+  <span class="comment">//elided...
+</span>
+  List&lt;Member&gt; list() <span class="keyword">throws</span> DAOException {
+    <span class="keyword">return</span> Db.list(Member.<span class="keyword">class</span>, MEMBER_LIST);
+  }
+   
+  <span class="keyword">public</span> Member fetch(Id aMemberId) <span class="keyword">throws</span> DAOException {
+    <span class="keyword">return</span> Db.fetch(Member.<span class="keyword">class</span>, MEMBER_FETCH, aMemberId);
+  }
+   
+  Id add(Member aMember) <span class="keyword">throws</span> DAOException, DuplicateException {
+    <span class="keyword">return</span> Db.add(MEMBER_ADD, baseParamsFrom(aMember));
+  }
+   
+  <span class="keyword">boolean</span> change(Member aMember) <span class="keyword">throws</span> DAOException, DuplicateException {
+    Object[] params = Db.addIdTo(baseParamsFrom(aMember), aMember.getId());
+    <span class="keyword">return</span> Util.isSuccess(Db.edit(MEMBER_CHANGE, params));
+  }
+  
+  <span class="keyword">int</span> delete(Id aMemberId) <span class="keyword">throws</span> DAOException {
+     <span class="keyword">return</span> Db.delete(MEMBER_DELETE, aMemberId);
+  }
+   
+  <span class="comment">// PRIVATE 
+</span>  
+  <span class="keyword">private</span> Object[] baseParamsFrom(Member aMember){
+    <span class="keyword">return</span> <span class="keyword">new</span> Object[]{
+      aMember.getName(), aMember.getIsActive(), aMember.getDisposition().getId()
+    };
+  }
+}
+ 
+</pre>
+
+The answer is that the <code>list</code> and <code>fetch</code> methods repeat the same piece of data - the 
+class literal <code>Member.class</code>. Like any repeated literal, it should likely 
+be placed in a <code>private static final</code> field. Since that would be a common occurence, 
+it would likely be beneficial to make a habit of doing so, and of giving a conventional name to 
+the field as well, such as <code>MODEL_CLASS</code>.
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction0d22.html?Id=76">Reduce database code duplication</a> <br>
+  <a href="TopicActione914.html?Id=105">Keep SQL out of code</a> <br>
+  <a href="TopicAction1a25.html?Id=124">Consider data layer tools</a> <br>
+  <a href="TopicActionf9c8.html?Id=183">Encapsulate connections</a> <br>
+  <a href="TopicAction5f31.html?Id=188">A Web App Framework   WEB4J</a> <br>
+  <a href="TopicAction3b51.html?Id=189">Use template for transactions</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=184 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+</html>

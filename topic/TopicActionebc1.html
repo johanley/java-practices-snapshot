@@ -1,0 +1,245 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=60 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="javadoc,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Use javadoc liberally</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Use javadoc liberally</div>
+
+<br><a href="http://docs.oracle.com/javase/8/docs/technotes/guides/javadoc/index.html">Javadoc</a> is
+a great tool, and should be used with feelings of unbridled joy ;).
+
+<p><span class="highlight">A method header combined with its associated javadoc form the specification,
+or <a href="TopicAction63b6.html?Id=194">contract</a>, of a method.</span> If the caller fulfills the stated requirements,
+then the method undertakes to fulfill its stated promises.
+
+</p><p>Using Javadoc acknowledges that there are <em>two</em> distinct questions a reader can ask about 
+code:
+</p><ul>
+<li><em>what is this supposed to do?</em> (answered only by the javadoc and method header)
+</li><li><em>how does it try to do it?</em> (answered only by the implementation)
+</li></ul>
+
+<p>If javadoc is written correctly, then:
+</p><ul>
+<li>one can understand exactly what services are offered by a method ("<em>what
+is this supposed this do?</em>"), without having to look at its implementation
+("<em>how does it try to do it?</em>"). Reading an implementation usually takes a lot 
+more effort than reading javdoc.</li>
+<li>the implementation can be checked for correctness versus the specification. That is, some bugs 
+can be found just by <em>reading</em> the code, as opposed to <em>executing</em> it.</li>
+</ul>
+Oracle has published this 
+<a href="http://www.oracle.com/technetwork/java/javase/documentation/index-137868.html">style guide</a> 
+for writing javadoc comments.
+
+<p>Note that:
+</p><ul>
+<li>if you wish to provide high level descriptions, then you may use the file
+names <code>overview.html</code> (a conventional name) and <code><a href="http://docs.oracle.com/javase/8/docs/technotes/tools/windows/javadoc.html#packagecomment">package-info.java</a></code>
+to do so (see below).</li>
+<li>javadoc is "inherited" - javadoc written for an interface method or an abstract
+method is automatically associated with corresponding concrete implementations</li>
+<li>it's a common error to put the class level javadoc comment at the very
+start of a source file, before the <code>import</code> statements. This is
+an error, since it must appear just above the class header.</li>
+</ul>
+
+
+Javadoc 1.4 has added many features, including:
+<ul>
+<li>
+the <code>-tag</code> option allows user-defined custom tags. This feature
+can be used to implement common items such as <code>@to.do</code>, <code>@is.Mutable</code>,
+or <code>@no.Nulls</code>. (Oracle recommends placing a period somewhere
+in the custom tag, to avoid potential future conflicts with tags defined
+by Oracle.)</li>
+
+<li>
+the <code>-linksource</code> option generates an HTML version of your source
+code, and links the javadoc to the source. (The source is presented without
+any syntax highlighting, but this remains a very nice feature.)</li>
+
+<li>
+there is finer-grained control over how javadoc is inherited. The <code>{@inheritDoc}</code>
+tag is useful here (warning: this is broken in JDK 1.4.0)</li>
+</ul>
+<a href="http://docs.oracle.com/javase/1.5.0/docs/guide/javadoc/whatsnew-1.5.0.html">Javadoc
+1.5</a> has these notable additions :
+<ul>
+<li>
+support for new language features, such as generics and annotations</li>
+
+<li>
+the @literal and @code tags for ensuring text is not treated as markup</li>
+</ul>
+
+<p><b>Example</b>:
+<br></p><pre>
+<span class="comment">/*
+* This comment is NOT a class level javadoc comment.
+* Such comments appear just above the class declaration, not at the 
+* start of the file. 
+*/</span>
+
+<span class="keyword">import</span> java.math.BigDecimal;
+
+<span class="comment">/**
+* Guitar Model Object.
+* 
+* &lt;P&gt;Various attributes of guitars, and related behaviour.
+*  
+* &lt;P&gt;Note that {@link BigDecimal} is used to model the price - not double or float. 
+* See {@link #Guitar(String, BigDecimal, Integer)} for more information.
+*  
+* @author Les Paul
+* @version 2.0
+*/</span>
+<span class="keyword">final</span> <span class="keyword">class</span> Guitar {
+  
+  <span class="comment">/**
+  * Constructor.
+  * 
+  * @param name (required) brand name of the guitar. Must have content. Length 
+  * must be in range &lt;code&gt;1..50&lt;/code&gt;. 
+  * @param price (optional) purchase price of the guitar.
+  * @param numStrings (required) number of strings on the guitar. Can take 
+  * values 6 or 12.
+  */</span>
+  Guitar(String name, BigDecimal price, Integer numStrings){
+    <span class="comment">//...elided
+</span>  }
+
+  <span class="comment">//There is a one-line form of javadoc comment, useful for shorter text :
+</span>  
+  <span class="comment">/** Return name passed to the constructor.  */</span>
+  String getName(){
+    <span class="keyword">return</span> <span class="keyword">null</span>;
+  }
+  
+  <span class="comment">/** Return price passed to the constructor.   */</span>
+  BigDecimal getPrice(){
+    <span class="keyword">return</span> <span class="keyword">null</span>;
+  }
+  
+  <span class="comment">/** Value - {@value}, key for storing the current guitar of interest in the session.*/</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String KEY = <span class="literal">"guitar"</span>;
+  
+  <span class="comment">/** 
+  * Play the guitar.
+  * 
+  * This method makes no guarantees as to how &lt;em&gt;well&lt;/em&gt; the song is played.
+  * @param songTitle must have content, and must have trimmed length greater than 2.
+  */</span>
+  <span class="keyword">void</span> play(String songTitle){
+    <span class="comment">//..elided
+</span>  }
+  
+  <span class="comment">/**
+  * Apply standard tuning to the guitar.
+  * 
+  * @return &lt;code&gt;true&lt;/code&gt; only if the guitar has been properly tuned.
+  */</span>
+  <span class="keyword">boolean</span> tune(){
+    <span class="keyword">return</span> <span class="keyword">true</span>;
+  }
+
+  <span class="comment">/**
+  * Destroy the guitar while on stage.
+  * 
+  * Not good for the environment.
+  */</span>
+  <span class="keyword">@Deprecated</span>
+  <span class="keyword">void</span> lightOnFireAndSmashLikeAWildman(){
+    <span class="comment">//..elided
+</span>  }
+  
+  <span class="comment">//...other methods elided
+</span>}
+ 
+</pre>
+
+
+<b>Prefer <code>package-info.java</code> to <code>package.html</code></b>
+<p></p><p>Originally, an HTML file named <code>package.html</code> was used to specify <a href="http://docs.oracle.com/javase/8/docs/technotes/tools/windows/javadoc.html#packagecomment">package level comments</a>.
+That style is still available, but it's likely better to use 
+<a href="http://docs.oracle.com/javase/specs/jls/se7/html/jls-7.html#jls-7.4.1"><code>package-info.java</code></a> 
+instead:
+</p><ul>
+ <li>it's shorter, since no boilerplate HTML is needed
+ </li><li>the leading '*' on each line can be discarded, making it easy to paste in existing HTML
+ </li><li><code>package-info.java</code> is the only place to <em>annotate</em> a package, if needed
+</li></ul>
+
+The <code>package-info.java</code> file is unusual since it doesn't contain a class. 
+Indeed, the name <code>package-info</code> is not a valid class name. 
+Here is a simple example of its contents: 
+
+<pre>/** Edit the roles attached to a user. */
+package hirondelle.fish.access.role;</pre>
+
+Here is an example including an annotation for the package: 
+<pre>/** Edit the settings attached to a user. */
+@Unpublished
+package hirondelle.fish.access.user;</pre>
+
+Here is a final example without the leading '*' on every line: 
+<pre>/**
+Maintain a list of Members in the Fish and Chips Club.
+An Active Member will be part of the RSVP list. When a Member 
+is inactive, they will not appear on the RSVP listing.
+@author B. P. Hennessey
+@version 1.0
+*/
+package hirondelle.fish.main.member;</pre>
+
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction234f.html?Id=48">Document thread safety</a> <br>
+  <a href="TopicAction59d6.html?Id=74">Construct classes from the outside in</a> <br>
+  <a href="TopicAction63b6.html?Id=194">Design by Contract</a> <br>
+  <a href="TopicAction56bf.html?Id=227">Avoid basic style errors</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=60 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

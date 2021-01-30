@@ -1,0 +1,63 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/util/ui/UiConsts.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:38 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+UiConsts.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.stocks.util.ui;<a name=line.1></a>
+<a name=line.2></a>
+<span class='comment'>/**<a name=line.3></a>
+* Collected constants related to the user interface.<a name=line.4></a>
+*<a name=line.5></a>
+* &lt;P&gt;All constants must be immutable.<a name=line.6></a>
+* No instances of this class can be constructed.<a name=line.7></a>
+*<a name=line.8></a>
+* &lt;P&gt;The Java Look and Feel Design Guidelines recommend that components be <a name=line.9></a>
+* spaced using this scheme :<a name=line.10></a>
+*&lt;ul&gt;<a name=line.11></a>
+* &lt;li&gt;place &lt;tt&gt;6*N&lt;/tt&gt; pixels between items <a name=line.12></a>
+* &lt;li&gt;but, place &lt;tt&gt;6*N-1&lt;/tt&gt; pixels between items if there is one <a name=line.13></a>
+* white border present<a name=line.14></a>
+*&lt;/ul&gt;<a name=line.15></a>
+*<a name=line.16></a>
+* The &lt;tt&gt;XXX_SPACE(S)&lt;/tt&gt; and {@link #STANDARD_BORDER} items follow the second scheme, <a name=line.17></a>
+* and use &lt;tt&gt;6*N-1&lt;/tt&gt; pixel spacings (since this is the more common case). <a name=line.18></a>
+*/</span><a name=line.19></a>
+<span class='keyword'>public</span> <span class='keyword'>final</span> <span class='keyword'>class</span> UiConsts  {<a name=line.20></a>
+<a name=line.21></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> <span class='keyword'>int</span> ONE_SPACE = <span class='literal'>5</span>;<a name=line.22></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> <span class='keyword'>int</span> TWO_SPACES = <span class='literal'>11</span>;<a name=line.23></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> <span class='keyword'>int</span> THREE_SPACES = <span class='literal'>17</span>;<a name=line.24></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> <span class='keyword'>int</span> STANDARD_BORDER = TWO_SPACES; <a name=line.25></a>
+<a name=line.26></a>
+  <span class='comment'>/** Symbolic name for absence of keystroke mask.  */</span><a name=line.27></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> <span class='keyword'>int</span> NO_KEYSTROKE_MASK = <span class='literal'>0</span>;<a name=line.28></a>
+  <a name=line.29></a>
+  <span class='comment'>/** Suggested width for a &lt;tt&gt;JTextField&lt;/tt&gt;  */</span><a name=line.30></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> <span class='keyword'>int</span> SIMPLE_FIELD_WIDTH = <span class='literal'>20</span>;<a name=line.31></a>
+ <a name=line.32></a>
+  <span class='comment'>//star * character for password fields<a name=line.33></a>
+</span>  <span class='comment'>//passwordField.setEchoChar('•');<a name=line.34></a>
+</span>  <a name=line.35></a>
+  <span class='comment'>/**<a name=line.36></a>
+  * Maximum length for some &lt;tt&gt;JLabel&lt;/tt&gt;s, beyond which the <a name=line.37></a>
+  * text will be truncated. See {@link UiUtil#addSimpleDisplayField}.<a name=line.38></a>
+  */</span><a name=line.39></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> <span class='keyword'>int</span> MAX_LABEL_LENGTH = <span class='literal'>35</span>;<a name=line.40></a>
+  <a name=line.41></a>
+  <span class='comment'>// PRIVATE<a name=line.42></a>
+</span>  <a name=line.43></a>
+  <span class='comment'>/** Prevent object construction.  */</span><a name=line.44></a>
+  <span class='keyword'>private</span> UiConsts(){<a name=line.45></a>
+    <span class='keyword'>throw</span> <span class='keyword'>new</span> AssertionError();<a name=line.46></a>
+  }<a name=line.47></a>
+} <a name=line.48></a>
+</PRE><a name=line.49></a>
+ </BODY><a name=line.50></a>
+<HTML><a name=line.51></a>

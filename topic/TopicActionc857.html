@@ -1,0 +1,143 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=41 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="library,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Know the core libraries</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Know the core libraries</div>
+
+<br>Java differs from most other languages in that the number of classes and
+interfaces in its standard libraries is very large. Many common tasks have
+already been implemented by these libraries. 
+
+<p>Advice to beginners might include:
+</p><ul>
+<li>don't be too intimidated by the large number of classes.
+Some are used often, but most are used relatively rarely.
+</li><li>the most widely used packages are 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/package-summary.html">java.lang</a></code> and 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/package-summary.html">java.util</a></code>.
+</li><li>for working with data, see 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/sql/package-summary.html">java.sql</a></code>,
+<code><a href="https://docs.oracle.com/javase/10/docs/api/javax/sql/package-summary.html">javax.sql</a></code>,
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/io/package-summary.html">java.io</a></code>,
+and
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/nio/file/package-summary.html">java.nio.file</a></code>. 
+
+</li><li>for graphical applications, see the Swing classes 
+(<a href="https://docs.oracle.com/javase/10/docs/api/javax/swing/package-summary.html">javax.swing</a>, and so on). 
+</li><li>for server applications, see the 
+<a href="http://www.oracle.com/technetwork/java/index-jsp-135475.html">servlet</a> and 
+Java Server Page APIs.
+</li><li>for other packages, you should skim through their documentation just to get an 
+idea of what is available. Later, when a specific need arises, you will often know 
+which packages might be helpful.
+</li></ul>
+
+<p>As well, the standard JDK libraries:
+</p><ul>
+<li>are generally of high quality</li>
+
+<li>
+often improve their performance over time</li>
+
+<li>
+are widely used, and usually form <em>defacto</em> standards</li>
+</ul>
+Implementing something which already exists in the libraries is probably
+wasted effort.
+<p>Significant changes and additions to the standard libraries occur in
+each major release, and it pays to <a href="TopicActionaa3f.html?Id=225">keep current</a>. 
+
+
+</p><p>The Java 8 release <a href="http://www.oracle.com/technetwork/java/javase/8-whats-new-2157071.html">includes</a>:
+</p><ul>
+ <li>java.time
+ </li><li>interfaces with static helper methods, and default methods
+ </li><li>functional interfaces (interfaces with a single method)
+ </li><li>lambda expressions
+ </li><li>method references
+ </li><li>for collections: streams, pipelines and aggregate operations
+</li></ul>
+
+<p>The Java 7 release <a href="http://www.oracle.com/technetwork/java/javase/jdk7-relnotes-418459.html">includes</a>:
+</p><ul>
+ <li>type inference
+ </li><li>try-with-resources
+ </li><li>java.nio.file - new ways to interact with the file system
+ </li><li>multi-catch - catching multiple exceptions at once
+ </li><li>JavaFX
+ </li><li>binary literals
+</li></ul>
+
+The Java 6 release <a href="http://www.oracle.com/technetwork/java/javase/features-141434.html">includes</a>:
+<ul>
+ <li>scripting
+ </li><li>the JConsole monitoring tool
+ </li><li>various Swing improvements
+</li></ul>
+
+The Java 5 release <a href="http://docs.oracle.com/javase/1.5.0/docs/relnotes/features.html">includes</a>:
+<ul> 
+ <li>generics 
+ </li><li>an enhanced for loop
+ </li><li>enums
+ </li><li>autoboxing
+ </li><li>and annotations
+</li></ul>
+
+<p>The Java 1.4 release <a href="http://docs.oracle.com/javase/1.4.2/docs/relnotes/features.html">includes</a>:
+</p><ul> 
+ <li>regular expressions 
+ </li><li>assertions 
+ </li><li>logging services
+</li></ul>
+
+
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActionaa3f.html?Id=225">Modernize old code</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=41 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

@@ -1,0 +1,123 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/util/Util.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:38 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+Util.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.stocks.util;<a name=line.1></a>
+<a name=line.2></a>
+<span class='keyword'>import</span> java.util.*;<a name=line.3></a>
+<span class='keyword'>import</span> java.util.logging.Logger;<a name=line.4></a>
+<span class='keyword'>import</span> java.math.BigDecimal;<a name=line.5></a>
+<a name=line.6></a>
+<span class='comment'>/**<a name=line.7></a>
+* Static convenience methods for common tasks, which eliminate code duplication.<a name=line.8></a>
+*/</span><a name=line.9></a>
+<span class='keyword'>public</span> <span class='keyword'>final</span> <span class='keyword'>class</span> Util {<a name=line.10></a>
+<a name=line.11></a>
+   <span class='comment'>/**<a name=line.12></a>
+   * Return &lt;tt&gt;true&lt;/tt&gt; only if &lt;tt&gt;aText&lt;/tt&gt; is not null,<a name=line.13></a>
+   * and is not empty after trimming. (Trimming removes both<a name=line.14></a>
+   * leading/trailing whitespace and ASCII control characters.)<a name=line.15></a>
+   *<a name=line.16></a>
+   * &lt;P&gt; For checking argument validity, {@link Args#checkForContent} should <a name=line.17></a>
+   * be used instead of this method.<a name=line.18></a>
+   *<a name=line.19></a>
+   * @param aText possibly-null.<a name=line.20></a>
+   */</span><a name=line.21></a>
+   <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>boolean</span> textHasContent(String aText) {<a name=line.22></a>
+     <span class='keyword'>return</span> (aText != <span class='keyword'>null</span>) &amp;&amp; (aText.trim().length() &gt; <span class='literal'>0</span>);<a name=line.23></a>
+   }<a name=line.24></a>
+<a name=line.25></a>
+  <span class='comment'>/**<a name=line.26></a>
+  * Return &lt;tt&gt;true&lt;/tt&gt; only if &lt;tt&gt;aNumber&lt;/tt&gt; is in the range <a name=line.27></a>
+  * &lt;tt&gt;aLow..aHigh&lt;/tt&gt; (inclusive).<a name=line.28></a>
+  *<a name=line.29></a>
+  * &lt;P&gt; For checking argument validity, {@link Args#checkForRange} should <a name=line.30></a>
+  * be used instead of this method.<a name=line.31></a>
+  *<a name=line.32></a>
+  * @param aLow less than or equal to &lt;tt&gt;aHigh&lt;/tt&gt;.<a name=line.33></a>
+  */</span><a name=line.34></a>
+  <span class='keyword'>static</span> <span class='keyword'>public</span> <span class='keyword'>boolean</span> isInRange(<span class='keyword'>int</span> aNumber, <span class='keyword'>int</span> aLow, <span class='keyword'>int</span> aHigh){<a name=line.35></a>
+    <span class='keyword'>if</span> (aLow &gt; aHigh) {<a name=line.36></a>
+      <span class='keyword'>throw</span> <span class='keyword'>new</span> IllegalArgumentException(<span class='literal'>"Low is greater than High."</span>);<a name=line.37></a>
+    }<a name=line.38></a>
+    <span class='keyword'>return</span> (aLow <= aNumber &amp;&amp; aNumber <= aHigh);<a name=line.39></a>
+  }<a name=line.40></a>
+<a name=line.41></a>
+  <span class='comment'>/**<a name=line.42></a>
+  * Return &lt;tt&gt;true&lt;/tt&gt; if &lt;tt&gt;aBoolean&lt;/tt&gt; equals "true" (ignore case), or <a name=line.43></a>
+  * &lt;tt&gt;false&lt;/tt&gt; if &lt;tt&gt;aBoolean&lt;/tt&gt; equals "false" (ignore case).<a name=line.44></a>
+  *<a name=line.45></a>
+  *&lt;P&gt;Note that this behavior is different from that of &lt;tt&gt;Boolean.getValue&lt;/tt&gt;.<a name=line.46></a>
+  *<a name=line.47></a>
+  * @param aBoolean equals "true" or "false" (not case-sensitive).<a name=line.48></a>
+  */</span><a name=line.49></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> Boolean parseBoolean(String aBoolean){<a name=line.50></a>
+    <span class='keyword'>if</span> ( aBoolean.equalsIgnoreCase(<span class='literal'>"true"</span>) ) {<a name=line.51></a>
+      <span class='keyword'>return</span> Boolean.TRUE;<a name=line.52></a>
+    }<a name=line.53></a>
+    <span class='keyword'>else</span> <span class='keyword'>if</span> ( aBoolean.equalsIgnoreCase(<span class='literal'>"false"</span>) ) {<a name=line.54></a>
+      <span class='keyword'>return</span> Boolean.FALSE;<a name=line.55></a>
+    }<a name=line.56></a>
+    <span class='keyword'>else</span> {<a name=line.57></a>
+      <span class='keyword'>throw</span> <span class='keyword'>new</span> IllegalArgumentException(<span class='literal'>"Cannot parse into Boolean: "</span> + aBoolean);<a name=line.58></a>
+    }<a name=line.59></a>
+  }<a name=line.60></a>
+  <a name=line.61></a>
+  <span class='comment'>/**<a name=line.62></a>
+  * Convert a &lt;tt&gt;Collection&lt;/tt&gt; represented in the form <a name=line.63></a>
+  * of &lt;tt&gt;AbstractCollection.toString&lt;/tt&gt; into a &lt;tt&gt;List&lt;/tt&gt; of <a name=line.64></a>
+  * &lt;tt&gt;String&lt;/tt&gt; objects.<a name=line.65></a>
+  * <a name=line.66></a>
+  * &lt;P&gt;Intended for use as an aid in parsing collections of objects which <a name=line.67></a>
+  * were stored in their &lt;tt&gt;toString&lt;/tt&gt; form. <a name=line.68></a>
+  * This method will not parse such &lt;tt&gt;String&lt;/tt&gt;s into the original objects, <a name=line.69></a>
+  * but will aid in doing so by tokenizing it into its parts. <a name=line.70></a>
+  *<a name=line.71></a>
+  * @param aText has format of &lt;tt&gt;AbstractCollection.toString&lt;/tt&gt;<a name=line.72></a>
+  * @return &lt;tt&gt;String&lt;/tt&gt; objects.<a name=line.73></a>
+  */</span><a name=line.74></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> List&lt;String&gt; getListFromString(String aText){<a name=line.75></a>
+    <span class='keyword'>if</span> ( aText == <span class='keyword'>null</span>) <span class='keyword'>throw</span> <span class='keyword'>new</span> IllegalArgumentException(<span class='literal'>"Text must not be null."</span>);<a name=line.76></a>
+    List&lt;String&gt; result = <span class='keyword'>new</span> ArrayList&lt;&gt;();<a name=line.77></a>
+    StringTokenizer parser = <span class='keyword'>new</span> StringTokenizer( aText, <span class='literal'>"[,] "</span> );<a name=line.78></a>
+    <span class='keyword'>while</span> ( parser.hasMoreTokens() ) {<a name=line.79></a>
+      result.add( parser.nextToken() );<a name=line.80></a>
+    }<a name=line.81></a>
+    <span class='keyword'>return</span> result;<a name=line.82></a>
+  }<a name=line.83></a>
+<a name=line.84></a>
+  <span class='comment'>/**<a name=line.85></a>
+  * Return &lt;tt&gt;true&lt;/tt&gt; only if &lt;tt&gt;aMoney&lt;/tt&gt; equals <a name=line.86></a>
+  * {@link Consts#ZERO_MONEY} or {@link Consts#ZERO_MONEY_WITH_DECIMAL}.<a name=line.87></a>
+  */</span><a name=line.88></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>boolean</span> isZeroMoney(BigDecimal aMoney){<a name=line.89></a>
+    <span class='keyword'>return</span> <a name=line.90></a>
+      aMoney.equals(Consts.ZERO_MONEY) || <a name=line.91></a>
+      aMoney.equals(Consts.ZERO_MONEY_WITH_DECIMAL)<a name=line.92></a>
+    ;<a name=line.93></a>
+  }<a name=line.94></a>
+  <a name=line.95></a>
+  <span class='comment'>/**<a name=line.96></a>
+  * Return a {@link Logger} whose name follows a specific naming convention.<a name=line.97></a>
+  *<a name=line.98></a>
+  * &lt;P&gt;The conventional logger names are taken as   <a name=line.99></a>
+  * &lt;tt&gt;aClass.getPackage().getName()&lt;/tt&gt;.<a name=line.100></a>
+  * <a name=line.101></a>
+  * &lt;P&gt;Logger names appearing in the &lt;tt&gt;logging.properties&lt;/tt&gt; config file<a name=line.102></a>
+  * must match the names returned by this method.<a name=line.103></a>
+  */</span><a name=line.104></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> Logger getLogger(Class&lt;?&gt; aClass){<a name=line.105></a>
+     <span class='keyword'>return</span> Logger.getLogger(aClass.getPackage().getName());  <a name=line.106></a>
+   }<a name=line.107></a>
+} <a name=line.108></a>
+</PRE><a name=line.109></a>
+ </BODY><a name=line.110></a>
+<HTML><a name=line.111></a>

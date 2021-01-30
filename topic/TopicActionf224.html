@@ -1,0 +1,93 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=266 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="cache,cascading style sheet,css,javascript,js,refresh,version,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Version links to CSS and JS</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Version links to CSS and JS</div>
+
+<br>
+Most web apps use cascading style sheets (.css files) and javascript (.js files).
+There's a pitfall regarding such files that occurs when you update your app.
+
+<p>Most browsers will cache .css/.js files.
+When you update your app, the browser will likely use the old, cached versions of these files, and not the new ones.
+That's usually not desirable, since you usually have updates that you need your users to see.
+If you do nothing, then, in the new world, users will see a mix of new web pages with old css/js.
+That's bad.
+
+</p><p>As a programmer, you know that you can hit Control + F5 (or similar) to refresh everything, and the app will look fine. 
+But that's dangerous, because now you see one thing, but most of your users will still see broken pages.
+You never want to force your users to hit Control + F5.
+
+
+</p><p>Here's a simple way of getting around this problem.
+Just append a version parameter to each link to a css/js file:
+</p><pre>&lt;link rel="stylesheet" href="../css/styles.css<b>?ver=27</b>" media="all"&gt;</pre>
+
+Every time you release a new version of your app, you increment the value of this version parameter.
+<em>The version parameter has no other role than to make the URL different between different releases.</em>
+This will force the browser to fetch the newest version of the css/js file when a release is made, and avoid the browser cache.
+
+<p>Of course, you need to define the value of this version parameter in one place.
+A natural home for it is <code>web.xml</code>:
+</p><pre>
+  &lt;context-param&gt;
+   &lt;param-name&gt;ver&lt;/param-name&gt;
+   &lt;param-value&gt;27&lt;/param-value&gt;
+  &lt;/context-param&gt;
+</pre>
+
+<p>You reference such data in a JSP like so:
+
+</p><pre>&lt;link rel="stylesheet" href="../css/styles.css<b>?ver=${initParam.ver}</b>" media="all"&gt;</pre>
+
+<p>You may want to centralize this policy in a .tag file:
+</p><pre>&lt;link rel="stylesheet" href="../css/styles.css&lt;tags:ver/&gt;" media="all"&gt;</pre>
+
+ver.tag:
+<pre>&lt;%@ include file="/WEB-INF/TagHeader.jspf" %&gt;&lt;%@ tag pageEncoding="UTF-8" trimDirectiveWhitespaces="true" %&gt;?ver=${initParam.ver}</pre>
+<p></p>
+
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=266 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+</html>

@@ -1,0 +1,199 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=217 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Beware of common hacks</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Beware of common hacks</div>
+
+<br>
+<h3>SQL Injection Attacks</h3>
+<a href="http://www.owasp.org/index.php/SQL_Injection">SQL Injection attacks</a> use crafted, unusual user input to cause undesired SQL statements to be executed.
+An application is vulnerable to such attacks whenever it builds SQL statements directly out of raw user input.
+If an application builds SQL statements out of user input by using <code>PreparedStatement</code> <a href="TopicActiona657.html?Id=212"><i>correctly</i></a>, then it will be protected from SQL injection attacks.
+If, on the other hand, it uses <code>Statement</code> to dynamically build SQL, or uses <code>PreparedStatement</code> <i>incorrectly</i> then it will <em>not</em> be protected from such attacks.
+
+<h3>Cross-Site Scripting (XSS) Attacks</h3>
+HTML allows for scripting. 
+Scripting needs some extra care, since it allows all kinds of code to execute on the client, where it has access to the user's private environment. 
+<span class="highlight">If you do not exercise care, it is <em>very easy</em> to create web applications that allow users to enter malicious scripts as regular data, 
+into forms or URLs.</span> 
+When such malicious input is later fetched from the database and rendered in a view, it becomes available for execution by the browser. 
+
+<p>Note that such scripts will execute in <em>any</em> browser that renders the data, not just for the browser of the hacker who happened to enter the script. 
+When the malicious script is executing in an innocent victim's browser, it gets access to sensitive information, and sends it back to the hacker.
+This is called a <a href="http://www.owasp.org/index.php/Cross_Site_Scripting">Cross-Site Scripting</a> (XSS) attack.
+
+</p><p>To prevent XSS attacks, ask yourself two questions: 
+</p><ul>
+<li>can this form control accept a script as input?
+</li><li>if so, how will the script be disabled when the user input is ultimately rendered in a page?
+</li></ul>
+
+Let's take this mock form as an example (<code>POST</code>ing this form does nothing):
+
+<p></p><form method="GET" action="http://www.javapractices.com/topic/Topic217.cjp">
+ <table border="1" cellpadding="3" cellspacing="0" align="center">
+  <tbody><tr>
+   <td>Movie Title :</td> 
+   <td><input type="text" name="Title"></td>
+  </tr>
+  <tr>
+   <td>Movie Decade :</td>  
+   <td> 
+    <select>
+     <option>2000</option>
+     <option>1990</option>
+     <option>1980</option>
+     <option>1970</option>
+     <option>1960</option>
+     <option>1950</option>
+     <option>1940</option>
+     <option>1930</option>
+     <option>1920</option>
+    </select>
+   </td>
+  </tr>
+  <tr>
+   <td colspan="2"><input type="submit" value="Submit"></td>
+  </tr>
+  <tr>
+ </tr></tbody></table>
+</form>
+<p></p>
+
+<p>
+When the user POSTs this form, the data should always be validated as strongly as possible by the server. 
+For instance, the <code>Movie Decade</code> should be checked against a fixed set of values, to ensure that form has not been altered by a malicious user.
+If the <code>Movie Decade</code> is indeed checked in such a manner, then it's not possible for the user to enter an arbitrary script as a value for the decade.
+<em>If such strong checks are performed</em>, then no special precautions against XSS attacks are needed.
+
+</p><p>The <code>Movie Title</code> is a different story, however. 
+Since it's free-form user input, it's not possible to tightly constrain the <code>Movie Title</code>.  
+The server cannot perform tight validation checks on its content, since there is no 'whitelist' of allowed values.
+
+</p><p>In this case, the user may indeed enter a script. 
+<span class="highlight">To prevent the script from being activated when rendered in a page as regular data, special care must be taken: any special characters in free-form user input must be escaped.</span> 
+The Open Web App Security Project recommends that you escape these 12 characters :
+
+</p><p></p><table border="1" cellpadding="3" cellspacing="0" align="center">
+ <tbody><tr><th> Character </th><th> Encoding </th></tr>
+ <tr><td> &lt; </td><td> &amp;lt; </td></tr>
+
+ <tr><td> &gt; </td><td> &amp;gt; </td></tr>
+ <tr><td> &amp; </td><td> &amp;amp; </td></tr>
+ <tr><td> " </td><td> &amp;quot;</td></tr>
+
+ <tr><td> ' </td><td> &amp;#039;</td></tr>
+ <tr><td> ( </td><td> &amp;#040;</td></tr> 
+ <tr><td> ) </td><td> &amp;#041;</td></tr>
+
+ <tr><td> # </td><td> &amp;#035;</td></tr>
+ <tr><td> % </td><td> &amp;#037;</td></tr>
+ <tr><td> ; </td><td> &amp;#059;</td></tr>
+
+ <tr><td> + </td><td> &amp;#043; </td></tr>
+ <tr><td> - </td><td> &amp;#045; </td></tr>
+</tbody></table>
+<p></p>
+
+<p>The escaping can be performed in various places : 
+</p><ul>
+<li>in the view, when the data is ultimately rendered
+</li><li>in the Model Object
+</li><li>in the database
+</li></ul>
+
+<p>The <a href="http://www.web4j.com/UserGuide.jsp#XSS">WEB4J</a> tool, for example, recommends performing the escaping in the Model Object, by using its 
+<code>SafeText</code> class to model free-form user input instead of <code>String</code>. 
+
+</p><p>In any case, remember that data <a href="TopicAction2c82.html?Id=201">should not be escaped more than once</a>.
+
+</p><p>Note as well that JSTL's <code>&lt;c:out&gt;</code> tag performs escaping only for <em>XML</em> (5 characters), and not for <em>HTML</em> (12 characters).
+In addition, note that the JSP Expression Language performs no escaping at all.
+
+
+</p><h3>Cross-Site Request Forgery (CSRF) Attacks</h3>
+The fundamental idea in a <a href="http://www.owasp.org/index.php/Cross-Site_Request_Forgery">Cross-Site Request Forgery</a> (CSRF) attack is that of hijacking a victim's session to perform a malicious task.
+Since the session becomes available to the hacker, the hacker can perform tasks that would otherwise not be possible.
+
+<p>For example, consider a simple logging-off operation. 
+On many sites, logging off is implemented with a simple <em>link</em> (<code>GET</code>), and not a <code>POSTed form</code>. 
+A hacker can log you off such a site <em>simply by sending you an email</em>. Here's the scenario:
+</p><ul>
+ <li>you legitimately log in to the target site
+ </li><li>the hacker sends you an email containing a bogus <code>IMG</code> tag whose <code>'src'</code> attribute points to the log-off link
+ </li><li>you receive the email and open it in some client (while still logged in to the target site)
+ </li><li>your email client automatically parses the email content
+ </li><li>when the <code>IMG</code> tag is encountered by your email client, it extracts the <code>src</code> target and <em>sends an HTTP</em> <code>GET</code> <em>request over the network</em>, ostensibly to fetch the 'image'
+ </li><li>bingo! you are now logged out, just by opening an email
+</li></ul>
+ 
+(This is why many email clients suppress the display of images.)
+
+<p>Defending against CSRF attacks isn't as simple as defending against XSS attacks. Usually, the defenses 
+take this form:
+</p><ul>
+<li><em>for operations that have side-effects</em> of any kind (database edits, logging off), use a form with <code>method='POST'</code> 
+</li><li><em>for operations without any side-effects</em> (listings, reports, search operations), use either a form with <code>method='GET'</code> or a link
+</li><li>for each user log-in, create a random, hard-to-guess token, and store it in the session. 
+This token (also called a <i>nonce</i>) is injected as a hidden parameter into each form served by your application. 
+For each <code>POST</code>ed form, the server verifies that the hidden parameter is present, and has the expected value for the current session.
+All of this has the intent of answering a simple question: <em>'Did this POSTed form really come originally from the legitimate server, or from some unknown third party?'</em>
+</li><li>specify the <code>content-type</code> of the response as an HTTP header. 
+When using form tokens, the <code>content-type</code> lets tools know when you are serving HTML -  
+if your are serving plain text or XML (which doesn't contain a form), then there's no need to inject form tokens.
+</li></ul>
+
+Your web app framework should assist you in defending against CSRF attacks. With servlets, it's common to provide 
+a Filter to generate and validate the special form token.
+
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction542c.html?Id=191">Manage sessions closely</a> <br>
+  <a href="TopicAction2c82.html?Id=201">Beware of doubly escaped ampersands</a> <br>
+  <a href="TopicActiona657.html?Id=212">Prefer PreparedStatement</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=217 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

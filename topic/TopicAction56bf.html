@@ -1,0 +1,93 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=227 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Avoid basic style errors</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Avoid basic style errors</div>
+
+<br>
+Many beginners to Java repeat the same basic style errors. 
+Such style errors don't make your program incorrect, but they make your program less maintainable. 
+In essence, many beginners write code that suffers from the same basic underlying defect of not being written with compassion for the reader.
+
+<p><span class="highlight">There are in fact two target platforms for all code: the runtime hardware, and the human cerebral cortex.</span> 
+All code 'runs' in the human brain, in the sense that all code needs to be understood by a human being. 
+Coding style is always concerned with this second target platform, not with the first.
+
+</p><p>Some common basic style errors:
+</p><ul>
+ <li>classes too long
+ </li><li>methods too long
+ </li><li>little or no <a href="TopicActionebc1.html?Id=60">javadoc</a>
+ </li><li>many <a href="TopicActionc388.html?Id=16">empty catch blocks</a> that suppress exceptions
+ </li><li>inappropriate use of <a href="TopicActione309.html?Id=114">multiple return statements</a>
+ </li><li>using exceptions <a href="TopicAction49be.html?Id=19">to define regular program flow</a> 
+ </li><li>excessive use of the <a href="TopicAction3d83.html?Id=31">instanceof</a> operator
+ </li><li>using <a href="TopicActionb0f5.html?Id=213">floating point data to represent money</a>
+ </li><li>preferring <a href="TopicAction55c9.html?Id=39">arrays over collections</a> (especially in JDK 5+)
+ </li><li>not <a href="TopicAction311e.html?Id=136">ordering class members by scope</a>
+</li></ul>
+
+<p>Some basic style errors are much more damaging to your code than others.
+<span class="highlight">The single most harmful bad habit is that of excessive length.</span>
+Classes that are too long are hard to understand. 
+As a guideline, if a class is more than about 300 lines long, you should likely consider splitting it up into smaller pieces. 
+Similarly, methods that are more than a single screen are very likely too long, and would almost always benefit from being split into several methods.
+It's not uncommon for a useful method to consist <a href="TopicActionb2ab.html?Id=91">only of a single line of code</a>.
+<br>
+</p><p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActionc388.html?Id=16">Avoid empty catch blocks</a> <br>
+  <a href="TopicAction49be.html?Id=19">Exceptions and control flow</a> <br>
+  <a href="TopicAction3d83.html?Id=31">Beware of instanceof operator</a> <br>
+  <a href="TopicAction55c9.html?Id=39">Prefer Collections over older classes</a> <br>
+  <a href="TopicActionff16.html?Id=58">Naming conventions</a> <br>
+  <a href="TopicActionebc1.html?Id=60">Use javadoc liberally</a> <br>
+  <a href="TopicActionb2ab.html?Id=91">Clarifying method</a> <br>
+  <a href="TopicActione309.html?Id=114">Multiple return statements</a> <br>
+  <a href="TopicAction311e.html?Id=136">Separate public and private members</a> <br>
+  <a href="TopicActionb0f5.html?Id=213">Beware of floating point numbers</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=227 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+</html>

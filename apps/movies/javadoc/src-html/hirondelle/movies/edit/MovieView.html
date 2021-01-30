@@ -1,0 +1,167 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/movies/javadoc/src-html/hirondelle/movies/edit/MovieView.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:32 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+MovieView.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.movies.edit;<a name=line.1></a>
+<a name=line.2></a>
+<span class='keyword'>import</span> hirondelle.movies.util.ui.OnClose;<a name=line.3></a>
+<span class='keyword'>import</span> hirondelle.movies.util.Edit;<a name=line.4></a>
+<span class='keyword'>import</span> hirondelle.movies.util.Util;<a name=line.5></a>
+<span class='keyword'>import</span> hirondelle.movies.util.ui.UiUtil;<a name=line.6></a>
+<span class='keyword'>import</span> hirondelle.movies.util.ui.StandardDialog;<a name=line.7></a>
+<a name=line.8></a>
+<span class='keyword'>import</span> java.util.logging.Logger;<a name=line.9></a>
+<span class='keyword'>import</span> java.util.*;<a name=line.10></a>
+<span class='keyword'>import</span> java.awt.event.ActionEvent;<a name=line.11></a>
+<span class='keyword'>import</span> java.awt.event.ActionListener;<a name=line.12></a>
+<span class='keyword'>import</span> javax.swing.*;<a name=line.13></a>
+<a name=line.14></a>
+<span class='comment'>/**<a name=line.15></a>
+  Dialog allowing user to input {@link Movie} information.<a name=line.16></a>
+<a name=line.17></a>
+  &lt;P&gt;This view can be used to either add a new Movie, or to change an existing one.<a name=line.18></a>
+  &lt;P&gt;It's important to note that validation of user entries is &lt;em&gt;not&lt;/em&gt; <a name=line.19></a>
+  performed by this class. Rather, it's performed by the {@link Movie} class.<a name=line.20></a>
+*/</span><a name=line.21></a>
+<span class='keyword'>final</span> <span class='keyword'>class</span> MovieView {<a name=line.22></a>
+<a name=line.23></a>
+  <span class='comment'>/**<a name=line.24></a>
+   Constructor.<a name=line.25></a>
+    <a name=line.26></a>
+   &lt;P&gt;Called when adding a new {@link Movie}.<a name=line.27></a>
+  */</span><a name=line.28></a>
+  MovieView(JFrame aParent) {<a name=line.29></a>
+    fEdit = Edit.ADD;<a name=line.30></a>
+    buildGui(aParent, <span class='literal'>"Add Movie"</span>);<a name=line.31></a>
+    fStandardDialog.display();<a name=line.32></a>
+  }<a name=line.33></a>
+<a name=line.34></a>
+  <span class='comment'>/**<a name=line.35></a>
+    Constructor.<a name=line.36></a>
+    <a name=line.37></a>
+    &lt;P&gt;Called when editing an existing {@link Movie}. The text fields are simply<a name=line.38></a>
+    prepopulated with the text taken from the currently selected row of the table.<a name=line.39></a>
+  */</span><a name=line.40></a>
+  MovieView(JFrame aParent, Movie aSelectedMovie) {<a name=line.41></a>
+    fLogger.fine(<span class='literal'>"Editing selected movie:"</span> + aSelectedMovie);<a name=line.42></a>
+    fEdit = Edit.CHANGE;<a name=line.43></a>
+    fId = aSelectedMovie.getId();<a name=line.44></a>
+    buildGui(aParent, <span class='literal'>"Edit Movie"</span>);<a name=line.45></a>
+    populateFields(aSelectedMovie);<a name=line.46></a>
+    fStandardDialog.display();<a name=line.47></a>
+  }<a name=line.48></a>
+<a name=line.49></a>
+  <span class='comment'>/**<a name=line.50></a>
+   Return the movie id. The id is used by the database, but is never shown to the user,<a name=line.51></a>
+   nor is it ever edited by the end user. This method is supplied since it's<a name=line.52></a>
+   convenient to carry the id with the other information related to a movie, and the<a name=line.53></a>
+   {@link MovieDAO} needs a way to uniquely identify records.<a name=line.54></a>
+  */</span><a name=line.55></a>
+  String getId() {<a name=line.56></a>
+    <span class='keyword'>return</span> fId;<a name=line.57></a>
+  }<a name=line.58></a>
+<a name=line.59></a>
+  <span class='comment'>/** The title of the movie, as entered by the user. */</span><a name=line.60></a>
+  String getTitle() {<a name=line.61></a>
+    <span class='keyword'>return</span> fTitle.getText();<a name=line.62></a>
+  }<a name=line.63></a>
+<a name=line.64></a>
+  <span class='comment'>/** The date the movie was viewed, as entered by the user. */</span><a name=line.65></a>
+  String getDateViewed() {<a name=line.66></a>
+    <span class='keyword'>return</span> fDateViewed.getText();<a name=line.67></a>
+  }<a name=line.68></a>
+<a name=line.69></a>
+  <span class='comment'>/** The movie rating, as entered by the user. */</span><a name=line.70></a>
+  String getRating() {<a name=line.71></a>
+    <span class='keyword'>return</span> fRating.getText();<a name=line.72></a>
+  }<a name=line.73></a>
+<a name=line.74></a>
+  <span class='comment'>/** The comment on the movie, as entered by the user. */</span><a name=line.75></a>
+  String getComment() {<a name=line.76></a>
+    <span class='keyword'>return</span> fComment.getText();<a name=line.77></a>
+  }<a name=line.78></a>
+<a name=line.79></a>
+  <span class='comment'>/** Close the view. */</span><a name=line.80></a>
+  <span class='keyword'>void</span> closeDialog() {<a name=line.81></a>
+    fStandardDialog.dispose();<a name=line.82></a>
+  }<a name=line.83></a>
+<a name=line.84></a>
+  <span class='comment'>/** Return the underlying dialog. */</span><a name=line.85></a>
+  JDialog getDialog() {<a name=line.86></a>
+    <span class='keyword'>return</span> fStandardDialog.getDialog();<a name=line.87></a>
+  }<a name=line.88></a>
+<a name=line.89></a>
+  <span class='comment'>// PRIVATE <a name=line.90></a>
+</span>  <span class='keyword'>private</span> StandardDialog fStandardDialog;<a name=line.91></a>
+  <span class='keyword'>private</span> Edit fEdit;<a name=line.92></a>
+  <span class='keyword'>private</span> String fId;<a name=line.93></a>
+  <span class='keyword'>private</span> JTextField fTitle = <span class='keyword'>new</span> JTextField();<a name=line.94></a>
+  <span class='keyword'>private</span> JTextField fDateViewed = <span class='keyword'>new</span> JTextField();<a name=line.95></a>
+  <span class='keyword'>private</span> JTextField fRating = <span class='keyword'>new</span> JTextField();<a name=line.96></a>
+  <span class='keyword'>private</span> JTextField fComment = <span class='keyword'>new</span> JTextField();<a name=line.97></a>
+  <span class='keyword'>private</span> JButton fEditButton;<a name=line.98></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> Logger fLogger = Util.getLogger(MovieView.<span class='keyword'>class</span>);<a name=line.99></a>
+<a name=line.100></a>
+  <span class='comment'>/** Populate the GUI with data from the movie. */</span><a name=line.101></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> populateFields(Movie aSelectedMovie) {<a name=line.102></a>
+    fTitle.setText(Util.format(aSelectedMovie.getTitle()));<a name=line.103></a>
+    fDateViewed.setText(Util.format(aSelectedMovie.getDateViewed()));<a name=line.104></a>
+    fRating.setText(Util.format(aSelectedMovie.getRating()));<a name=line.105></a>
+    fComment.setText(aSelectedMovie.getComment());<a name=line.106></a>
+  }<a name=line.107></a>
+<a name=line.108></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> buildGui(JFrame aParent, String aDialogTitle) {<a name=line.109></a>
+    fStandardDialog = <span class='keyword'>new</span> StandardDialog(<a name=line.110></a>
+      aParent, aDialogTitle, <span class='keyword'>true</span>, OnClose.DISPOSE, getUserInputArea(), getButtons()<a name=line.111></a>
+    );<a name=line.112></a>
+    fStandardDialog.setDefaultButton(fEditButton);<a name=line.113></a>
+  }<a name=line.114></a>
+<a name=line.115></a>
+  <span class='keyword'>private</span> JPanel getUserInputArea() {<a name=line.116></a>
+    JPanel result = <span class='keyword'>new</span> JPanel();<a name=line.117></a>
+    result.setLayout(<span class='keyword'>new</span> BoxLayout(result, BoxLayout.Y_AXIS));<a name=line.118></a>
+<a name=line.119></a>
+    addTextField(fTitle, <span class='literal'>"Title"</span>, result);<a name=line.120></a>
+    addTextField(fDateViewed, <span class='literal'>"Date Viewed"</span>, result);<a name=line.121></a>
+    addTextField(fRating, <span class='literal'>"Rating"</span>, result);<a name=line.122></a>
+    addTextField(fComment, <span class='literal'>"Comment"</span>, result);<a name=line.123></a>
+    UiUtil.alignAllX(result, UiUtil.AlignX.LEFT);<a name=line.124></a>
+    <span class='keyword'>return</span> result;<a name=line.125></a>
+  }<a name=line.126></a>
+<a name=line.127></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> addTextField(JTextField aTextField, String aLabel, JPanel aPanel) {<a name=line.128></a>
+    JLabel label = <span class='keyword'>new</span> JLabel(aLabel);<a name=line.129></a>
+    aPanel.add(label);<a name=line.130></a>
+    aPanel.add(aTextField);<a name=line.131></a>
+    aTextField.setColumns(<span class='literal'>15</span>);<a name=line.132></a>
+  }<a name=line.133></a>
+<a name=line.134></a>
+  <span class='keyword'>private</span> java.util.List&lt;JButton&gt; getButtons() {<a name=line.135></a>
+    java.util.List&lt;JButton&gt; result = <span class='keyword'>new</span> ArrayList&lt;&gt;();<a name=line.136></a>
+<a name=line.137></a>
+    fEditButton = <span class='keyword'>new</span> JButton(fEdit.toString());<a name=line.138></a>
+    fEditButton.addActionListener(<span class='keyword'>new</span> MovieController(<span class='keyword'>this</span>, fEdit));<a name=line.139></a>
+    result.add(fEditButton);<a name=line.140></a>
+<a name=line.141></a>
+    JButton cancel = <span class='keyword'>new</span> JButton(<span class='literal'>"Cancel"</span>);<a name=line.142></a>
+    cancel.addActionListener(<span class='keyword'>new</span> ActionListener() {<a name=line.143></a>
+      <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> actionPerformed(ActionEvent arg0) {<a name=line.144></a>
+        closeDialog();<a name=line.145></a>
+      }<a name=line.146></a>
+    });<a name=line.147></a>
+    result.add(cancel);<a name=line.148></a>
+    <span class='keyword'>return</span> result;<a name=line.149></a>
+  }<a name=line.150></a>
+}<a name=line.151></a>
+ <a name=line.152></a>
+</PRE><a name=line.153></a>
+ </BODY><a name=line.154></a>
+<HTML><a name=line.155></a>

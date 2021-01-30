@@ -1,0 +1,144 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=82 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="clipboard,copy,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Clipboard copy and paste</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Clipboard copy and paste</div>
+
+<br>Here's a demonstration of how to move text to and from the 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/awt/datatransfer/Clipboard.html">Clipboard</a></code>.
+
+<p>In Java, there are actually two kinds of <code>Clipboard</code> - system
+and local. The following example uses the system <code>Clipboard</code>.
+It corresponds to the usual idea of sharing data between otherwise independent
+applications running on the same computer.
+</p><p>Local <code>Clipboard</code>s are visible only within a single Java
+application. They are created by simply passing a name to 
+the <code><a href="https://docs.oracle.com/javase/10/docs/api/java/awt/datatransfer/Clipboard.html#Clipboard(java.lang.String)">Clipboard
+constructor</a></code>.
+<br></p><pre>
+<span class="keyword">import</span> java.awt.datatransfer.Clipboard;
+<span class="keyword">import</span> java.awt.datatransfer.ClipboardOwner;
+<span class="keyword">import</span> java.awt.datatransfer.Transferable;
+<span class="keyword">import</span> java.awt.datatransfer.StringSelection;
+<span class="keyword">import</span> java.awt.datatransfer.DataFlavor;
+<span class="keyword">import</span> java.awt.datatransfer.UnsupportedFlavorException;
+<span class="keyword">import</span> java.awt.Toolkit;
+<span class="keyword">import</span> java.io.*;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> TextTransfer <span class="keyword">implements</span> ClipboardOwner {
+
+  <span class="comment">/** Simple test harness. */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String...  args){
+    TextTransfer textTransfer = <span class="keyword">new</span> TextTransfer();
+
+    <span class="comment">//display what is currently on the clipboard
+</span>    log(<span class="literal">"Clipboard contains:"</span> + textTransfer.getClipboardContents());
+
+    <span class="comment">//change the contents and then re-display
+</span>    textTransfer.setClipboardContents(<span class="literal">"blah, blah, blah"</span>);
+    log(<span class="literal">"Clipboard contains:"</span> + textTransfer.getClipboardContents());
+  }
+
+   <span class="comment">/**
+   * Empty implementation of the ClipboardOwner interface.
+   */</span>
+   <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> lostOwnership(Clipboard clipboard, Transferable contents){
+     <span class="comment">//do nothing
+</span>   }
+
+  <span class="comment">/**
+  * Place a String on the clipboard, and make this class the
+  * owner of the Clipboard's contents.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">void</span> setClipboardContents(String string){
+    StringSelection stringSelection = <span class="keyword">new</span> StringSelection(string);
+    Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+    clipboard.setContents(stringSelection, <span class="keyword">this</span>);
+  }
+
+  <span class="comment">/**
+  * Get the String residing on the clipboard.
+  *
+  * @return any text found on the Clipboard; if none found, return an
+  * empty String.
+  */</span>
+  <span class="keyword">public</span> String getClipboardContents() {
+    String result = <span class="literal">""</span>;
+    Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+    <span class="comment">//odd: the Object param of getContents is not currently used
+</span>    Transferable contents = clipboard.getContents(<span class="keyword">null</span>);
+    <span class="keyword">boolean</span> hasTransferableText =
+      (contents != <span class="keyword">null</span>) &amp;&amp;
+      contents.isDataFlavorSupported(DataFlavor.stringFlavor)
+    ;
+    <span class="keyword">if</span> (hasTransferableText) {
+      <span class="keyword">try</span> {
+        result = (String)contents.getTransferData(DataFlavor.stringFlavor);
+      }
+      <span class="keyword">catch</span> (UnsupportedFlavorException | IOException ex){
+        System.out.println(ex);
+        ex.printStackTrace();
+      }
+    }
+    <span class="keyword">return</span> result;
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(String msg) {
+    System.out.println(msg);
+  }
+} 
+</pre>
+
+<br>An example run of this class:
+<p></p><p><code>&gt;java -cp . TextTransfer</code>
+<br><code>Clipboard contains:Java is in Indonesia.</code>
+</p><p><code>Clipboard contains:blah, blah, blah</code>
+</p><p><code>&gt;</code>
+<br>
+</p>
+<p></p>
+
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=82 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

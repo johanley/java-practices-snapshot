@@ -1,0 +1,226 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=168 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:47 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="swing,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Render table cells</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Render table cells</div>
+
+<br>Renderers customize how data is presented. For example, one may customize
+the rendering of table cells, table column headers, or tree nodes. 
+
+<p>To <a href="http://docs.oracle.com/javase/tutorial/uiswing/components/table.html#renderer">render table cells</a> 
+as desired, first ensure that the table model
+implements <code><a href="https://docs.oracle.com/javase/10/docs/api/javax/swing/table/TableModel.html#getColumnClass(int)">getColumnClass</a></code>.
+This will ensure Swing selects the most appropriate default renderer for
+each column.
+</p><p>If the default renderer is inadequate, then an implementation of <code><a href="https://docs.oracle.com/javase/10/docs/api/javax/swing/table/TableCellRenderer.html">TableCellRenderer</a></code>
+(which has only one method - <code>getTableCellRendererComponent</code>) must
+be defined, in one of two ways:
+</p><ul>
+<li>
+subclass <code><a href="https://docs.oracle.com/javase/10/docs/api/javax/swing/table/DefaultTableCellRenderer.html">DefaultTableCellRenderer</a></code>
+and override some methods - usually <code>setValue</code> or <code>getTableCellRendererComponent</code>
+(suitable when rendering is similar to <code>JLabel</code>)</li>
+
+<li>
+implement the interface directly by subclassing a component and adding
+an implementation of <code>getTableCellRendererComponent</code> (suitable when
+rendering is not similar to <code>JLabel</code>)</li>
+</ul>
+It's important to note that <code>getTableCellRendererComponent</code>:
+<ul>
+<li>
+usually returns a reference to itself</li>
+
+<li>
+should not create a new object each time it is called, for performance
+reasons; the intent is that a single renderer object is reused for
+all the cells in a particular column</li>
+</ul>
+
+To use your custom renderer in a table, pass it to <code>TableColumn.<a href="https://docs.oracle.com/javase/10/docs/api/javax/swing/table/TableColumn.html#setCellRenderer(javax.swing.table.TableCellRenderer)">setCellRenderer()</a></code>:
+<pre>
+myTable.getColumnModel().getColumn(idx).setCellRenderer(new MyRenderer());
+</pre>
+
+<b>Example 1</b>
+<p>The default action of <code>setValue</code> is to place the result of <code>toString</code>
+into a cell. This value may not be appropriate.
+</p><p>Here, <code>Stock.toString</code> would place unwanted data in the cell.
+The <code>setValue</code> method is overridden to customize both the text placed
+in a cell, and its associated tooltip:
+<br></p><pre>
+<span class="keyword">package</span> hirondelle.stocks.table;
+
+<span class="keyword">import</span> javax.swing.table.*;
+<span class="keyword">import</span> hirondelle.stocks.quotes.Stock;
+<span class="keyword">import</span> hirondelle.stocks.util.Util;
+
+<span class="comment">/**
+* Display a {@link Stock} in a table cell by placing the
+* full name in the cell, and by providing its Yahoo ticker 
+* (including suffix for the {@link hirondelle.stocks.quotes.Exchange}) as tooltip.
+*/</span>
+<span class="keyword">final</span> <span class="keyword">class</span> RenderStockName <span class="keyword">extends</span> DefaultTableCellRenderer {
+  
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> setValue(Object aValue) {
+    Object result = aValue;
+    <span class="keyword">if</span> ((aValue != <span class="keyword">null</span>) &amp;&amp; (aValue <span class="keyword">instanceof</span> Stock)) {
+      Stock stock = (Stock) aValue;
+      result = stock.getName();
+      setTooltip(stock);
+    } 
+    <span class="keyword">super</span>.setValue(result);
+  }
+
+  <span class="keyword">private</span> <span class="keyword">void</span> setTooltip(Stock aStock) {
+    StringBuilder tooltip = <span class="keyword">new</span> StringBuilder(<span class="literal">"Yahoo Ticker: "</span>);
+    tooltip.append(aStock.getTicker());
+    String suffix = aStock.getExchange().getTickerSuffix();
+    <span class="keyword">if</span> (Util.textHasContent(suffix)) {
+      tooltip.append(<span class="literal">"."</span>);
+      tooltip.append(suffix);
+    }
+    setToolTipText(tooltip.toString());
+  }   
+} 
+</pre>
+
+<br><b>Example 2</b>
+<p></p><p>Use the current locale to render a <code>Number</code> as a currency:
+<br></p><pre>
+<span class="keyword">package</span> hirondelle.stocks.table;
+
+<span class="keyword">import</span> javax.swing.table.*;
+<span class="keyword">import</span> javax.swing.*;
+<span class="keyword">import</span> java.text.NumberFormat;
+
+<span class="comment">/**
+* Display a &lt;tt&gt;Number&lt;/tt&gt; in a table cell in the format defined by  
+* {@link NumberFormat#getCurrencyInstance()}, and aligned to the right.
+*/</span>
+<span class="keyword">final</span> <span class="keyword">class</span> RenderPrice <span class="keyword">extends</span> DefaultTableCellRenderer {
+  
+  RenderPrice() { 
+    setHorizontalAlignment(SwingConstants.RIGHT);  
+  }
+  
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> setValue(Object aValue) {
+    Object result = aValue;
+    <span class="keyword">if</span> ((aValue != <span class="keyword">null</span>) &amp;&amp; (aValue <span class="keyword">instanceof</span> Number)) {
+      Number numberValue = (Number)aValue;
+      NumberFormat formatter = NumberFormat.getCurrencyInstance();
+      result = formatter.format(numberValue.doubleValue());
+    } 
+    <span class="keyword">super</span>.setValue(result);
+  }   
+} 
+</pre>
+
+<br><b>Example 3</b>
+<p></p><p>Render as red or green, according to the sign of a <code>Number</code>.
+The implementation overrides <code>getTableCellRendererComponent</code> instead
+of <code>setValue</code>, and returns a <code>this</code> reference.
+<br></p><pre>
+<span class="keyword">package</span> hirondelle.stocks.table;
+
+<span class="keyword">import</span> javax.swing.table.*;
+<span class="keyword">import</span> javax.swing.*;
+<span class="keyword">import</span> java.awt.*;
+
+<span class="comment">/**
+* Display a &lt;tt&gt;Number&lt;/tt&gt; in a table cell as either red (for negative values)
+* or green (for non-negative values), and aligned on the right.
+*
+* &lt;P&gt;Note that this class will work with any &lt;tt&gt;Number&lt;/tt&gt; -  
+* &lt;tt&gt;Double&lt;/tt&gt;, &lt;tt&gt;BigDecimal&lt;/tt&gt;, etc.
+*/</span>
+<span class="keyword">final</span> <span class="keyword">class</span> RenderRedGreen <span class="keyword">extends</span> DefaultTableCellRenderer {
+  
+  RenderRedGreen () {
+    setHorizontalAlignment(SwingConstants.RIGHT);   
+  }
+  
+  <span class="keyword">@Override</span> <span class="keyword">public</span> Component getTableCellRendererComponent(
+    JTable aTable, Object aNumberValue, <span class="keyword">boolean</span> aIsSelected, 
+    <span class="keyword">boolean</span> aHasFocus, <span class="keyword">int</span> aRow, <span class="keyword">int</span> aColumn
+  ) {  
+    <span class="comment">/* 
+    * Implementation Note :
+    * It is important that no 'new' objects be present in this 
+    * implementation (excluding exceptions):
+    * if the table is large, then a large number of objects would be 
+    * created during rendering.
+    */</span>
+    <span class="keyword">if</span> (aNumberValue == <span class="keyword">null</span>) <span class="keyword">return</span> <span class="keyword">this</span>;
+    Component renderer = <span class="keyword">super</span>.getTableCellRendererComponent(
+      aTable, aNumberValue, aIsSelected, aHasFocus, aRow, aColumn
+    );
+    Number value = (Number)aNumberValue;
+    <span class="keyword">if</span> (value.doubleValue() &lt; <span class="literal">0</span>) {
+      renderer.setForeground(Color.red);
+    }
+    <span class="keyword">else</span> {
+      renderer.setForeground(fDarkGreen);
+    }
+    <span class="keyword">return</span> <span class="keyword">this</span>;
+  }
+  
+  <span class="comment">// PRIVATE 
+</span>  
+  <span class="comment">//the default green is too bright and illegible
+</span>  <span class="keyword">private</span> Color fDarkGreen = Color.green.darker();
+} 
+</pre>
+
+<p></p><p>Here's an illustration of all three example renderers:
+</p><p><img SRC="../images/Renderers.gif" ALT="Illustration of above renderers" height="317" width="582" border="0">
+<br>
+</p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActiond0e1.html?Id=162">Sort table rows</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=168 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:48 GMT -->
+</html>

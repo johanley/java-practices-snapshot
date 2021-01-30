@@ -1,0 +1,232 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=228 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:49 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Don't subclass JDialog or JFrame</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Don't subclass JDialog or JFrame</div>
+
+<br>When creating a class based on 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/javax/swing/JDialog.html">JDialog</a></code> or 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/javax/swing/JFrame.html">JFrame</a></code>, 
+there are two choices:
+
+<ul>
+ <li>either subclass the JDK class using <code>extends</code>
+ </li><li>define a field (instance variable) to hold the <code>JDialog</code> or <code>JFrame</code>
+</li></ul>
+
+The second method has a nice advantage: your class's javadoc will not be cluttered up with items that are usually irrelevant. 
+The Java Swing API is very extensive, and it's common for its javadoc to be a bit overwhelming. 
+Using <code>JDialog</code> and <code>JFrame</code> as a <em>field</em>, and not as a base class, will automatically remove all such extraneous methods from your own class's javadoc.
+
+<p>Of course, sometimes the caller will want access to the underlying <code>JDialog</code> or <code>JFrame</code>.
+In that case, just return the needed object using a <code>getXXX()</code> method.
+
+</p><p><b>Example</b>
+</p><p>Here is a GUI class which does not extend any base class. 
+Note how the <code>JFrame</code> object is passed in to its constructors.
+In addition, it uses a <a href="TopicAction7910.html?Id=150">standard dialog</a> class.
+<br></p><pre>
+<span class="keyword">package</span> hirondelle.movies.edit;
+
+<span class="keyword">import</span> hirondelle.movies.util.ui.OnClose;
+<span class="keyword">import</span> hirondelle.movies.util.Edit;
+<span class="keyword">import</span> hirondelle.movies.util.Util;
+<span class="keyword">import</span> hirondelle.movies.util.ui.UiUtil;
+<span class="keyword">import</span> hirondelle.movies.util.ui.StandardDialog;
+
+<span class="keyword">import</span> java.util.logging.Logger;
+<span class="keyword">import</span> java.util.*;
+<span class="keyword">import</span> java.awt.event.ActionEvent;
+<span class="keyword">import</span> java.awt.event.ActionListener;
+<span class="keyword">import</span> javax.swing.*;
+
+<span class="comment">/**
+  Dialog allowing user to input {@link Movie} information.
+
+  &lt;P&gt;This view can be used to either add a new Movie, or to change an existing one.
+  &lt;P&gt;It's important to note that validation of user entries is &lt;em&gt;not&lt;/em&gt; 
+  performed by this class. Rather, it's performed by the {@link Movie} class.
+*/</span>
+<span class="keyword">final</span> <span class="keyword">class</span> MovieView {
+
+  <span class="comment">/**
+   Constructor.
+    
+   &lt;P&gt;Called when adding a new {@link Movie}.
+  */</span>
+  MovieView(JFrame aParent) {
+    fEdit = Edit.ADD;
+    buildGui(aParent, <span class="literal">"Add Movie"</span>);
+    fStandardDialog.display();
+  }
+
+  <span class="comment">/**
+    Constructor.
+    
+    &lt;P&gt;Called when editing an existing {@link Movie}. The text fields are simply
+    prepopulated with the text taken from the currently selected row of the table.
+  */</span>
+  MovieView(JFrame aParent, Movie aSelectedMovie) {
+    fLogger.fine(<span class="literal">"Editing selected movie:"</span> + aSelectedMovie);
+    fEdit = Edit.CHANGE;
+    fId = aSelectedMovie.getId();
+    buildGui(aParent, <span class="literal">"Edit Movie"</span>);
+    populateFields(aSelectedMovie);
+    fStandardDialog.display();
+  }
+
+  <span class="comment">/**
+   Return the movie id. The id is used by the database, but is never shown to the user,
+   nor is it ever edited by the end user. This method is supplied since it's
+   convenient to carry the id with the other information related to a movie, and the
+   {@link MovieDAO} needs a way to uniquely identify records.
+  */</span>
+  String getId() {
+    <span class="keyword">return</span> fId;
+  }
+
+  <span class="comment">/** The title of the movie, as entered by the user. */</span>
+  String getTitle() {
+    <span class="keyword">return</span> fTitle.getText();
+  }
+
+  <span class="comment">/** The date the movie was viewed, as entered by the user. */</span>
+  String getDateViewed() {
+    <span class="keyword">return</span> fDateViewed.getText();
+  }
+
+  <span class="comment">/** The movie rating, as entered by the user. */</span>
+  String getRating() {
+    <span class="keyword">return</span> fRating.getText();
+  }
+
+  <span class="comment">/** The comment on the movie, as entered by the user. */</span>
+  String getComment() {
+    <span class="keyword">return</span> fComment.getText();
+  }
+
+  <span class="comment">/** Close the view. */</span>
+  <span class="keyword">void</span> closeDialog() {
+    fStandardDialog.dispose();
+  }
+
+  <span class="comment">/** Return the underlying dialog. */</span>
+  JDialog getDialog() {
+    <span class="keyword">return</span> fStandardDialog.getDialog();
+  }
+
+  <span class="comment">// PRIVATE 
+</span>  <span class="keyword">private</span> StandardDialog fStandardDialog;
+  <span class="keyword">private</span> Edit fEdit;
+  <span class="keyword">private</span> String fId;
+  <span class="keyword">private</span> JTextField fTitle = <span class="keyword">new</span> JTextField();
+  <span class="keyword">private</span> JTextField fDateViewed = <span class="keyword">new</span> JTextField();
+  <span class="keyword">private</span> JTextField fRating = <span class="keyword">new</span> JTextField();
+  <span class="keyword">private</span> JTextField fComment = <span class="keyword">new</span> JTextField();
+  <span class="keyword">private</span> JButton fEditButton;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Logger fLogger = Util.getLogger(MovieView.<span class="keyword">class</span>);
+
+  <span class="comment">/** Populate the GUI with data from the movie. */</span>
+  <span class="keyword">private</span> <span class="keyword">void</span> populateFields(Movie aSelectedMovie) {
+    fTitle.setText(Util.format(aSelectedMovie.getTitle()));
+    fDateViewed.setText(Util.format(aSelectedMovie.getDateViewed()));
+    fRating.setText(Util.format(aSelectedMovie.getRating()));
+    fComment.setText(aSelectedMovie.getComment());
+  }
+
+  <span class="keyword">private</span> <span class="keyword">void</span> buildGui(JFrame aParent, String aDialogTitle) {
+    fStandardDialog = <span class="keyword">new</span> StandardDialog(
+      aParent, aDialogTitle, <span class="keyword">true</span>, OnClose.DISPOSE, getUserInputArea(), getButtons()
+    );
+    fStandardDialog.setDefaultButton(fEditButton);
+  }
+
+  <span class="keyword">private</span> JPanel getUserInputArea() {
+    JPanel result = <span class="keyword">new</span> JPanel();
+    result.setLayout(<span class="keyword">new</span> BoxLayout(result, BoxLayout.Y_AXIS));
+
+    addTextField(fTitle, <span class="literal">"Title"</span>, result);
+    addTextField(fDateViewed, <span class="literal">"Date Viewed"</span>, result);
+    addTextField(fRating, <span class="literal">"Rating"</span>, result);
+    addTextField(fComment, <span class="literal">"Comment"</span>, result);
+    UiUtil.alignAllX(result, UiUtil.AlignX.LEFT);
+    <span class="keyword">return</span> result;
+  }
+
+  <span class="keyword">private</span> <span class="keyword">void</span> addTextField(JTextField aTextField, String aLabel, JPanel aPanel) {
+    JLabel label = <span class="keyword">new</span> JLabel(aLabel);
+    aPanel.add(label);
+    aPanel.add(aTextField);
+    aTextField.setColumns(<span class="literal">15</span>);
+  }
+
+  <span class="keyword">private</span> java.util.List&lt;JButton&gt; getButtons() {
+    java.util.List&lt;JButton&gt; result = <span class="keyword">new</span> ArrayList&lt;&gt;();
+
+    fEditButton = <span class="keyword">new</span> JButton(fEdit.toString());
+    fEditButton.addActionListener(<span class="keyword">new</span> MovieController(<span class="keyword">this</span>, fEdit));
+    result.add(fEditButton);
+
+    JButton cancel = <span class="keyword">new</span> JButton(<span class="literal">"Cancel"</span>);
+    cancel.addActionListener(<span class="keyword">new</span> ActionListener() {
+      <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> actionPerformed(ActionEvent arg0) {
+        closeDialog();
+      }
+    });
+    result.add(cancel);
+    <span class="keyword">return</span> result;
+  }
+}
+ 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction7910.html?Id=150">Standardized dialogs</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=228 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:49 GMT -->
+</html>

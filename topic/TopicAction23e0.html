@@ -1,0 +1,126 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=196 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Use for each liberally</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Use for each liberally</div>
+
+<br>The <code><a href="http://docs.oracle.com/javase/1.5.0/docs/guide/language/foreach.html">for-each</a></code>
+loop is used with both collections and arrays. It's intended to simplify
+the most common form of iteration, where the iterator or index is used
+solely for iteration, and not for any other kind of operation, such as
+removing or editing an item in the collection or array. When there is a
+choice, the <code>for-each</code> loop should be preferred over the <code>for</code>
+loop, since it increases legibility.
+<p><b>Example</b>
+</p><p>Here are some examples of the <code>for-each</code> loop.
+<br></p><pre>
+<span class="keyword">import</span> java.util.*;
+<span class="keyword">import</span> java.math.BigDecimal;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> ForEachExamples {
+
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args){
+    List&lt;Number&gt; numbers = <span class="keyword">new</span> ArrayList&lt;&gt;();
+    numbers.add(<span class="literal">42</span>);
+    numbers.add(-<span class="literal">30</span>);
+    numbers.add(<span class="keyword">new</span> BigDecimal(<span class="literal">"654.2"</span>));
+
+    <span class="comment">//typical for-each loop
+</span>    <span class="comment">//processes each item, without changing the collection or array.
+</span>    <span class="keyword">for</span> (Number number : numbers){
+      log(number);
+    }
+
+    <span class="comment">//use with an array
+</span>    String[] names = {<span class="literal">"Ethan Hawke"</span>, <span class="literal">"Julie Delpy"</span>};
+    <span class="keyword">for</span>(String name : names){
+      log(<span class="literal">"Name : "</span> + name);
+    }
+
+    <span class="comment">//removal of items requires an explicit iterator,
+</span>    <span class="comment">//so you can't use a for-each loop in this case
+</span>    Collection&lt;String&gt; words = <span class="keyword">new</span> ArrayList&lt;&gt;();
+    words.add(<span class="literal">"Il ne lui faut que deux choses: "</span>);
+    words.add(<span class="literal">"le"</span>);
+    words.add(<span class="literal">"pain"</span>);
+    words.add(<span class="literal">"et"</span>);
+    words.add(<span class="literal">"le"</span>);
+    words.add(<span class="literal">"temps."</span>);
+    words.add(<span class="literal">"- Alfred de Vigny."</span>);
+    <span class="keyword">for</span>(Iterator&lt;String&gt; iter = words.iterator(); iter.hasNext();){
+      <span class="keyword">if</span> (iter.next().length() == <span class="literal">4</span>){
+        iter.remove();
+      }
+    }
+    log(<span class="literal">"Edited words: "</span> + words.toString());
+
+    <span class="comment">//if used with a non-parameterized type (not recommended!), 
+</span>    <span class="comment">//then Object must be used, along with a cast
+</span>    Collection stuff = <span class="keyword">new</span> ArrayList();
+    stuff.add(<span class="literal">"blah"</span>);
+    <span class="keyword">for</span> (Object thing : stuff){
+      String item = (String)thing;
+      log(<span class="literal">"Thing : "</span> + item);
+    }
+  }
+
+  <span class="comment">// PRIVATE
+</span>  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(Object aThing){
+    System.out.println(aThing);
+  }
+}
+ 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction5e5f.html?Id=88">Iterate without an index</a> <br>
+  <a href="TopicAction852c.html?Id=125">Ways of iterating</a> <br>
+  <a href="TopicActionaa3f.html?Id=225">Modernize old code</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=196 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+</html>

@@ -1,0 +1,218 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=237 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Plugin Factory</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Plugin Factory</div>
+
+<br>
+It's often useful to be able to quickly and easily switch one implementation of a given feature with another. 
+This is especially useful when writing unit tests for your code, but the technique isn't 
+strictly limited to unit tests.
+
+<p>A <em>plugin factory</em> is one way of quickly swapping implementations.
+The general idea is to:
+</p><ul>
+ <li>define a Java interface for the methods whose implementation you want to be able to swap.
+ </li><li>define 2 or more concrete implementations of that interface.
+ </li><li>create a corresponding method in a plugin factory class to return one of those 
+  implementations, as defined by some configuration setting.
+</li></ul>
+
+<p>Using configuration of some kind (often simply a text file), the plugin factory knows which 
+concrete implementation it's supposed to return to its caller.
+
+</p><p>It's important for your application to treat the Plugin Factory as the <i>sole source</i> for implementations of the 
+corresponding interfaces. That is, the rest of your app is not supposed to have <i>direct</i> knowledge of 
+the concrete implementations. The Plugin Factory is meant to keep that knowledge secret.
+
+</p><p>A plugin factory can have a number of methods defined, each returning an implementation of a specific interface. 
+Or, it might uses a generic method to return objects of any type.
+
+</p><p>A recurring theme in object programming is <b>allowing old code to call new code</b>. 
+A Plugin Factory is simply another variation on that important theme.
+
+</p><p><b>Example</b>
+
+</p><p>As an example, let's take the idea of a <a href="TopicActionec62.html?Id=234">fake system clock</a>.
+In this case, you want the current time to be defined centrally, in one place. You also want to 
+be able to swap in various ways of defining the current time, either for testing or for other reasons.
+
+</p><p>Here's the interface:
+<br></p><pre>
+<span class="keyword">public</span> <span class="keyword">interface</span> TimeSource {
+
+  <span class="comment">/** Return the system time. */</span>  
+  <span class="keyword">long</span> currentTimeMillis();
+
+} 
+</pre>
+
+
+<p>Here's an example of a particular concrete implementation of the above interface:
+<br></p><pre>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> TimeSourceOneDayAhead <span class="keyword">implements</span> TimeSource {
+
+  <span class="comment">/** One day in advance of the actual time.*/</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">long</span> currentTimeMillis() {
+    <span class="keyword">return</span> System.currentTimeMillis() + ONE_DAY;
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">long</span> ONE_DAY = <span class="literal">24</span>*<span class="literal">60</span>*<span class="literal">60</span>*<span class="literal">1000</span>;
+
+} 
+</pre>
+
+
+<p>Finally, here's a sketch of the Plugin Factory itself. 
+In this case, a generic method is used to return concrete implementations.
+<br></p><pre>
+<span class="keyword">import</span> java.lang.reflect.InvocationTargetException;
+<span class="keyword">import</span> java.util.LinkedHashMap;
+<span class="keyword">import</span> java.util.Map;
+
+<span class="comment">/** 
+ Return concrete implementations of interfaces.
+ 
+ Here, each concrete implementation class needs to have a 
+ no-argument constructor, in order to be built by this 
+ factory.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> PluginFactory {
+  
+  <span class="comment">/** Simple demo. */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args) <span class="keyword">throws</span> Exception {
+    Map&lt;String, String&gt; config = <span class="keyword">new</span> LinkedHashMap&lt;&gt;();
+    <span class="comment">//hard-coded, instead of using a text file as config: 
+</span>    config.put(TimeSource.<span class="keyword">class</span>.getName(), TimeSourceOneDayAhead.<span class="keyword">class</span>.getName());
+    PluginFactory.init(config);
+    
+    TimeSource ts = PluginFactory.instanceOf(TimeSource.<span class="keyword">class</span>);
+    System.out.println(ts);
+  }
+  
+  <span class="comment">/**
+   Read in configuration data that maps names of interfaces to names of 
+   corresponding concrete implementation classes. Called early upon startup, 
+   before any implementations are needed by the rest of the program.
+   
+   &lt;P&gt;Example of a possible entry in such a config file (where package names
+   have been added):
+   myapp.TimeSource = myapp.TimeSourceOneDayAdvance
+   
+   @param config map-key is the fully-qualified interface name, map-value is 
+   the fully-qualified name of a corresponding concrete implementation class, 
+   having a no-argument constructor.
+   The caller decides where this data comes from. It may be a simple text file, a 
+   database, etc. 
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> init(Map&lt;String, String&gt; config){
+    <span class="comment">/*
+     for testing (outside of production), you might want to let the caller 
+     call this method more than once, to swap around different implementations. 
+    */</span>
+    <span class="comment">//interfaceToImpl.clear();
+</span>    
+    interfaceToImpl.putAll(config);
+    
+    <span class="comment">//variation: you might want to fail as early as possible, by trying to 
+</span>    <span class="comment">//build an object here for each interface, as a simple test 
+</span>    
+    <span class="comment">//variation: you might want to allow the mapping to be set in code, instead of 
+</span>    <span class="comment">//in a text file. In that case, the Map would use Class objects directly, and 
+</span>    <span class="comment">//not their names.
+</span>  }
+  
+  <span class="comment">/**
+   Return an object that implements the given interface.
+   If the given interface has no known mapping defined by the config, 
+   or if the instance cannot be created, then an exception is thrown.
+   
+   Example of getting an instance that implements the TimeSoure interface: 
+   &lt;code&gt;TimeSource ts = PluginFactory.instanceOf(TimeSource.class);&lt;/code&gt;
+   
+   @param aInterface the class object representing the interface. 
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> &lt;T&gt; T instanceOf(Class&lt;T&gt; aInterface) <span class="keyword">throws</span> 
+    ClassNotFoundException, InstantiationException, IllegalAccessException, 
+    IllegalArgumentException, InvocationTargetException, NoSuchMethodException, 
+    SecurityException
+  {
+    T result = <span class="keyword">null</span>;
+    <span class="keyword">for</span>(String interfaceName : interfaceToImpl.keySet()) {
+      <span class="keyword">if</span> (interfaceName.equals(aInterface.getName())) {
+        String implName = interfaceToImpl.get(interfaceName);
+        <span class="comment">//unavoidable cast!
+</span>        Class&lt;? <span class="keyword">extends</span> T&gt; implClass = (Class&lt;? <span class="keyword">extends</span> T&gt;)Class.forName(implName);
+        result = implClass.getDeclaredConstructor().newInstance();
+      }
+    }
+    <span class="keyword">if</span> (result == <span class="keyword">null</span>) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> InstantiationException(
+        <span class="literal">"The interface "</span> + aInterface.getName() + <span class="literal">" has no mapping to an impl."</span>
+      );
+    }
+    <span class="keyword">return</span> result;
+  }
+  
+  <span class="comment">// PRIVATE
+</span>  
+  <span class="comment">/**
+   Maps the name of an interface to the name of a corresponding concrete 
+   implementation class. 
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Map&lt;String, String&gt; interfaceToImpl = <span class="keyword">new</span> LinkedHashMap&lt;&gt;();
+} 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActionddc6.html?Id=113">Construct Object using class name</a> <br>
+  <a href="TopicActionec62.html?Id=234">Use a fake system clock</a> <br>
+  <a href="TopicAction8aa5.html?Id=128">Abstract Factory</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=237 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

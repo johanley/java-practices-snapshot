@@ -1,0 +1,156 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=229 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:49 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Provide an uncaught exception handler</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Provide an uncaught exception handler</div>
+
+<br>In Java programs, what happens when an uncaught <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/RuntimeException.html">RuntimeException</a></code> is thrown, but is not handled by your program?
+In the simplest Java programs run from the console and executed in a single thread, the default behavior is to:
+<ul>
+ <li>print a stack trace to the console
+ </li><li>terminate the thread (and thus terminate the program itself)
+</li></ul>
+
+<p>There are two common kinds of programs where the above behavior is <em>not</em> in effect:
+</p><ul>
+ <li>programs running in a servlet container
+ </li><li>Swing applications
+</li></ul>
+
+<p>In Swing applications, the default behavior still prints the stack trace to the console, but the Event Dispatch Thread (the main Swing thread) is not terminated.
+The Event Dispatch Thread always remains alive, in spite of any <code>RuntimeException</code>s thrown by your program.
+
+</p><p>However, simply printing a stack trace to the console in a Swing application is not very informative for the average user. 
+Instead, you should likely override Java's default handling of uncaught exceptions.
+The benefits are:
+</p><ul>
+ <li>the end user is kept informed of problems more effectively
+ </li><li>new behavior can be added, such as logging or sending emails to support staff
+</li></ul>
+
+<p>If you're using JDK 5+, then you may define your own 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Thread.UncaughtExceptionHandler.html">UncaughtExceptionHandler</a></code>.
+They can be defined at 3 different levels. 
+From the highest level to the lowest level, they are:
+</p><ul>
+ <li>for the whole Java Runtime, call 
+ <code>Thread.<a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Thread.html#setDefaultUncaughtExceptionHandler(java.lang.Thread.UncaughtExceptionHandler)">setDefaultUncaughtExceptionHandler</a></code>
+ upon startup
+ </li><li>for a ThreadGroup, override <code>ThreadGroup.<a href="https://docs.oracle.com/javase/10/docs/api/java/lang/ThreadGroup.html#uncaughtException(java.lang.Thread,java.lang.Throwable)">uncaughtException</a></code>
+ </li><li>for a single Thread, call <code>Thread.<a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Thread.html#setUncaughtExceptionHandler(java.lang.Thread.UncaughtExceptionHandler)">setUncaughtExceptionHandler</a></code>
+</li></ul>
+
+<p><b>Example</b>
+</p><p>Here's an example of such a handler class.
+<br></p><pre>
+<span class="keyword">package</span> hirondelle.movies.exception;
+
+<span class="keyword">import</span> hirondelle.movies.util.Util;
+<span class="keyword">import</span> hirondelle.movies.util.ui.UiUtil;
+
+<span class="keyword">import</span> java.io.PrintWriter;
+<span class="keyword">import</span> java.io.StringWriter;
+<span class="keyword">import</span> java.io.Writer;
+<span class="keyword">import</span> java.util.logging.Logger;
+
+<span class="keyword">import</span> javax.swing.JOptionPane;
+
+<span class="comment">/**
+ Custom handler for any uncaught exceptions.
+ 
+ &lt;P&gt;By default, a Swing app will handle uncaught exceptions simply by 
+  printing a stack trace to {@link System#err}. However, the end user will 
+  not usually see that, and if they do, they will not likely understand it. 
+  This class addresses that problem, by showing the end user a 
+  simple error message in a modal dialog. (The dialog's owner is the 
+  currently active frame.)
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> ExceptionHandler <span class="keyword">implements</span> Thread.UncaughtExceptionHandler {
+
+  <span class="comment">/** 
+  Custom handler for uncaught exceptions.
+  
+  &lt;P&gt;Displays a simple model dialog to the user, showing that an error has
+   occured. The text of the error includes {@link Throwable#toString()}. 
+   The stack trace is logged at a SEVERE level.
+ */</span>
+  <span class="keyword">@Override</span>  <span class="keyword">public</span> <span class="keyword">void</span> uncaughtException(Thread aThread, Throwable aThrowable) {
+    fLogger.severe(getStackTrace(aThrowable));
+    JOptionPane.showMessageDialog(
+      UiUtil.getActiveFrame(), <span class="literal">"Error: "</span> + aThrowable.toString(), 
+      <span class="literal">"Error"</span>, JOptionPane.ERROR_MESSAGE
+    );
+  }
+  
+  <span class="comment">// PRIVATE 
+</span>  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Logger fLogger = Util.getLogger(ExceptionHandler.<span class="keyword">class</span>);
+  
+  <span class="keyword">private</span> String getStackTrace(Throwable aThrowable) {
+    <span class="keyword">final</span> Writer result = <span class="keyword">new</span> StringWriter();
+    <span class="keyword">final</span> PrintWriter printWriter = <span class="keyword">new</span> PrintWriter(result);
+    aThrowable.printStackTrace(printWriter);
+    <span class="keyword">return</span> result.toString();
+  }
+}
+ 
+</pre>
+
+
+<p></p><p>For JDK 1.4, the simplest way of overriding the default handler for uncaught exceptions is to 
+use the following undocumented feature (which has actually been removed from JDK 7):
+ </p><ul>
+  <li>create a class with a no-argument constructor
+  </li><li>add to it a method <code>public void handle(Throwable aThrowable){...}</code>
+  </li><li>upon startup, add a <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/System.html">System</a></code> property named <code>'sun.awt.exception.handler'</code>, whose value is 
+   the fully qualified class name of this new handler class
+ </li></ul> 
+
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction5ab4.html?Id=78">Stack trace as String</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=229 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:49 GMT -->
+</html>

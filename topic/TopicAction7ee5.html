@@ -1,0 +1,115 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=208 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Try alternatives to ResourceBundle</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Try alternatives to ResourceBundle</div>
+
+<br>There are some rather disturbing problems with 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/ResourceBundle.html">ResourceBundle</a></code>:
+<ul>
+<li>if the translations are stored in a database, there is no way for an application
+to create a new localization without code changes (that is, without creating a new 
+database-backed <code>ResourceBundle</code> class for each new <code>Locale</code>).
+</li><li>prior to JDK 6, there is no way of refreshing the underlying data at runtime. 
+</li></ul>
+
+<p>
+<em>These are serious defects.</em>
+
+
+</p><p>In addition, there are many nuisances associated with using <code>ResourceBundle</code>s and their 
+associated properties files: 
+</p><ul>
+
+<li>prior to JDK 9, the encoding used in a properties file is ISO-8859-1, not UTF-8. If the app is using a 
+language which does not use ISO-8859-1, then the <code>native2ascii</code> tool must be used to process the files.
+(Rather impolite for an internationalization mechanism, is it not?)
+
+</li><li>natural text keys versus coder keys: from the point of the caller, using a natural text lookup key 
+has the advantage that it increases legibility. However, such a lookup key appears as 
+<code>blah=blah</code> in a properties file. Such duplication makes most programmers justifiably nervous. (If a 
+database is used, a <code>ResultSet</code> having the same <code>blah=blah</code> structure can be 
+easily created, but without any actual data repeated in the underlying tables.)
+
+</li><li>in a properties file, there is no easy way to find duplicates. In general, there 
+is <em>no easy way to perform any sort of query</em> on the data (as there is in a database).
+
+</li><li>mailing raw properties files to translators does not seem desirable, but 
+building a front end tool for such files is not easy - so it never gets done
+
+</li><li>if an item has more than one line, then the line continuation character "\\" must be appended to each line
+
+</li><li>apostrophe characters are a problem: the 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/text/MessageFormat.html">MessageFormat</a></code> 
+class treats apostrophes as special characters. If an apostrophe appears 
+in a pattern passed to a <code>MessageFormat</code>, it must be escaped, or else 
+a nice little <code>RuntimeException</code> is thrown. If you send properties files to translators, 
+the probabilty of errors related to apostrophes is <em>very</em> high. 
+If a database is used instead of properties files, however, then 
+it's fairly easy to build a front end tool which can do the necessary validations. 
+(Building such a tool is especially attractive when it can be used with multiple projects.)
+</li><li>use of module names: the <code>ResourceBundle</code> mechanism allows the caller to specify a module name, 
+which is mapped into a corresponding class name or properties file name. It's possible 
+to seriously question this design. In general, <em>a method should not know the identity of its caller</em>. 
+</li></ul>
+
+<p>In summary, it seems that <code>ResourceBundle</code> was intended 
+originally for desktop applications and properties files, and that its design is not robust 
+enough for easy use in the context of a web application backed by a database.
+
+</p><p>Fortunately, text translation is not a difficult task, and 
+creating an alternative to <code>ResourceBundle</code> is actually fairly easy. 
+For an example, please see the 
+<a href="../apps/web4j/javadoc/hirondelle/web4j/ui/translate/package-summary.html">hirondelle.web4j.ui.translate</a> 
+package of the <a href="TopicAction5f31.html?Id=188">WEB4J</a> tool. It uses a technique called 
+"last second localization".
+
+</p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActionb69d.html?Id=73">Internationalization</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=208 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:35 GMT -->
+</html>

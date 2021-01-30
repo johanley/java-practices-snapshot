@@ -1,0 +1,296 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=234 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Use a fake system clock</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Use a fake system clock</div>
+
+<br>
+
+ <p>When testing an application, it's often useful to define a <i>fake system clock</i> in order 
+ to exercise code that uses dates and times.
+  
+</p><p>While it's always possible to change the system clock <i>directly</i>, many view that style 
+ as undesirable:
+</p><ul>
+ <li>it affects <i>all</i> programs running on a machine, and not just the application being tested
+ </li><li>it can be time consuming and annoying to repeatedly change the system clock
+</li></ul>
+
+ <p>Instead of changing the system clock, it's possible to define a <i>fake</i> system clock just for your application.
+ In production, the fake system clock returns normal time. 
+ During testing, the fake system clock is changed to return any time you need for effective test coverage.
+
+ </p><p>For this to work, you need to define various different clock implementations, and be able to swap them easily.
+ Many would choose to use a dependency-injection tool for this, or perhaps a <a href="TopicAction5a93.html?Id=237">plug-in mechanism</a>. 
+ 
+ </p><p>For this to work, <b>you must never reference the default system clock and time zone directly</b>, by avoiding methods such as:
+ </p><ul>
+  <li><code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/System.html#currentTimeMillis()">System.currentTimeMillis()</a></code>
+  </li><li><code><a href="https://docs.oracle.com/javase/10/docs/api/java/time/LocalDateTime.html#now()">LocalDateTime.now()</a></code> (and similar)
+  </li><li>the default constructor for the <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Date.html#Date()">Date</a></code> class (which in turn uses <code>System.currentTimeMillis()</code>)
+ </li></ul>
+  <b>This requires some discipline</b>, because so many code examples use the default system clock (and time zone), 
+  and because calling the above methods has become habitual. 
+  
+ <p>Possible behaviors for a fake clock include:
+ </p><ul> 
+  <li>skip ahead to the future
+  </li><li>go back to the past
+  </li><li>use a fixed date, and a fixed time
+  </li><li>use a fixed date, but still let the time vary 
+  </li><li>increment by one second each time you 'look' at the clock
+  </li><li>change the <i>rate</i> at which time passes, by speeding up or slowing down by a certain factor
+  </li><li>use the normal system clock without alteration 
+ </li></ul> 
+
+ <p>According to your needs, you may have to use the fake system clock in some or all of these places:
+ </p><ul>
+   <li>your application code
+   </li><li>your code that interacts with the database
+   </li><li>your logging output 
+   </li><li>your framework classes
+ </li></ul>
+ 
+ <p><b>Examples for Java 8</b>
+ </p><p>The <code><a href="https://docs.oracle.com/javase/10/docs/api/java/time/Clock.html">Clock</a></code> 
+ class of the <code>java.time</code> package lets you create a fake system clock.
+ Its <code><a href="https://docs.oracle.com/javase/10/docs/api/java/time/Clock.html#fixed(java.time.Instant,java.time.ZoneId)">fixed</a></code> 
+ method lets you quickly create a common 
+ type of fake <code>Clock</code>, which simply returns a fixed value in a given time zone.
+ In general, you'll need to extend the abstract <code>Clock</code> class, and implement its abstract methods.
+<br></p><pre>
+<span class="keyword">import</span> java.time.Clock;
+<span class="keyword">import</span> java.time.Instant;
+<span class="keyword">import</span> java.time.ZoneId;
+<span class="keyword">import</span> java.util.Objects;
+
+<span class="comment">/** 
+ Increment by 1 second each time you look at the clock.
+ Starts with the default system clock's instant and time-zone.
+ 
+ Example output:
+  2018-05-26T14:00:12.778Z
+  2018-05-26T14:00:13.778Z
+  2018-05-26T14:00:14.778Z
+  2018-05-26T14:00:15.778Z
+  2018-05-26T14:00:16.778Z
+   
+ @since Java 8.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> ClockTicker <span class="keyword">extends</span> Clock {
+  
+  <span class="comment">/** Simple demo of the behaviour of this class. */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args) {
+    ClockTicker ticker = <span class="keyword">new</span> ClockTicker();
+    log(ticker.instant());
+    log(ticker.instant());
+    log(ticker.instant());
+    log(ticker.instant());
+    log(ticker.instant());
+  }
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(Object msg){
+    System.out.println(Objects.toString(msg));
+  }
+  
+  <span class="keyword">@Override</span> <span class="keyword">public</span> ZoneId getZone() {
+    <span class="keyword">return</span> DEFAULT_TZONE;
+  }
+  
+  <span class="keyword">@Override</span> <span class="keyword">public</span> Clock withZone(ZoneId zone) {
+    <span class="keyword">return</span> Clock.fixed(WHEN_STARTED, zone);
+  }
+  
+  <span class="keyword">@Override</span> <span class="keyword">public</span> Instant instant() {
+    <span class="keyword">return</span> nextInstant();
+  }
+  
+  <span class="comment">//PRIVATE 
+</span>  <span class="keyword">private</span> <span class="keyword">final</span> Instant WHEN_STARTED = Instant.now();
+  <span class="keyword">private</span> <span class="keyword">final</span> ZoneId DEFAULT_TZONE = ZoneId.systemDefault();
+  <span class="keyword">private</span> <span class="keyword">long</span> count = <span class="literal">0</span>;
+  
+  <span class="keyword">private</span> Instant nextInstant() {
+    ++count;
+    <span class="keyword">return</span> WHEN_STARTED.plusSeconds(count);
+  }
+} 
+</pre>
+
+<br><pre>
+<span class="keyword">import</span> java.time.Clock;
+<span class="keyword">import</span> java.time.Instant;
+<span class="keyword">import</span> java.time.LocalDateTime;
+<span class="keyword">import</span> java.time.ZoneId;
+<span class="keyword">import</span> java.time.ZoneOffset;
+<span class="keyword">import</span> java.util.Objects;
+
+<span class="comment">/** 
+ Set the starting date-time and time-zone, but then 
+ let the time vary normally.
+ 
+ Example output:
+  2018-12-25T05:00:00Z
+  Sleep for 5 seconds...
+  2018-12-25T05:00:05.005Z
+  Done.
+
+ @since Java 8.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> ClockTimeTravel <span class="keyword">extends</span> Clock {
+  
+  <span class="comment">/** Simple demo of the behaviour of this class. */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String[] args) <span class="keyword">throws</span> InterruptedException {
+    ClockTimeTravel timeTravel = <span class="keyword">new</span> ClockTimeTravel(
+      LocalDateTime.parse(<span class="literal">"2018-12-25T00:00:00"</span>), ZoneOffset.of(<span class="literal">"-05:00"</span>)
+    );
+    log(timeTravel.instant());
+    log(<span class="literal">"Sleep for 5 seconds..."</span>);
+    Thread.currentThread().sleep(<span class="literal">5000</span>);
+    log(timeTravel.instant());
+    log(<span class="literal">"Done."</span>);
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(Object msg){
+    System.out.println(Objects.toString(msg));
+  }
+  
+  <span class="keyword">public</span> ClockTimeTravel(LocalDateTime t0, ZoneOffset zoneOffset){
+    <span class="keyword">this</span>.zoneOffset = zoneOffset;
+    <span class="keyword">this</span>.t0LocalDateTime = t0;
+    <span class="keyword">this</span>.t0Instant = t0.toInstant(zoneOffset);
+    <span class="keyword">this</span>.whenObjectCreatedInstant = Instant.now();
+  }
+  
+  <span class="keyword">@Override</span> <span class="keyword">public</span> ZoneId getZone() {
+    <span class="keyword">return</span> zoneOffset;
+  }
+  
+  <span class="comment">/** The caller needs to actually pass a ZoneOffset object here. */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> Clock withZone(ZoneId zone) {
+    <span class="keyword">return</span> <span class="keyword">new</span> ClockTimeTravel(t0LocalDateTime, (ZoneOffset)zone);
+  }
+  
+  <span class="keyword">@Override</span> <span class="keyword">public</span> Instant instant() {
+    <span class="keyword">return</span> nextInstant();
+  }
+  
+  <span class="comment">//PRIVATE
+</span>  
+  <span class="comment">/** t0 is the moment this clock object was created in Java-land. */</span>
+  <span class="keyword">private</span> <span class="keyword">final</span> Instant t0Instant;
+  <span class="keyword">private</span> <span class="keyword">final</span> LocalDateTime t0LocalDateTime;
+  
+  <span class="keyword">private</span> <span class="keyword">final</span> ZoneOffset zoneOffset;
+  <span class="keyword">private</span> <span class="keyword">final</span> Instant whenObjectCreatedInstant;
+  
+  <span class="comment">/** 
+   Figure out how much time has elapsed between the moment this 
+   object was created, and the moment when this method is being called.
+   Then, apply that diff to t0. 
+  */</span>
+  <span class="keyword">private</span> Instant nextInstant() {
+    Instant now = Instant.now();
+    <span class="keyword">long</span> diff = now.toEpochMilli() - whenObjectCreatedInstant.toEpochMilli();
+    <span class="keyword">return</span> t0Instant.plusMillis(diff);
+  }
+} 
+</pre>
+
+
+ <p><b>Example for Java &lt; 8</b>
+ 
+ </p><p> The <code>TimeSource</code> interface allows you to define various implementations of a fake system clock:
+<br></p><pre>
+<span class="keyword">public</span> <span class="keyword">interface</span> TimeSource {
+
+  <span class="comment">/** Return the system time. */</span>  
+  <span class="keyword">long</span> currentTimeMillis();
+
+} 
+</pre>
+
+ This implementation mimics a system clock running one day in advance:
+<br><pre>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> TimeSrc <span class="keyword">implements</span> TimeSource {
+
+  <span class="comment">/** One day in advance of the actual time.*/</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">long</span> currentTimeMillis() {
+    <span class="keyword">return</span> System.currentTimeMillis() + ONE_DAY;
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">long</span> ONE_DAY = <span class="literal">24</span>*<span class="literal">60</span>*<span class="literal">60</span>*<span class="literal">1000</span>;
+
+} 
+</pre>
+
+ Using various <code>TimeSource</code> implementations, you can mimic any desired behavior for a system clock.
+  
+ <p>It's simple to configure the JDK logger to use your fake system clock.
+A simple custom 
+<a href="https://docs.oracle.com/javase/10/docs/api/java/util/logging/Formatter.html"><code>Formatter</code></a> 
+can use your <code>TimeSource</code> to alter the time of the <code>LogRecord</code>:
+<br></p><pre>
+<span class="keyword">import</span> java.util.logging.LogRecord;
+<span class="keyword">import</span> java.util.logging.SimpleFormatter;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> SimpleFormatterTimeSource <span class="keyword">extends</span> SimpleFormatter {
+
+  <span class="keyword">@Override</span> <span class="keyword">public</span> String format(LogRecord aLogRecord) {
+    aLogRecord.setMillis(fTimeSource.currentTimeMillis());
+    <span class="keyword">return</span> <span class="keyword">super</span>.format(aLogRecord);
+  }
+
+  <span class="keyword">private</span> TimeSource fTimeSource = BuildImpl.forTimeSource();
+}
+ 
+</pre>
+
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActiond5a5.html?Id=33">Use a testing framework (JUnit)</a> <br>
+  <a href="TopicAction5a93.html?Id=237">Plugin Factory</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=234 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

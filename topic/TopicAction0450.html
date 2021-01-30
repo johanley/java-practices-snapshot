@@ -1,0 +1,204 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=174 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="main,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Test using main method</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Test using main method</div>
+
+<br>The <pre><code>public static void main(String...){}</code></pre> method may be used to test the operation of a class.
+It should probably be used informally, since it lacks the features of a more complete testing tool such as <a href="TopicActiond5a5.html?Id=33">JUnit</a>.
+<p>When finished testing, <code>main</code> can simply be deleted, or it may
+be kept for future needs. If kept, it's probably a good idea to change
+its scope to <code>private</code>, in order to avoiding polluting the class
+API with a method intended only for development. Of course, if <code>main</code>
+needs to be run again later, you will need to temporarily change its scope back to <code>public</code>.
+
+</p><p><b>Example</b>
+
+</p><p>Here, <code>SplashScreen.main</code> exercises the display of a splash screen.
+It's placed at the very bottom of the class, since it's intended only
+as a development tool. The informal character of this <code>main</code> is
+reflected in the call to <code>Thread.sleep</code>, which simply wastes time
+for a few seconds. Doing this in the real application would be silly,
+since a splash screen's purpose is to give the illusion of rapid feedback.
+In the real application, <code>SplashScreen</code> is disposed of not after
+a fixed number of seconds, but rather after the appearance of the primary
+window.
+<br></p><pre>
+<span class="keyword">package</span> hirondelle.stocks.main;
+
+<span class="keyword">import</span> java.awt.*;
+<span class="keyword">import</span> java.net.URL;
+<span class="keyword">import</span> java.awt.image.ImageObserver;
+
+<span class="comment">/**
+* Present a simple graphic to the user upon launch of the application, to 
+* provide a faster initial response than is possible with the main window.
+* 
+* &lt;P&gt;Adapted from an 
+* &lt;a href=http://developer.java.sun.com/developer/qow/archive/24/index.html&gt;item&lt;/a&gt; 
+* on Sun's Java Developer Connection.
+*
+* &lt;P&gt;This splash screen appears within about 2.5 seconds on a development 
+* machine. The main screen takes about 6.0 seconds to load, so use of a splash 
+* screen cuts down the initial display delay by about 55 percent.
+* 
+* &lt;P&gt;When JDK 6+ is available, its java.awt.SplashScreen class should be used instead 
+* of this class.
+*/</span>
+<span class="keyword">final</span> <span class="keyword">class</span> SplashScreen <span class="keyword">extends</span> Frame {
+
+  <span class="comment">/**
+  * Construct using an image for the splash screen.
+  *  
+  * @param aImageId must have content, and is used by  
+  * {@link Class#getResource(java.lang.String)} to retrieve the splash screen image.
+  */</span>
+  SplashScreen(String aImageId) {
+    <span class="comment">/* 
+    * Implementation Note
+    * Args.checkForContent is not called here, in an attempt to minimize 
+    * class loading.
+    */</span>
+    <span class="keyword">if</span> (aImageId == <span class="keyword">null</span> || aImageId.trim().length() == <span class="literal">0</span>){
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="literal">"Image Id does not have content."</span>);
+    }
+    fImageId = aImageId;
+  }
+   
+  <span class="comment">/**
+  * Show the splash screen to the end user.
+  *
+  * &lt;P&gt;Once this method returns, the splash screen is realized, which means 
+  * that almost all work on the splash screen should proceed through the event 
+  * dispatch thread. In particular, any call to &lt;tt&gt;dispose&lt;/tt&gt; for the 
+  * splash screen must be performed in the event dispatch thread.
+  */</span>
+  <span class="keyword">void</span> splash(){
+    initImageAndTracker();
+    setSize(fImage.getWidth(NO_OBSERVER), fImage.getHeight(NO_OBSERVER));
+    center();
+    fMediaTracker.addImage(fImage, IMAGE_ID);
+    <span class="keyword">try</span> {
+      fMediaTracker.waitForID(IMAGE_ID);
+    }
+    <span class="keyword">catch</span>(InterruptedException ex){
+      System.out.println(<span class="literal">"Cannot track image load."</span>);
+    }
+    SplashWindow splashWindow = <span class="keyword">new</span> SplashWindow(<span class="keyword">this</span>,fImage);
+  }
+  
+  <span class="comment">// PRIVATE
+</span>  <span class="keyword">private</span> <span class="keyword">final</span> String fImageId;
+  <span class="keyword">private</span> MediaTracker fMediaTracker;
+  <span class="keyword">private</span> Image fImage;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> ImageObserver NO_OBSERVER = <span class="keyword">null</span>; 
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> IMAGE_ID = <span class="literal">0</span>;
+
+  <span class="keyword">private</span> <span class="keyword">void</span> initImageAndTracker(){
+    fMediaTracker = <span class="keyword">new</span> MediaTracker(<span class="keyword">this</span>);
+    URL imageURL = SplashScreen.<span class="keyword">class</span>.getResource(fImageId);
+    fImage = Toolkit.getDefaultToolkit().getImage(imageURL);
+  }
+
+  <span class="comment">/**
+  * Centers the frame on the screen.
+  *
+  *&lt;P&gt;This centering service is more or less in {@link hirondelle.stocks.util.ui.UiUtil}; 
+  * this duplication is justified only because the use of  
+  * {@link hirondelle.stocks.util.ui.UiUtil} would entail more class loading, which is 
+  * not desirable for a splash screen.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">void</span> center(){
+    Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+    Rectangle frame = getBounds();
+    setLocation((screen.width - frame.width)/<span class="literal">2</span>, (screen.height - frame.height)/<span class="literal">2</span>);
+  }
+ 
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">class</span> SplashWindow <span class="keyword">extends</span> Window {
+    SplashWindow(Frame aParent, Image aImage) {
+       <span class="keyword">super</span>(aParent);
+       fImage = aImage;
+       setSize(fImage.getWidth(NO_OBSERVER), fImage.getHeight(NO_OBSERVER));
+       Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+       Rectangle window = getBounds();
+       setLocation((screen.width - window.width) / <span class="literal">2</span>,(screen.height - window.height)/<span class="literal">2</span>);
+       setVisible(<span class="keyword">true</span>);
+    }
+    <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> paint(Graphics graphics) {
+      <span class="keyword">if</span> (fImage != <span class="keyword">null</span>) {
+        graphics.drawImage(fImage,<span class="literal">0</span>,<span class="literal">0</span>,<span class="keyword">this</span>);
+      }
+    }
+    <span class="keyword">private</span> Image fImage;
+  }
+  
+  <span class="comment">/**
+  * Developer test harness shows the splash screen for a fixed length of 
+  * time, without launching the full application.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... aArgs){
+    SplashScreen splashScreen = <span class="keyword">new</span> SplashScreen(<span class="literal">"StocksMonitor.gif"</span>);
+    splashScreen.splash();
+    <span class="keyword">try</span> {
+      Thread.sleep(<span class="literal">2000</span>);
+    }
+    <span class="keyword">catch</span>(InterruptedException ex) {
+      System.out.println(ex);
+    }
+    System.exit(<span class="literal">0</span>);
+  }
+}
+ 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActiond5a5.html?Id=33">Use a testing framework (JUnit)</a> <br>
+  <a href="TopicAction028c.html?Id=149">Splash screen</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=174 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

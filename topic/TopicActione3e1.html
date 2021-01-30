@@ -1,0 +1,384 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=269 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:49 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="build,cheat sheet,Command,guidelines,maven,summary,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Using Maven for builds</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Using Maven for builds</div>
+
+<br><a href="https://maven.apache.org/">Maven</a> is a widely-used tool for building Java projects.
+
+<p>For those familiar with the basics of Maven, here are some reminders regarding its use.
+
+</p><h3>Running maven from the command line</h3>
+After downloading Maven, you'll usually want to adjust your environment variables:
+<ul>
+    <li>set <code>JAVA_HOME</code> to a local JDK, for example <code>set JAVA_HOME=C:\jdk1.8.0</code>
+    </li><li>append the <code>maven/bin</code> directory to the <code>PATH</code>
+</li></ul>
+The default Maven repository for downloaded jars and build artifacts has this default location:  
+<p><code>${user.home}/.m2/repository</code>
+
+</p><h3>Common command lines</h3>
+Examples:
+<ul>
+  <li><code>mvn validate</code> - sanity-check for the <code>pom.xml</code> file. (Each project has a <code>pom.xml</code> file that controls the behaviour of Maven.)
+  </li><li><code>mvn compile</code>
+  </li><li><code>mvn test</code>
+  </li><li><code>mvn package</code>
+  </li><li><code>mvn install</code>
+</li></ul>
+
+<code>mvn dependency:analyze</code> is a good sanity check. It detects 2 kinds of error:
+<ul>
+    <li>kruft: jars that are not really used
+    </li><li>finds jars that are needed, but aren't explicit dependencies (and should be).
+  In this case, the jars come via transitive fetching. 
+  A needs C, but gets C only because B depends on it. 
+  If B changes in the future, and no longer needs C, then A breaks because C wasn't an explicit dependency.
+</li></ul>
+
+Some common options for commands:
+<ul>
+ <li><code>-Dmaven.test.skip=true</code> don't run the unit tests
+ </li><li><code>-Pdev</code> run with a specific profile; profiles often carry data specific to a target environment
+ </li><li><code>-X</code> verbose
+ </li><li><code>-q</code> quiet
+ </li><li><code>-l</code> where to put the output log file
+ </li><li><code>-f</code> a custom name for the <code>pom.xml</code> file
+ </li><li><code>-e</code> verbose error reporting
+</li></ul>
+
+In general, a Maven command has this form:
+<pre>mvn [options] [goal(s)] [phase(s)]</pre>
+
+
+<h3>Archetype</h3>
+An archetype is a canned template for a project structure, for example a jar or war. 
+You typically start a new project by running a command like this to generate an 'archetypal' or standard directory structure:
+<p>A simple jar app:
+</p><pre>&gt;mvn archetype:generate -DartifactId=my-app -DgroupId=com.mycompany.app 
+   -DarchetypeArtifactId=maven-archetype-quickstart -DinteractiveMode=false</pre>
+A web app:
+<pre>&gt;mvn archetype:generate -DartifactId=my-web-app -DgroupId=com.mycompany.app 
+  -DarchetypeArtifactId=maven-archetype-webapp -DinteractiveMode=false</pre>
+
+For the web-app archetype, the tree looks like this after you have also run <code>mvn install</code>:
+<pre>
+├───src
+│ └───main
+│ ├───resources
+│ └───webapp
+│ └───WEB-INF
+└───target
+ ├───classes
+ ├───maven-archiver
+ └───my-web-app
+ ├───META-INF
+ └───WEB-INF
+ └───classes</pre>
+
+ 
+<h3>Packaging: Lifecycle, Phase, and Goal</h3>
+<pre>
+Packaging: 'LP(P:)G'
+   1x Lifecycle
+       Nx Phase
+          Nx(plugin:)Goal
+</pre>
+
+Packaging settings: 
+<ul>
+ <li><code>jar</code> (the default)
+ </li><li><code>pom</code>
+ </li><li><code>war</code>
+ </li><li><code>ear</code>
+ </li><li><code>rar</code>
+ </li><li><code>par</code>
+ </li><li><code>ejb</code>
+ </li><li><code>maven-plugin</code>
+</li></ul> 
+
+<p>There are 3 lifecycles. Here they are, listed with their phases:
+</p><ul>
+    <li><b>clean</b>: <code>pre-clean, clean, post-clean</code>
+    </li><li><b>default</b>: <code>validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, 
+    generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, 
+    prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy</code>
+    </li><li><b>site</b>: <code>pre-site, site, post-site, site-deploy</code>
+</li></ul>
+
+<p><b>The phases in a lifecycle are ordered and cumulative</b>: a later phase includes all earlier ones. 
+For example, invoking <code>mvn install</code> will always cause all preceding phases in that lifecycle to be executed as well. 
+Typical invocations of Maven specify 1..N phases. 
+For example, <code>mvn clean install</code> invokes 2 phases from 2 independent lifecycles.
+
+</p><p>Each phase, in turn, has N <code>plugin:goal</code>'s (much like an Ant target). 
+Each goal is implemented by a plugin. 
+You customize the behavior of a plugin by adding a <code>&lt;plugin&gt;</code> entry in the <code>pom.xml</code>.
+
+</p><p>Some important phases:
+</p><ul>
+    <li><code>validate</code> - validate the project is correct and all necessary information is available 
+    </li><li><code>compile</code> - compile the source code
+    </li><li><code>test</code> - run the unit tests
+    </li><li><code>package</code> - create the build target (a jar, for example)
+    </li><li><code>install</code> - put the build target into your local Maven repository
+</li></ul>
+
+
+<h3>Resource-Filters</h3>
+(Filter is actually a bad name; these refer to find-and-replace operations on special place-holder text in text files.)
+
+<p>In the resources directory, files can have place-holder references of the form <code>${blah}</code>. 
+Values for those references are defined in:
+</p><ul>
+    <li><code>pom.xml</code> profile settings (likely the most common location)
+    </li><li>as <code>pom.xml</code> properties, as in <code>${project.name}</code>, for instance
+    </li><li><code>main/filters/blah.properties</code>
+    </li><li>a System property
+    </li><li><code>settings.xml</code>, a Maven config file, as in <code>${settings.blah}</code>
+    </li><li>environment settings, as in <code>${env.blah}</code>
+</li></ul>
+
+<p>During the build, there is a maven phase (<code>process-resources</code>) which finds resource files and does a find-and-replace on all such 
+<code>${blah}</code> placeholder strings. 
+In the <code>pom.xml</code>, you need to turn this mechanism on explicitly, like so:
+</p><pre>
+&lt;build&gt;
+ &lt;resources&gt;
+  &lt;resource&gt;
+   &lt;directory&gt;src/main/resources&lt;/directory&gt;
+   &lt;filtering&gt;true&lt;/filtering&gt;
+   &lt;/resource&gt;
+ &lt;/resources&gt;
+&lt;/build&gt;
+</pre>
+
+
+<h3>Maven coordinates</h3>
+
+Maven uses the (rather silly) term of <code>coordinates</code> to refer to their conventional names for build 
+artifacts: the who-what-when information.
+
+<p>Example: <code>myorg.myproj:abc-web:1.1.0</code>
+
+</p><p>The colon acts as a separator. The 3 basic items are, in order:
+</p><ul>
+    <li><code>groupId</code> who made this
+    </li><li><code>artifactId</code> what is its name - avoid dots in this part
+    </li><li><code>version</code>  major.minor.increment.qualifier: 3.2.9, 3.2-beta
+</li></ul>
+
+Maven defines conventional version strings that it's able to parse (examples above). 
+The qualifier is simply plain text. 
+The other items are numeric. 
+Following this convention is highly recommended. 
+A version of <code>SNAPSHOT</code> has specific meaning to Maven: the build is a development build, not a release build.
+
+<p>There are variations in the version string, having these items appearing before the version:
+</p><ul>
+    <li>packaging
+    </li><li>classifier (for example jdk18)
+</li></ul>
+
+<h3>Layout</h3>
+Maven projects have a conventional layout (a directory tree). 
+A starter-version of that layout is generated when you start a project using a Maven archetype. 
+The project layout can be altered, but in practice that's probably rarely done. 
+When you deviate from the defaults, it requires more work to keep Maven functioning properly.
+
+<h3>Names of tests</h3>
+By default, in the test directory, Maven recognizes the following kinds of class names as unit tests:
+<ul>
+    <li><code>**/*Test.java</code>
+    </li><li><code>**/Test*.java</code>
+    </li><li><code>**/*TestCase.java</code>
+</li></ul>
+The idea is that it <em>won't</em> treat any other classes as tests. 
+This let you place helper or utility classes beside your test classes.
+
+<h3>Resource locations</h3>
+<ul>
+   <li><code>main/resources</code> items are put into the root of the jar
+   </li><li><code>test/resources</code> can be accessed in tests, as if they're in the root of the class path
+</li></ul>
+
+<h3>Artifact names</h3>
+You should avoid using dots in the <code>artifactId</code>, because it may lead to problems.
+
+<h3>Version numbers</h3>
+See above for details on version numbers. 
+Note as well that in the <code>pom.xml</code>, a standard version number, appearing as just 3.2, acts as advice to Maven. 
+Maven will try to use that version, as your preferred version, but it may, if needed, use a different version instead. 
+You alter this behaviour, and hard-code to a precise version, by decorating the version with a special syntax, for example <code>[3.2]</code>.
+
+<p>Versions have a special syntax:
+</p><ul>
+    <li>3.2 - my preferred version, but Maven may need to use some other version
+    </li><li>[3.2] - this exact version only
+    </li><li>(1.2, 3.2) - in this range (exclude the ends)
+    </li><li>[1.2,3.2] - in this range (include the ends)
+</li></ul>
+
+
+<h3>Dependencies</h3>
+If you declare a dependency on X, and X depends on Y, Maven will automagically fetch Y for you.
+A version is always needed. 
+If it's not explicit, it's taken from somewhere:
+<ul>
+    <li>defined by some other dependency
+    </li><li>defined by another <code>pom.xml</code>
+</li></ul>
+
+The scope of a dependency defines the contexts in which it's needed:
+<ul>
+    <li><code>compile</code> (the default; all cases; propagated to child projects)
+    </li><li><code>runtime</code> (run and test, but not compile)
+    </li><li><code>test</code> (tests only)
+    </li><li><code>provided</code> (compile and test, but not run). For example, the servlet API jars are provided by the container, 
+  so they don't need to be included in the war.
+</li></ul>
+
+<h3>Jars not available in a remote Maven repository</h3>
+In this case, you need to put the jar manually into the local repository, using a command similar to:
+ <pre>&gt;mvn install:install-file -Dfile=non-maven-proj.jar 
+ -DgroupId=some.group -DartifactId=non-maven-proj -Dversion=1 -Dpackaging=jar</pre>
+
+<h3>Sharing POMs</h3>
+There are 3 ways to share the content of a <code>pom.xml</code>:
+<ul>
+    <li>dependencies. 
+  For example, you can define a project that consists of nothing but shared dependencies, and then point your own project to it.
+    </li><li>super-pom
+    </li><li>aggregator-and-module
+</li></ul>
+
+<p>Be aware of sloppy terms when reading docs about these ideas: the terms parent and child are used, but they should be avoided, because they mean different things according to who's talking. 
+Your thinking will be clear if you stick to these terms instead:
+</p><ul>
+    <li>pom and its super-pom
+    </li><li>an aggregator-project and its N module-projects
+</li></ul>
+
+Inheritance from super-pom (Project Inheritance):
+<ul>
+    <li>one pom extends another, by including a <code>&lt;parent&gt;</code>, and pointing to a super-pom
+    </li><li>a super-pom is always present by default (Maven has a built-in super-pom)
+    </li><li>a pom gets most, but not all, of what's in its super-pom
+    </li><li>a pom has only 1 super-pom
+    </li><li>the super-pom must set its <code>packaging</code> to pom
+</li></ul>
+
+Aggregation: point to child-modules (Project Aggregation):
+<ul>
+    <li>the aggregator-pom sets its packaging to pom
+    </li><li>the aggregator-pom adds modules, pointing to N module-projects
+    </li><li>there are no changes to the module's pom
+    </li><li>the ordering of modules in the aggregator-pom isn't significant; if child A depends on child B, then Maven will figure it out
+    </li><li>any Maven commands on the aggregator-project are passed on to the module-projects
+</li></ul>
+
+It's legal to combine the above two styles:
+<ul>
+    <li>your-pom has a super-pom
+    </li><li>the super-pom has your-pom as one of its modules
+</li></ul>
+
+Be careful: whether or not something is inherited is tricky! 
+You should verify the behaviour if there's any doubt.
+
+<p>The <em>effective-pom</em>:
+</p><ul>
+    <li>is a merge of your-pom + all of its  super-poms (up the tree, 1 at a time)
+    </li><li><code>mvn help:effective-pom</code>  is the command that shows the effective-pom
+</li></ul>
+
+
+<h3>Dependency vs Dependency Management</h3>
+
+The difference between these 2 is with respect to poms that point to a super-pom. 
+Let's say that your-pom points to a super-pom, via the usual <code>parent</code> tag.
+<ul>
+    <li>If the super-pom has a regular <code>dependency</code>, then your-pom gets that <code>dependency</code>, no matter what.
+    </li><li>If the super-pom has the jar as a <code>dependencyManagement</code> item, then your-pom gets it only if your-pom explicitly declares it as a <code>dependency</code>. 
+  Furthermore, if your-pom's <code>dependency</code> leaves out version/scope for the item, then it gets the super-pom's version/scope.
+</li></ul>
+
+<h3>Profiles</h3>
+Some projects use profiles to customize the build for different environments. 
+One of the main things to customize are database settings.
+<ul>
+    <li>each profile must have an id 
+    </li><li>an example of using a profile id in a production build: <code>mvn -Pproduction clean install</code>
+    </li><li>profiles can override just about any setting in the <code>pom.xml</code>
+    </li><li>any property settings defined in a <code>&lt;profile&gt;</code> tag are visible during resource-filtering, so that placeholder 
+  strings <code>${blah}</code> in resource files can be replaced with real values defined by the current profile. 
+</li></ul>
+
+<p>Example of the syntax:
+</p><pre>&lt;profile&gt;
+ &lt;id&gt;production&lt;/id&gt;
+ &lt;properties&gt;
+   &lt;db.driverClass&gt;oracle.jdbc.driver.OracleDriver&lt;/db.driverClass&gt;
+   &lt;db.connectionURL&gt;jdbc:oracle:thin:@10.0.1.14:1521:APPS&lt;/db.connectionURL&gt;
+   &lt;db.username&gt;productionuser&lt;/db.username&gt;
+   &lt;db.password&gt;productionpassword&lt;/db.password&gt;
+ &lt;/properties&gt;
+&lt;/profile&gt; </pre>
+
+<h3>Practices to consider</h3>
+<ul>
+    <li>don't leave out the version of a dependency, since it will default to the latest version, which will change over time
+    </li><li>use <code>dependencyManagement</code> to centralize versions among modules
+    </li><li>avoid duplication by centralizing in a super-pom
+    </li><li>do your best to avoid repeating things
+    </li><li>consider using the enforcer plugin
+    </li><li>consider using the Maven release plugin
+    </li><li>in <code>pluginManagement</code>, consider defining explicitly all versions of all plugins, 
+  so you don't get clobbered by plugin upgrades (similar behaviour as for <code>dependencyManagement</code>)
+</li></ul>
+<p></p>
+
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=269 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:49 GMT -->
+</html>

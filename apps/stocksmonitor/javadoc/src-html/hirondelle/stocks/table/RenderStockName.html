@@ -1,0 +1,49 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/table/RenderStockName.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:38 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+RenderStockName.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.stocks.table;<a name=line.1></a>
+<a name=line.2></a>
+<span class='keyword'>import</span> javax.swing.table.*;<a name=line.3></a>
+<span class='keyword'>import</span> hirondelle.stocks.quotes.Stock;<a name=line.4></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Util;<a name=line.5></a>
+<a name=line.6></a>
+<span class='comment'>/**<a name=line.7></a>
+* Display a {@link Stock} in a table cell by placing the<a name=line.8></a>
+* full name in the cell, and by providing its Yahoo ticker <a name=line.9></a>
+* (including suffix for the {@link hirondelle.stocks.quotes.Exchange}) as tooltip.<a name=line.10></a>
+*/</span><a name=line.11></a>
+<span class='keyword'>final</span> <span class='keyword'>class</span> RenderStockName <span class='keyword'>extends</span> DefaultTableCellRenderer {<a name=line.12></a>
+  <a name=line.13></a>
+  <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> setValue(Object aValue) {<a name=line.14></a>
+    Object result = aValue;<a name=line.15></a>
+    <span class='keyword'>if</span> ((aValue != <span class='keyword'>null</span>) &amp;&amp; (aValue <span class='keyword'>instanceof</span> Stock)) {<a name=line.16></a>
+      Stock stock = (Stock) aValue;<a name=line.17></a>
+      result = stock.getName();<a name=line.18></a>
+      setTooltip(stock);<a name=line.19></a>
+    } <a name=line.20></a>
+    <span class='keyword'>super</span>.setValue(result);<a name=line.21></a>
+  }<a name=line.22></a>
+<a name=line.23></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> setTooltip(Stock aStock) {<a name=line.24></a>
+    StringBuilder tooltip = <span class='keyword'>new</span> StringBuilder(<span class='literal'>"Yahoo Ticker: "</span>);<a name=line.25></a>
+    tooltip.append(aStock.getTicker());<a name=line.26></a>
+    String suffix = aStock.getExchange().getTickerSuffix();<a name=line.27></a>
+    <span class='keyword'>if</span> (Util.textHasContent(suffix)) {<a name=line.28></a>
+      tooltip.append(<span class='literal'>"."</span>);<a name=line.29></a>
+      tooltip.append(suffix);<a name=line.30></a>
+    }<a name=line.31></a>
+    setToolTipText(tooltip.toString());<a name=line.32></a>
+  }   <a name=line.33></a>
+} <a name=line.34></a>
+</PRE><a name=line.35></a>
+ </BODY><a name=line.36></a>
+<HTML><a name=line.37></a>

@@ -1,0 +1,117 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=137 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="denial-of-service,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Repel invalid requests</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Repel invalid requests</div>
+
+<br>The <a href="http://www.owasp.org/">Open Web Application Security Project</a>
+has practical guidelines for implementing a secure web site. The first
+item on their list of security concerns is validating requests.
+<p>A reasonable approach is to first validate all requests before performing
+any other processing. Such checks can include:
+</p><ul>
+<li>
+check for requests whose overall size is unreasonably large (some attacks
+send requests with large payloads, in an attempt to overload the server)</li>
+
+<li>
+check for unknown parameter <i>names</i></li>
+
+<li>
+"sanity checks" for unreasonable parameter <i>values</i>, not expected
+during normal operation (for example, text of unreasonably large size,
+or a checkbox taking an unexpected value)</li>
+</ul>
+Early in processing, sanity checks on parameter values may be either complete
+or partial validations:
+<ul>
+<li>
+<em>complete</em> - for example, items presented to the user in a static drop down
+list, under normal operation, will take only the values defined by the
+web application. Any other value constitutes an invalid request (almost
+always a hack) which may be given a short, unpolished response, perhaps
+in static HTML.</li>
+
+<li>
+<em>partial</em> - for example, a free form text area can be checked for size, but
+not for detailed content. As a second example, a business identifer can
+be checked for textual form, but validating it against the datastore is
+not appropriate at this early stage in processing</li>
+</ul>
+Checks on parameter values might be performed at <i>two</i> stages in processing
+- early sanity checks (as described above), and later "business" validations.
+For example, if an <code>Age</code> is typed into a text <code>input</code> control,
+the parameter value can be validated in two steps:
+<ul>
+<li>
+first, validate the input can indeed build an <code>Integer</code>. This validation
+might be performed on the application's behalf by a framework which defines
+reasonable policies for converting text into an <code>Integer</code>, <code>Date</code>,
+<code>BigDecimal</code>, and so on.</li>
+
+<li>
+second, validate the <code>Integer</code> is, say, in the range <code>0..150</code>.
+This sort of validation can only be performed by an application, not by
+a framework.</li>
+</ul>
+
+
+<p>This two-step validation style is used in the <a href="TopicAction5f31.html?Id=188">WEB4J</a>
+framework. In WEB4J, business validations are performed by a <a href="TopicActiond08d.html?Id=187">Model
+Object</a> constructor.
+
+</p><p>Controls in an HTML form can perform simple validations.
+For example, a control for entering a number may be assigned a minimum and maximum accepted value.
+In order to be secure and robust, an app should repeat such validations on the server-side.
+
+<br>
+</p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction703a.html?Id=138">Parse parameters into domain objects</a> <br>
+  <a href="TopicAction5f31.html?Id=188">A Web App Framework   WEB4J</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=137 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

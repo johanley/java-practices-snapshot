@@ -1,0 +1,279 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=163 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:44 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="filter,swing,table,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Filter table rows</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Filter table rows</div>
+
+<br>Filtering table rows according to some criterion is a common requirement
+in Swing applications. JSE 6 has added a filter and sort mechanism to 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/javax/swing/JTable.html">JTable</a></code>, using 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/javax/swing/RowFilter.html">RowFilter</a></code> and 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/javax/swing/table/TableRowSorter.html">TableRowSorter</a></code>.
+
+<p>The following example is for JSE 1.5. 
+This example uses 
+<code><a href="../apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/quotes/Quote.html">Quote</a></code> 
+objects, which are data-centric objects
+containing information regarding the current price of a stock.
+
+</p><p><code>QuoteFilter</code> is an abstract base class (sometimes called an "ABC") which:
+</p><ul>
+<li>defines <code>isAcceptable</code>, which must be implemented by concrete subclasses
+(these represent specific filters)</li>
+<li>defines <code>sift</code>, a template method which calls <code>isAcceptable</code>,
+and which applies a particular filter to a given <code>Collection</code> of
+<code>Quote</code> objects</li>
+<li>does not have knowledge of any GUI elements</li>
+</ul>
+<br><pre>
+<span class="keyword">package</span> hirondelle.stocks.table;
+
+<span class="keyword">import</span> hirondelle.stocks.quotes.Quote;
+<span class="keyword">import</span> java.util.*;
+
+<span class="comment">/**
+* Allows collections of {@link Quote} objects 
+* to be filtered according to a criterion defined by implementors.
+* JDK less than 6.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">class</span> QuoteFilter {
+  
+  <span class="comment">/**
+  * Defines the criteria by which &lt;tt&gt;aQuote&lt;/tt&gt; is accepted or rejected 
+  * by this filter.
+  */</span>
+  <span class="keyword">abstract</span> <span class="keyword">public</span> <span class="keyword">boolean</span> isAcceptable(Quote aQuote);
+  
+  <span class="comment">/**
+  * Return a &lt;tt&gt;List&lt;/tt&gt; which has the same 
+  * iteration order as &lt;tt&gt;aQuotes&lt;/tt&gt;, but which includes only those elements 
+  * which satisfy {@link #isAcceptable}.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">final</span> List&lt;Quote&gt; sift(Collection&lt;Quote&gt; aQuotes ){
+    <span class="comment">/*
+    * This is an example of a template method : the general outline is
+    * defined here in this abstract base class, but the implementation of 
+    * specific steps (in this case the method isAcceptable) is left to 
+    * concrete subclasses.
+    *
+    * Note as well that this method is final, so that no subclass can override this 
+    * implementation.
+    */</span>
+    List&lt;Quote&gt; result = <span class="keyword">new</span> ArrayList&lt;&gt;();
+    <span class="keyword">for</span>(Quote quote : aQuotes){
+      <span class="keyword">if</span> (isAcceptable(quote)) {
+        result.add(quote);
+      }
+    }
+    <span class="keyword">return</span> result;
+  }
+}
+ 
+</pre>
+
+<br>The <code><a href="../apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/table/QuoteFilterFactory.html">QuoteFilterFactory</a></code> class
+<ul>
+ <li>defines all concrete implementations of <code>QuoteFilter</code> (using static
+ private classes)</li>
+ <li>provides a graphical interface for user selection of these filter implementations
+ (using a <code>JTree</code>)</li>
+</ul>
+<code>QuoteFilterFactory</code> uses the idea of attaching a "user object"
+to each node of a <code>JTree</code>. These user objects are the <code>QuoteFilter</code>
+implementations. When the user clicks on a new node, listeners attached
+to <code>QuoteFilterFactory</code> are informed of the change, and use <code>getSelectedFilter</code>
+to fetch the corresponding filter. They then use the filter object to update the 
+list underlying the <code>TableModel</code>, and then finally call <code>fireTableDataChanged</code>, 
+to ensure the change becomes visible to the user.
+<br><pre>
+<span class="comment">/**
+* Graphical component which allows the end user to select a 
+* {@link QuoteFilter}, and informs its listeners of changes 
+* to this selection.
+* JDK less than 6.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> QuoteFilterFactory <span class="keyword">extends</span> JScrollPane <span class="keyword">implements</span> Observer {
+
+  <span class="comment">/**
+  * Constructor.
+  *  
+  * @param aCurrentPortfolio is observed by this class, since the list of 
+  * possible filters displayed by this class depends on its content.
+  */</span>
+  <span class="keyword">public</span> QuoteFilterFactory (CurrentPortfolio aCurrentPortfolio){
+    fCurrentPortfolio = aCurrentPortfolio;
+    <span class="comment">//bad practice - 'this' is not fully defined until the constructor has returned:
+</span>    fCurrentPortfolio.addObserver(<span class="keyword">this</span>);
+    fSelectedFilter = NO_SELECTION_FILTER;
+    initGui();
+  }
+  
+  <span class="comment">/**
+  * Return the &lt;tt&gt;QuoteFilter&lt;/tt&gt; 
+  * attached to the currently selected item. If no selection is present, 
+  * then return a &lt;tt&gt;QuoteFilter&lt;/tt&gt; which accepts all {@link Quote} objects.
+  */</span>
+  <span class="keyword">public</span> QuoteFilter getSelectedFilter(){
+    assert fSelectedFilter != <span class="keyword">null</span> : <span class="literal">"Filter has null value."</span>;
+    <span class="keyword">return</span> fSelectedFilter;
+  }
+  
+  <span class="comment">//elided...
+</span>
+  
+  <span class="comment">// PRIVATE
+</span>
+  <span class="keyword">private</span> CurrentPortfolio fCurrentPortfolio;
+  
+  <span class="comment">/**
+  * The {@link QuoteFilter} corresponding to the user's 
+  * current non-null selection.
+  */</span>
+  <span class="keyword">private</span> QuoteFilter fSelectedFilter;
+  
+  <span class="comment">/**
+  * The {@link QuoteFilter} corresponding to the absence of 
+  * any user selection.
+  */</span>
+  <span class="keyword">private</span> QuoteFilter NO_SELECTION_FILTER = 
+    <span class="keyword">new</span> QuoteFilterAcceptAll(Consts.EMPTY_STRING)
+  ;
+
+  <span class="comment">//elided...
+</span>
+  <span class="comment">// All QuoteFilter implementations:
+</span>  
+  <span class="comment">/**
+  * No {@link Quote} objects are rejected by this filter.
+  *
+  *&lt;P&gt; Since more than one tree node uses this filter, text is 
+  * passed to the constructor to allows for customized display.
+  */</span>
+  <span class="keyword">static</span> <span class="keyword">private</span> <span class="keyword">class</span> QuoteFilterAcceptAll <span class="keyword">extends</span> QuoteFilter {
+    QuoteFilterAcceptAll(String aText) {
+      fText = aText;
+    }
+    <span class="keyword">public</span> <span class="keyword">boolean</span> isAcceptable(Quote aQuote){
+      <span class="keyword">return</span> <span class="keyword">true</span>;
+    }
+    <span class="keyword">@Override</span> <span class="keyword">public</span> String toString(){
+      <span class="keyword">return</span> fText;
+    }
+    <span class="keyword">private</span> <span class="keyword">final</span> String fText;
+  }
+  
+  <span class="comment">/**
+  * {@link Quote} objects are accepted only if they are from a specific 
+  * {@link Exchange}.
+  */</span>
+  <span class="keyword">static</span> <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">class</span> QuoteFilterExchange <span class="keyword">extends</span> QuoteFilter {
+    QuoteFilterExchange(Exchange aExchange) {
+      fTargetExchange = aExchange;
+    }
+    <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">boolean</span> isAcceptable(Quote aQuote){
+      <span class="keyword">return</span> aQuote.getStock().getExchange() == fTargetExchange;
+    }
+    <span class="keyword">@Override</span> <span class="keyword">public</span> String toString(){
+      <span class="keyword">return</span> fTargetExchange.toString();
+    }
+    <span class="keyword">private</span> Exchange fTargetExchange;
+  }
+  
+  <span class="comment">/**
+  * {@link Quote} objects are accepted only if todays price change is 
+  * non-negative.
+  */</span>
+  <span class="keyword">static</span> <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">class</span> QuoteFilterGainers <span class="keyword">extends</span> QuoteFilter {
+    <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">boolean</span> isAcceptable(Quote aQuote){
+      <span class="keyword">return</span> aQuote.getChange().doubleValue() &gt;= <span class="literal">0.0</span>;
+    }
+    <span class="keyword">@Override</span> <span class="keyword">public</span> String toString(){
+      <span class="keyword">return</span> GAINERS;
+    }
+  }
+
+  <span class="comment">/** 
+  * {@link Quote} objects are accepted only if todays price change is negative.
+  */</span>
+  <span class="keyword">static</span> <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">class</span> QuoteFilterLosers <span class="keyword">extends</span> QuoteFilter {
+    <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">boolean</span> isAcceptable(Quote aQuote){
+      <span class="keyword">return</span> aQuote.getChange().doubleValue() &lt; <span class="literal">0.0</span>;
+    }
+    <span class="keyword">@Override</span> <span class="keyword">public</span> String toString(){
+      <span class="keyword">return</span> LOSERS;
+    }
+  }
+  
+  <span class="comment">/** {@link Quote} objects are accepted only if it is an index.  */</span>
+  <span class="keyword">static</span> <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">class</span> QuoteFilterIndex <span class="keyword">extends</span> QuoteFilter {
+    <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">boolean</span> isAcceptable(Quote aQuote){
+      <span class="keyword">return</span> aQuote.getStock().isIndex();
+    }
+    <span class="keyword">@Override</span> <span class="keyword">public</span> String toString(){
+      <span class="keyword">return</span> INDEX;
+    }
+  }
+
+  <span class="comment">/** {@link Quote} objects are accepted only if it is not an index.  */</span>
+  <span class="keyword">static</span> <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">class</span> QuoteFilterNonIndex <span class="keyword">extends</span> QuoteFilter {
+    <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">boolean</span> isAcceptable(Quote aQuote){
+      <span class="keyword">return</span> !aQuote.getStock().isIndex();
+    }
+    <span class="keyword">@Override</span> <span class="keyword">public</span> String toString(){
+      <span class="keyword">return</span> NON_INDEX;
+    }
+  }
+}
+ 
+</pre>
+
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActiond357.html?Id=156">Observers and listeners</a> <br>
+  <a href="TopicActiond0e1.html?Id=162">Sort table rows</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=163 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:45 GMT -->
+</html>

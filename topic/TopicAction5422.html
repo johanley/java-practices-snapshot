@@ -1,0 +1,127 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=218 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Understand details of FORM tags</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Understand details of FORM tags</div>
+
+<br>When building web applications, you should have an excellent understanding of how 
+<code>&lt;<a href="http://www.w3.org/TR/html4/interact/forms.html">FORM</a>&gt;</code> tags work. 
+
+<p>In particular, there are a number of quirky behaviors that should be noted. 
+When in doubt, you can verify form behavior in various browsers. 
+Since these quirks are often related to browser implementations, and not to the HTML specfication itself, these quirks may change over time.
+
+</p><h4>SELECT Controls</h4>
+Even if the user has made no selection at all in a <code>&lt;<a href="http://www.w3.org/TR/html4/interact/forms.html#edef-SELECT">SELECT</a>&gt;</code> control, <em>browsers will automatically submit the first</em> <code>&lt;<a href="http://www.w3.org/TR/html4/interact/forms.html#edef-OPTION">OPTION</a>&gt;</code> appearing in the body of a <code>&lt;SELECT&gt;</code>.
+As a workaround, it's often useful to ensure that the first <code>&lt;OPTION&gt;</code> is a <em>blank</em> value, instead of a 'real' one.
+
+
+<h4>File Upload Controls</h4>
+Curiously, there is apparently no attribute to specify the <em>text</em> of the button used for <a href="http://www.w3.org/TR/html4/interact/forms.html#h-17.13.4.2">file upload</a> controls.
+The text is apparently deduced by the browser from language settings on the client, and not by settings in HTML or HTTP headers.
+
+<p>Reminder: if a form includes a file upload control, then it must have :
+</p><ul>
+<li><code>method='POST'</code>
+</li><li><code>enctype='multipart/form-data'</code>
+</li></ul>
+
+<p>Reminder: the Servlet API 2.5 has poor support for file upload requests.
+As soon as a form includes a file upload control, the format of the underlying request is completely changed.
+In particular, if no special measures are taken, <em>none</em> of the form's data will be available from <code>request.getParameter(String)</code>; this 
+applies to <em>all</em> of the form's data, both file upload controls <em>and</em> regular controls.
+
+</p><p>Tools such as Apache Commons <a href="http://commons.apache.org/fileupload/">FileUpload</a> are often used to handle such forms.
+Also note that support for file upload requests has been added to version 3.0 of the Servlet Specification.
+
+</p><h4>Submit Controls</h4>
+It's often desirable to distinguish between the appearance of a control, as seen by the end user, and the actual underlying value submitted to the server. 
+(This is particularly true in multilingual applications.)
+This is indeed possible for all controls, <em>except</em> for the <code>Submit</code> control, whose <code>value</code> attribute is used <em>both</em> for its visual appearance <em>and</em> for its submitted value.
+
+<p>This is a problem in multilingual applications where forms have more than one submit button (further <a href="TopicActionfbe8.html?Id=203">discussion</a>).
+
+</p><h4>Checkbox Controls</h4>
+When a <a href="http://www.w3.org/TR/html4/interact/forms.html#checkbox">checkbox</a> control is checked, its name and value are submitted to the server. 
+If the checkbox control is <em>not</em> checked, then it is not submitted at all. 
+That is, the server has two possible tasks: if the request parameter is present, then access its value. 
+If the request parameter is not submitted at all, then the server must assume some default value such as 'null' or 'false'.
+
+<h4>Disabled Controls and Read-Only Controls</h4>
+The <code><a href="http://www.w3.org/TR/html4/interact/forms.html#adef-readonly">readonly</a></code> and <code><a href="http://www.w3.org/TR/html4/interact/forms.html#adef-disabled">disabled</a></code> attributes are distinct, and have different behavior.
+The most important distinction is that readonly items are submitted, while disabled items are not.
+
+<p>When rendering reports or listings that include boolean values, it is tempting to use a disabled checkbox.
+However, some feel that such disabled checkboxes don't have a very pleasing appearance. 
+One alternative is to use an <em>image</em> instead of a checkbox control, to present the boolean value. 
+(One might even use an image of a checkbox.)
+
+
+</p><h4>Hitting Enter to Submit</h4>
+Forms are usually submitted by hitting a <code>Submit</code> button.
+However, forms can often be submitted just by hitting the <code>'Enter'</code> key. 
+This behavior is commonly used for web site search boxes.
+
+<p>Be careful that the server can handle <em>both</em> styles of submission - <code>Enter</code> key <em>and</em> <code>Submit</code> button.
+
+
+</p><h4>TEXTAREA Controls</h4>
+You often need to exercise care regarding how new lines are handled by your <code>&lt;<a href="http://www.w3.org/TR/html4/interact/forms.html#h-17.7">TEXTAREA</a>&gt;</code> controls.
+The <code>wrap</code> attribute can often be added to a <code>TEXTAREA</code> to define a desired policy for new line characters.
+Its values are :
+<pre>wrap=(hard|soft)</pre>
+
+<h4>Reminder - POST Versus GET</h4>
+If an operation has a side-effect (an edit to the database, for example), then <code><a href="http://www.w3.org/TR/html4/interact/forms.html#adef-method">method</a>='POST'</code> is highly recommended.
+If an operation has no side-effect (a list or search operation, for example), then <code>method='GET'</code> is highly recommended.
+
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActionfbe8.html?Id=203">Beware multilingual submit buttons</a> <br>
+  <a href="TopicAction4762.html?Id=221">Wrap file upload requests</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=218 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+</html>

@@ -1,0 +1,225 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=125 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="enhanced for,iteration,lambda,listiterator,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Ways of iterating</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Ways of iterating</div>
+
+<br>As the Java language has grown, so has the number of ways it can iterate over items.
+Here are some examples as reminders.
+<br><pre>
+<span class="keyword">import</span> java.util.ArrayList;
+<span class="keyword">import</span> java.util.Enumeration;
+<span class="keyword">import</span> java.util.Iterator;
+<span class="keyword">import</span> java.util.LinkedHashSet;
+<span class="keyword">import</span> java.util.List;
+<span class="keyword">import</span> java.util.ListIterator;
+<span class="keyword">import</span> java.util.Set;
+<span class="keyword">import</span> java.util.Vector;
+<span class="keyword">import</span> java.util.stream.IntStream;
+
+<span class="keyword">public</span> <span class="keyword">class</span> IterationExamples {
+  
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args) {
+    IterationExamples examples = <span class="keyword">new</span> IterationExamples();
+    examples.forLoopWithIntegerIndex();
+    examples.enhancedFor();
+    examples.explicitIterator();
+    examples.listIterator();
+    examples.overAnEnumeration();
+    examples.simpleDoWhileLoop();
+    examples.streamsAndLambdas();
+  }
+  
+  <span class="comment">/** Common error: off-by-one in the index value. */</span>
+  <span class="keyword">void</span> forLoopWithIntegerIndex(){
+    logTitle(<span class="literal">"Normal for loop."</span>);
+    <span class="keyword">for</span>(<span class="keyword">int</span> idx=<span class="literal">0</span>; idx &lt; NAMES.size(); ++idx){
+      log(NAMES.get(idx));
+    }
+  }
+
+  <span class="comment">/** More compact, less error-prone than the for-loop with an int index. */</span>
+  <span class="keyword">void</span> enhancedFor(){
+    logTitle(<span class="literal">"Enhanced-for loop. JDK 1.5+"</span>);
+    <span class="keyword">for</span>(String name : NAMES){
+      log(name);
+    }
+  }
+  
+  <span class="comment">/** 
+   A common reason for using an Iterator is to remove items from the collection.
+   With a normal enhanced-for loop, you can't modify the underlying collection
+   while you're iterating over it. 
+  */</span>
+  <span class="keyword">void</span> explicitIterator(){
+    logTitle(<span class="literal">"Explicit Iterator. JDK 1.5+"</span>);
+    <span class="comment">//not used here, since the Set is unmodifiable:
+</span>    <span class="comment">//Set&lt;String&gt; letters = Set.of("alpha", "beta", " ", "gamma");
+</span>    <span class="comment">//LinkedHashSet is modifiable (and has a predictable iteration order)
+</span>    Set&lt;String&gt; letters = <span class="keyword">new</span> LinkedHashSet&lt;&gt;(); 
+    letters.add(<span class="literal">"alpha"</span>); 
+    letters.add(<span class="literal">"beta"</span>); 
+    letters.add(<span class="literal">""</span>); <span class="comment">// an empty string 
+</span>    letters.add(<span class="literal">"gamma"</span>);
+    log(<span class="literal">"Before: "</span> + letters);
+    
+    <span class="comment">//now remove any empty strings from the collection
+</span>    Iterator&lt;String&gt; iter = letters.iterator();
+    <span class="keyword">while</span>(iter.hasNext()){
+      <span class="keyword">if</span> (iter.next().trim().length() == <span class="literal">0</span>){
+        <span class="comment">//this only works if the collection supports 'remove'
+</span>        iter.remove();
+      }
+    }
+    log(<span class="literal">"After: "</span> + letters);
+    
+    <span class="comment">/*
+     This second style has the advantage that the iterator object is 
+     confined to the for-loop; however, it's not as legible as the 
+     previous style.
+    */</span>
+    logTitle(<span class="literal">"Explicit iterator with a for-loop."</span>);
+    <span class="keyword">for</span> (Iterator&lt;String&gt; iter2 = letters.iterator(); iter2.hasNext();){
+      log(iter2.next());
+    }
+  }
+
+  <span class="comment">/** ListIterator is for Lists only. */</span>
+  <span class="keyword">void</span> listIterator(){
+    logTitle(<span class="literal">"ListIterator can add-remove-change. JDK1.5+"</span>);
+    List&lt;Integer&gt; years = <span class="keyword">new</span> ArrayList&lt;&gt;();
+    years.add(<span class="literal">1775</span>);
+    years.add(<span class="literal">1925</span>);
+    years.add(<span class="literal">1929</span>);
+    log(<span class="literal">"Before: "</span> + years);
+    ListIterator&lt;Integer&gt; iter = years.listIterator();
+    <span class="keyword">while</span> (iter.hasNext()){
+      Integer value = iter.next();
+      <span class="keyword">if</span> (value &gt;= <span class="literal">1900</span>){
+        iter.set(value - <span class="literal">1</span>);
+      }
+      <span class="keyword">else</span> <span class="keyword">if</span> (value &lt; <span class="literal">1800</span>){
+        iter.remove();
+      }
+    }
+    log(<span class="literal">"After: "</span> + years);
+  }
+  
+  <span class="comment">/** 
+   Enumerations are used by older APIs.
+   When defining new code, you should almost always use Collections and Maps instead. 
+  */</span>
+  <span class="keyword">void</span> overAnEnumeration(){
+    <span class="comment">//Vector is an older class, usually avoided in new code
+</span>    Vector&lt;String&gt; v = <span class="keyword">new</span> Vector&lt;&gt;(); 
+    v.add(<span class="literal">"alpha"</span>);
+    v.add(<span class="literal">"beta"</span>);
+    v.add(<span class="literal">"gamma"</span>);
+    Enumeration&lt;String&gt; e = v.elements();
+    logTitle(<span class="literal">"Enumeration, with a while loop."</span>);
+    <span class="keyword">while</span> (e.hasMoreElements()){
+      log(e.nextElement());
+    }
+  }
+  
+  <span class="comment">/**
+   do-while isn't used often. 
+   It differs from the while-loop in the placement of the boolean test.
+   In a do-while loop, the loop body is executed at least once. 
+  */</span>
+  <span class="keyword">void</span> simpleDoWhileLoop(){
+    logTitle(<span class="literal">"Do-while."</span>);
+    <span class="keyword">int</span> countDown = <span class="literal">5</span>;
+    <span class="keyword">do</span> {
+      log(countDown);
+      --countDown;
+    }
+    <span class="keyword">while</span>(countDown &gt; -<span class="literal">1</span>);
+  }
+
+  <span class="comment">/** @since Java 8 */</span>
+  <span class="keyword">void</span> streamsAndLambdas(){
+    logTitle(<span class="literal">"Iterable.forEach(Consumer). JDK 8+"</span>);
+    <span class="comment">//Iterable now has a functional-friendly forEach method that 
+</span>    <span class="comment">//takes a Consumer, so you don't even need an intermediate stream
+</span>    NAMES.forEach(name -&gt; log(name));
+
+    logTitle(<span class="literal">"Explicit stream with a lambda expression. JDK 8+"</span>);
+    NAMES.stream().forEach(name -&gt; log(name));
+    
+    logTitle(<span class="literal">"Explicit stream with a method reference expression. JDK 8+"</span>);
+    NAMES.stream().forEach(System.out::println);
+
+    logTitle(<span class="literal">"Using a stream in a second style, for N-line methods. JDK 8+"</span>);
+    NAMES.stream().forEach(name -&gt; {
+      log(name.toLowerCase());
+      log(name.toUpperCase());
+    });
+    
+    logTitle(<span class="literal">"IntStream has a compact way of defining ranges of integers."</span>);
+    IntStream.range(<span class="literal">10</span>,<span class="literal">20</span>).forEach(i -&gt; log(i));
+  }
+ 
+  <span class="comment">/** Warning: List.of() returns an unmodifiable list. */</span>
+  <span class="keyword">private</span> List&lt;String&gt; NAMES = List.of(<span class="literal">"Ann"</span>, <span class="literal">"Bob"</span>, <span class="literal">"Charles"</span>, <span class="literal">"Diane"</span>);
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">void</span> log(Object thing){
+    System.out.println(<span class="literal">"  "</span> + thing.toString());
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">void</span> logTitle(Object thing){
+    System.out.println(thing.toString());
+  }
+} 
+</pre>
+
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction5e5f.html?Id=88">Iterate without an index</a> <br>
+  <a href="TopicAction23e0.html?Id=196">Use for each liberally</a> <br>
+  <a href="TopicActionc99c.html?Id=282">Remove from a collection</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=125 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+</html>

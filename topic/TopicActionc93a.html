@@ -1,0 +1,223 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=284 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="var,local variable type inference,type inference,variable name,JEP 286,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Don't let var hide essential info</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Don't let var hide essential info</div>
+
+<br>
+<code>var</code> uses <em>local type inference</em> to deduce type.
+It was <a href="https://docs.oracle.com/javase/10/language/toc.htm#JSLAN-GUID-7D5FDD65-ACE4-4B3C-80F4-CC01CBD211A4">introduced in Java 10</a>.
+
+<p><code>var</code> is used in the body of a method.
+It exists in order to remove some forms of repeated type names in code.
+The benefit is that the code becomes more terse and legible.
+Using <code>var</code> has a significant effect on the appearance of code in general, since it can be used in many places. 
+
+
+</p><p>A simple example to illustrate:
+</p><pre><code>ByteArrayOutputStream weather = new ByteArrayOutputStream();
+var weather = new ByteArrayOutputStream();</code></pre>
+
+<p>There are many cases where a straightforward use of <code>var</code> will improve the implementation of a method (as above). 
+But <b>you shouldn't use <code>var</code> if it hides essential type information from the reader.</b>
+
+
+</p><p>Using variable names which clarify the meaning of code is always a good practice.
+When using <code>var</code>, the type information may not be completely explicit, so <b>using 
+good variable names becomes especially important</b>.  
+
+</p><p>
+<code>var</code> is a <b>not a reserved keyword</b> in the Java language.
+(This is a common misconception.) 
+For example, this code still compiles in Java 10, and it wouldn't compile if <code>var</code> was a keyword:
+</p><pre><code>String var = "Landau and Lifshitz";</code></pre>
+<code>var</code> is actually a <a href="https://docs.oracle.com/javase/specs/jls/se10/html/jls-3.html#jls-3.9">reserved type name</a>.
+If your code has a type named <code>var</code>, then conflicts will indeed occur.
+But given common Java naming conventions, the likelihood of such conflicts is probably infinitesimal. 
+
+<p><code>var</code> <em>can</em> be used for these kinds of variables:
+</p><ul>
+ <li>local variable declarations <em>with non-null initializers</em>
+ </li><li>enhanced for-loop indexes
+ </li><li>try-with-resources variables
+ </li><li>index variables declared in traditional for loops
+</li></ul>     
+
+<p><code>var</code> <em>cannot</em> be used for these kinds of variables:
+</p><ul>
+ <li>fields
+ </li><li>method arguments    
+ </li><li>lambda expressions
+ </li><li>method reference expressions 
+</li></ul>
+
+<p><b>Examples</b>
+<br></p><pre>
+<span class="keyword">import</span> java.io.ByteArrayOutputStream;
+<span class="keyword">import</span> java.io.FileInputStream;
+<span class="keyword">import</span> java.io.IOException;
+<span class="keyword">import</span> java.nio.file.Files;
+<span class="keyword">import</span> java.nio.file.Path;
+<span class="keyword">import</span> java.nio.file.Paths;
+<span class="keyword">import</span> java.time.LocalDate;
+<span class="keyword">import</span> java.util.ArrayList;
+<span class="keyword">import</span> java.util.LinkedHashMap;
+<span class="keyword">import</span> java.util.List;
+<span class="keyword">import</span> java.util.Map;
+
+<span class="comment">/** 
+ Examples of using var.
+  
+ @since Java 10 
+*/</span>  
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> UsingVar {
+  
+  <span class="comment">/**
+   It's glaringly obvious what the type is, because it  
+   appears on both the LHS (left-hand side) and the RHS (right-hand side).
+   This is likely the most common use case for var. 
+  */</span>
+  <span class="keyword">void</span> repeatedTypeName() {
+    <span class="comment">//without var
+</span>    ByteArrayOutputStream weather = <span class="keyword">new</span> ByteArrayOutputStream();
+   
+    <span class="comment">//with  var
+</span>    var readings = <span class="keyword">new</span> ByteArrayOutputStream();
+  }
+  
+  <span class="comment">/** 
+   Small improvement to iteration with enhanced-for loops.
+   The iteration variable can be a var. 
+  */</span>
+  <span class="keyword">void</span> enhancedForIteration() {
+    <span class="keyword">class</span> Nucleus{<span class="comment">/*elided*/</span>} <span class="comment">//a toy type to play with
+</span>    
+    <span class="comment">//without var
+</span>    List&lt;Nucleus&gt; nuclei = <span class="keyword">new</span> ArrayList&lt;&gt;();
+    <span class="keyword">for</span> (Nucleus nucleus : nuclei) {
+      <span class="comment">//..elided
+</span>    }
+    
+    <span class="comment">//with var
+</span>    <span class="comment">//note how the type moves to the RHS of the declaration
+</span>    var molecule = <span class="keyword">new</span> ArrayList&lt;Nucleus&gt;(); 
+    <span class="keyword">for</span> (var nucleus : molecule) {
+      <span class="comment">//..elided
+</span>    }
+  }
+
+  <span class="comment">/**
+   With simple integer-loops, you can use var, but it doesn't seem very useful. 
+  */</span>
+  <span class="keyword">void</span> oldStyleForLoop() {
+    <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="literal">0</span>; i &lt; <span class="literal">10</span>; ++i) {
+      <span class="comment">//..elided
+</span>    }
+    
+    <span class="keyword">for</span>(var i = <span class="literal">0</span>; i &lt; <span class="literal">10</span>; ++i) {
+      <span class="comment">//..elided
+</span>    }
+  }
+
+  <span class="comment">/**
+   Sometimes a local variable exists only as a step in a chain of operations.
+  */</span>
+  <span class="keyword">void</span> chainingIntermediateObjects() <span class="keyword">throws</span> IOException {
+    <span class="comment">//without var
+</span>    Path weather = Paths.get(<span class="literal">"weather.utf8"</span>); <span class="comment">//the intermediate object
+</span>    <span class="keyword">byte</span>[] weatherBytes = Files.readAllBytes(weather);
+
+    <span class="comment">//with var
+</span>    var readings = Paths.get(<span class="literal">"readings.utf8"</span>);
+    <span class="keyword">byte</span>[] readingsBytes = Files.readAllBytes(readings); 
+  }
+  
+  <span class="comment">/** Again, the type appears both on the LHS and the RHS. */</span>
+  <span class="keyword">void</span> repeatedTypeNameTryWithResources() <span class="keyword">throws</span> IOException {
+    <span class="comment">//without var
+</span>    <span class="keyword">try</span> (FileInputStream weather = <span class="keyword">new</span> FileInputStream(<span class="literal">"weather.utf8"</span>)) {
+      <span class="comment">//..elided
+</span>    }
+    
+    <span class="comment">//with var
+</span>    <span class="keyword">try</span> (var readings = <span class="keyword">new</span> FileInputStream(<span class="literal">"readings.utf8"</span>)) {
+      <span class="comment">//..elided
+</span>    }
+  }
+
+  <span class="comment">/**
+   There are occasions when iterating over a Map is particularly repetitive, and 
+   benefits from using var. 
+  */</span>
+  <span class="keyword">void</span> mapIteration() {
+    <span class="comment">//map course id to a list of student names
+</span>    
+    <span class="comment">//without var
+</span>    Map&lt;String, List&lt;String&gt;&gt; courseToStudents = <span class="keyword">new</span> LinkedHashMap&lt;&gt;();
+    <span class="keyword">for</span>(Map.Entry&lt;String, List&lt;String&gt;&gt; entry : courseToStudents.entrySet()) {
+      List&lt;String&gt; students = entry.getValue();
+    }
+    
+    <span class="comment">//with var
+</span>    <span class="comment">//note how the types move to the RHS of the declaration
+</span>    var courseToStudentsWithVar = <span class="keyword">new</span> LinkedHashMap&lt;Integer, List&lt;String&gt;&gt;();
+    <span class="keyword">for</span> (var entry : courseToStudentsWithVar.entrySet()) {
+      var students = entry.getValue();
+    }
+  }
+  
+  <span class="comment">/** Yes, the returned object can be a var. */</span>
+  List&lt;LocalDate&gt; returnedObject() {
+    var result = <span class="keyword">new</span> ArrayList&lt;LocalDate&gt;();
+    <span class="comment">//..some computation..
+</span>    <span class="keyword">return</span> result;
+  }
+} 
+</pre>
+
+<p></p>
+
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=284 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

@@ -1,0 +1,89 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=175 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="JSP,JSTL,servlet,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Prefer JSTL tags</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Prefer JSTL tags</div>
+
+<br><a href="http://www.oracle.com/technetwork/java/index-jsp-135995.html">JSTL</a> is a standard
+set of tags used for implementing common tasks in Java Server Pages. 
+It's probably best to prefer the JSTL over other tag libraries, if possible,
+since the average web programmer can be expected to be familiar with it.
+<p>To give an example of typical JSTL syntax, here are some JSP snippets which
+use the core, format, and function parts of JSTL:
+</p><pre>
+&lt;%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %&gt;  
+&lt;%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %&gt;
+&lt;%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %&gt; 
+...
+
+&lt;c:forEach var="restaurant" items="${itemsForListing}" varStatus="index"&gt;
+ &lt;tr class="row_highlight"&gt;
+  &lt;td title="Line Number"&gt;${index.count}&lt;/td&gt;
+  &lt;td&gt;${restaurant.name}&lt;/td&gt;
+  &lt;td align="center"&gt;${restaurant.location}&lt;/td&gt;
+  &lt;td&gt;${restaurant.price}&lt;/td&gt;
+  &lt;td align="center"&gt;${restaurant.comment}&lt;/td&gt;
+ &lt;/tr&gt;
+&lt;/c:forEach&gt;
+...
+
+System Properties (${fn:length(systemProperties)})
+&lt;c:forEach var="entry" items="${systemProperties}"&gt;
+ &lt;b&gt;${entry.key}&lt;/b&gt; = ${entry.value}
+&lt;/c:forEach&gt;
+
+
+&lt;jsp:useBean id="now" class="java.util.Date" /&gt;
+Copyright &lt;fmt:formatDate value="${now}" pattern="yyyy" /&gt; 
+
+</pre>
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction37f1.html?Id=95">Emit flexible URLs</a> <br>
+  <a href="TopicAction1c49.html?Id=109">Always maintain HttpSessions </a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=175 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

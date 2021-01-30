@@ -1,0 +1,67 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/preferences/PreferencesEditor.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:37 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+PreferencesEditor.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.stocks.preferences;<a name=line.1></a>
+<a name=line.2></a>
+<span class='keyword'>import</span> javax.swing.JComponent;<a name=line.3></a>
+<a name=line.4></a>
+<span class='comment'>/**<a name=line.5></a>
+* Allows editing of a set of related user preferences.<a name=line.6></a>
+*<a name=line.7></a>
+* &lt;P&gt;Implementations of this interface do not define a "stand-alone" GUI, <a name=line.8></a>
+* but rather a component (usually a &lt;tt&gt;JPanel&lt;/tt&gt;) which can be used by the <a name=line.9></a>
+* caller in any way they want. Typically, a set of &lt;tt&gt;PreferencesEditor&lt;/tt&gt; <a name=line.10></a>
+* objects are placed in a &lt;tt&gt;JTabbedPane&lt;/tt&gt;, one per pane.<a name=line.11></a>
+*/</span><a name=line.12></a>
+<span class='keyword'>public</span> <span class='keyword'>interface</span> PreferencesEditor { <a name=line.13></a>
+<a name=line.14></a>
+  <span class='comment'>/**<a name=line.15></a>
+  * Return a GUI component which allows the user to edit this set of related <a name=line.16></a>
+  * preferences.<a name=line.17></a>
+  */</span>  <a name=line.18></a>
+  JComponent getUI();<a name=line.19></a>
+<a name=line.20></a>
+  <span class='comment'>/**<a name=line.21></a>
+  * The name of the tab in which this &lt;tt&gt;PreferencesEditor&lt;/tt&gt;<a name=line.22></a>
+  * will be placed. <a name=line.23></a>
+  */</span><a name=line.24></a>
+  String getTitle();<a name=line.25></a>
+<a name=line.26></a>
+  <span class='comment'>/**<a name=line.27></a>
+  * The mnemonic to appear in the tab name.<a name=line.28></a>
+  *<a name=line.29></a>
+  * &lt;P&gt;Must match a letter appearing in {@link #getTitle}.<a name=line.30></a>
+  * Use constants defined in &lt;tt&gt;KeyEvent&lt;/tt&gt;, for example &lt;tt&gt;KeyEvent.VK_A&lt;/tt&gt;.<a name=line.31></a>
+  */</span><a name=line.32></a>
+  <span class='keyword'>int</span> getMnemonic();<a name=line.33></a>
+  <a name=line.34></a>
+  <span class='comment'>/**<a name=line.35></a>
+  * Store the related preferences as they are currently displayed, overwriting<a name=line.36></a>
+  * all corresponding settings.<a name=line.37></a>
+  */</span><a name=line.38></a>
+  <span class='keyword'>void</span> savePreferences();<a name=line.39></a>
+<a name=line.40></a>
+  <span class='comment'>/**<a name=line.41></a>
+  * Reset the related preferences to their default values, but only as <a name=line.42></a>
+  * presented in the GUI, without affecting stored preference values.<a name=line.43></a>
+  *<a name=line.44></a>
+  * &lt;P&gt;This method may not apply in all cases. For example, if the item <a name=line.45></a>
+  * represents a config which has no meaningful default value (such as a mail server <a name=line.46></a>
+  * name), the desired behavior may be to only allow a manual change. In such a <a name=line.47></a>
+  * case, the implementation of this method must be a no-operation. <a name=line.48></a>
+  */</span><a name=line.49></a>
+  <span class='keyword'>void</span> matchGuiToDefaultPreferences();<a name=line.50></a>
+}<a name=line.51></a>
+ <a name=line.52></a>
+</PRE><a name=line.53></a>
+ </BODY><a name=line.54></a>
+<HTML><a name=line.55></a>

@@ -1,0 +1,186 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+
+<!-- Mirrored from www.javapractices.com/apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/help/HelpAction.View.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:37 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>package hirondelle.stocks.help;<a name="line.1"></a><a name=line.1></a>
+<span class="sourceLineNo">002</span><a name="line.2"></a><a name=line.2></a>
+<span class="sourceLineNo">003</span>import java.awt.event.*;<a name="line.3"></a><a name=line.3></a>
+<span class="sourceLineNo">004</span>import javax.swing.*;<a name="line.4"></a><a name=line.4></a>
+<span class="sourceLineNo">005</span>import java.util.logging.*;<a name="line.5"></a><a name=line.5></a>
+<span class="sourceLineNo">006</span>import javax.help.*;<a name="line.6"></a><a name=line.6></a>
+<span class="sourceLineNo">007</span>import java.net.URL;<a name="line.7"></a><a name=line.7></a>
+<span class="sourceLineNo">008</span>import hirondelle.stocks.util.Args;<a name="line.8"></a><a name=line.8></a>
+<span class="sourceLineNo">009</span>import hirondelle.stocks.util.Util;<a name="line.9"></a><a name=line.9></a>
+<span class="sourceLineNo">010</span><a name="line.10"></a><a name=line.10></a>
+<span class="sourceLineNo">011</span>/**<a name="line.11"></a><a name=line.11></a>
+<span class="sourceLineNo">012</span>* Display the help system for the application.<a name="line.12"></a><a name=line.12></a>
+<span class="sourceLineNo">013</span>*<a name="line.13"></a><a name=line.13></a>
+<span class="sourceLineNo">014</span>* &lt;P&gt;Display one of table of contents, index, or search tab, according <a name="line.14"></a><a name=line.14></a>
+<span class="sourceLineNo">015</span>* to argument passed to the constructor. This implementation uses <a name="line.15"></a><a name=line.15></a>
+<span class="sourceLineNo">016</span>* Sun's &lt;a href=http://java.sun.com/products/javahelp/&gt;JavaHelp&lt;/a&gt; tool.<a name="line.16"></a><a name=line.16></a>
+<span class="sourceLineNo">017</span>*<a name="line.17"></a><a name=line.17></a>
+<span class="sourceLineNo">018</span>* &lt;P&gt;This action activates the Help key (often &lt;tt&gt;F1&lt;/tt&gt;) for this application. <a name="line.18"></a><a name=line.18></a>
+<span class="sourceLineNo">019</span>* When the help key is pressed, the help system's table of contents is displayed.<a name="line.19"></a><a name=line.19></a>
+<span class="sourceLineNo">020</span>*<a name="line.20"></a><a name=line.20></a>
+<span class="sourceLineNo">021</span>* &lt;P&gt;This action is unusual in that it corresponds to more than one menu item <a name="line.21"></a><a name=line.21></a>
+<span class="sourceLineNo">022</span>* (Contents, Index, and Search).<a name="line.22"></a><a name=line.22></a>
+<span class="sourceLineNo">023</span>*<a name="line.23"></a><a name=line.23></a>
+<span class="sourceLineNo">024</span>* &lt;P&gt;Note: the displayed JavaHelp screen is not centered; it's left as is, <a name="line.24"></a><a name=line.24></a>
+<span class="sourceLineNo">025</span>* since the JavaHelp GUI is often cut off at the bottom anyway, and centering would <a name="line.25"></a><a name=line.25></a>
+<span class="sourceLineNo">026</span>* make this problem worse.<a name="line.26"></a><a name=line.26></a>
+<span class="sourceLineNo">027</span>*/<a name="line.27"></a><a name=line.27></a>
+<span class="sourceLineNo">028</span>public final class HelpAction extends AbstractAction {<a name="line.28"></a><a name=line.28></a>
+<span class="sourceLineNo">029</span><a name="line.29"></a><a name=line.29></a>
+<span class="sourceLineNo">030</span>  /**<a name="line.30"></a><a name=line.30></a>
+<span class="sourceLineNo">031</span>  * Constructor.<a name="line.31"></a><a name=line.31></a>
+<span class="sourceLineNo">032</span>  *  <a name="line.32"></a><a name=line.32></a>
+<span class="sourceLineNo">033</span>  * @param aFrame parent window to which the help window is attached<a name="line.33"></a><a name=line.33></a>
+<span class="sourceLineNo">034</span>  * @param aText name of the menu item for this help action<a name="line.34"></a><a name=line.34></a>
+<span class="sourceLineNo">035</span>  * @param aMnemonicKeyEvent mnemonic for &lt;tt&gt;aText&lt;/tt&gt;<a name="line.35"></a><a name=line.35></a>
+<span class="sourceLineNo">036</span>  * @param aIcon possibly-null graphic to be displayed alongside the text, or <a name="line.36"></a><a name=line.36></a>
+<span class="sourceLineNo">037</span>  * in a toolbar<a name="line.37"></a><a name=line.37></a>
+<span class="sourceLineNo">038</span>  * @param aView determines which help window is to be displayed: Contents, Index, <a name="line.38"></a><a name=line.38></a>
+<span class="sourceLineNo">039</span>  * or Search<a name="line.39"></a><a name=line.39></a>
+<span class="sourceLineNo">040</span>  */<a name="line.40"></a><a name=line.40></a>
+<span class="sourceLineNo">041</span>  public HelpAction(<a name="line.41"></a><a name=line.41></a>
+<span class="sourceLineNo">042</span>    JFrame aFrame, String aText, int aMnemonicKeyEvent, Icon aIcon, View aView<a name="line.42"></a><a name=line.42></a>
+<span class="sourceLineNo">043</span>  ) {<a name="line.43"></a><a name=line.43></a>
+<span class="sourceLineNo">044</span>    super(aText, aIcon);<a name="line.44"></a><a name=line.44></a>
+<span class="sourceLineNo">045</span>    Args.checkForNull(aFrame);<a name="line.45"></a><a name=line.45></a>
+<span class="sourceLineNo">046</span>    Args.checkForNull(aText);<a name="line.46"></a><a name=line.46></a>
+<span class="sourceLineNo">047</span>    Args.checkForNull(aView);<a name="line.47"></a><a name=line.47></a>
+<span class="sourceLineNo">048</span>    fFrame = aFrame;<a name="line.48"></a><a name=line.48></a>
+<span class="sourceLineNo">049</span>    fView = aView;<a name="line.49"></a><a name=line.49></a>
+<span class="sourceLineNo">050</span>    putValue(SHORT_DESCRIPTION, "StocksMonitor Help");<a name="line.50"></a><a name=line.50></a>
+<span class="sourceLineNo">051</span>    putValue(LONG_DESCRIPTION, "Displays JavaHelp for StocksMonitor.");<a name="line.51"></a><a name=line.51></a>
+<span class="sourceLineNo">052</span>    putValue(MNEMONIC_KEY, new Integer(aMnemonicKeyEvent) );    <a name="line.52"></a><a name=line.52></a>
+<span class="sourceLineNo">053</span>    initHelpSystem(); <a name="line.53"></a><a name=line.53></a>
+<span class="sourceLineNo">054</span>  }<a name="line.54"></a><a name=line.54></a>
+<span class="sourceLineNo">055</span><a name="line.55"></a><a name=line.55></a>
+<span class="sourceLineNo">056</span>  @Override public void actionPerformed(ActionEvent event) {<a name="line.56"></a><a name=line.56></a>
+<span class="sourceLineNo">057</span>    fLogger.info("Showing help system.");<a name="line.57"></a><a name=line.57></a>
+<span class="sourceLineNo">058</span>    fHelpBroker.setCurrentView( fView.toString() );<a name="line.58"></a><a name=line.58></a>
+<span class="sourceLineNo">059</span>    fDisplayHelp.actionPerformed( event );<a name="line.59"></a><a name=line.59></a>
+<span class="sourceLineNo">060</span>  }<a name="line.60"></a><a name=line.60></a>
+<span class="sourceLineNo">061</span>  <a name="line.61"></a><a name=line.61></a>
+<span class="sourceLineNo">062</span>  /** Enumeration for the style of presentation of the the Help system. */<a name="line.62"></a><a name=line.62></a>
+<span class="sourceLineNo">063</span>  public enum View {<a name="line.63"></a><a name=line.63></a>
+<span class="sourceLineNo">064</span>    SEARCH("Search"), <a name="line.64"></a><a name=line.64></a>
+<span class="sourceLineNo">065</span>    CONTENTS("TOC"), <a name="line.65"></a><a name=line.65></a>
+<span class="sourceLineNo">066</span>    INDEX("Index");<a name="line.66"></a><a name=line.66></a>
+<span class="sourceLineNo">067</span>    @Override public String toString(){<a name="line.67"></a><a name=line.67></a>
+<span class="sourceLineNo">068</span>      return fName;<a name="line.68"></a><a name=line.68></a>
+<span class="sourceLineNo">069</span>    }<a name="line.69"></a><a name=line.69></a>
+<span class="sourceLineNo">070</span>    private View(String aName){<a name="line.70"></a><a name=line.70></a>
+<span class="sourceLineNo">071</span>      fName = aName;<a name="line.71"></a><a name=line.71></a>
+<span class="sourceLineNo">072</span>    }<a name="line.72"></a><a name=line.72></a>
+<span class="sourceLineNo">073</span>    private String fName;<a name="line.73"></a><a name=line.73></a>
+<span class="sourceLineNo">074</span>  } <a name="line.74"></a><a name=line.74></a>
+<span class="sourceLineNo">075</span><a name="line.75"></a><a name=line.75></a>
+<span class="sourceLineNo">076</span>  // PRIVATE <a name="line.76"></a><a name=line.76></a>
+<span class="sourceLineNo">077</span>  private JFrame fFrame;<a name="line.77"></a><a name=line.77></a>
+<span class="sourceLineNo">078</span>  private View fView;<a name="line.78"></a><a name=line.78></a>
+<span class="sourceLineNo">079</span>  /** Path used by a classloader to find the JavaHelp files. */<a name="line.79"></a><a name=line.79></a>
+<span class="sourceLineNo">080</span>  private static final String PATH_TO_JAVA_HELP =<a name="line.80"></a><a name=line.80></a>
+<span class="sourceLineNo">081</span>    "hirondelle/stocks/help/JavaHelp/HelpSet.hs"<a name="line.81"></a><a name=line.81></a>
+<span class="sourceLineNo">082</span>  ;<a name="line.82"></a><a name=line.82></a>
+<span class="sourceLineNo">083</span>  private ClassLoader DEFAULT_CLASS_LOADER = null;<a name="line.83"></a><a name=line.83></a>
+<span class="sourceLineNo">084</span>  private static final Logger fLogger = Util.getLogger(HelpAction.class); <a name="line.84"></a><a name=line.84></a>
+<span class="sourceLineNo">085</span>  <a name="line.85"></a><a name=line.85></a>
+<span class="sourceLineNo">086</span>  private HelpBroker fHelpBroker;<a name="line.86"></a><a name=line.86></a>
+<span class="sourceLineNo">087</span>  private CSH.DisplayHelpFromSource fDisplayHelp;<a name="line.87"></a><a name=line.87></a>
+<span class="sourceLineNo">088</span>  <a name="line.88"></a><a name=line.88></a>
+<span class="sourceLineNo">089</span>  /** Initialize the JavaHelp system. */<a name="line.89"></a><a name=line.89></a>
+<span class="sourceLineNo">090</span>  private void initHelpSystem(){<a name="line.90"></a><a name=line.90></a>
+<span class="sourceLineNo">091</span>    //optimization to avoid repeated init<a name="line.91"></a><a name=line.91></a>
+<span class="sourceLineNo">092</span>    if ( fHelpBroker != null &amp;&amp; fDisplayHelp != null) return;<a name="line.92"></a><a name=line.92></a>
+<span class="sourceLineNo">093</span>    <a name="line.93"></a><a name=line.93></a>
+<span class="sourceLineNo">094</span>    //(uses the classloader mechanism)<a name="line.94"></a><a name=line.94></a>
+<span class="sourceLineNo">095</span>    ClassLoader loader = this.getClass().getClassLoader();<a name="line.95"></a><a name=line.95></a>
+<span class="sourceLineNo">096</span>    URL helpSetURL = HelpSet.findHelpSet(loader, PATH_TO_JAVA_HELP);<a name="line.96"></a><a name=line.96></a>
+<span class="sourceLineNo">097</span>    assert helpSetURL != null : "Cannot find help system.";<a name="line.97"></a><a name=line.97></a>
+<span class="sourceLineNo">098</span>    try {<a name="line.98"></a><a name=line.98></a>
+<span class="sourceLineNo">099</span>      HelpSet helpSet = new HelpSet(DEFAULT_CLASS_LOADER, helpSetURL);<a name="line.99"></a><a name=line.99></a>
+<span class="sourceLineNo">100</span>      fHelpBroker = helpSet.createHelpBroker();<a name="line.100"></a><a name=line.100></a>
+<span class="sourceLineNo">101</span>      fHelpBroker.enableHelpKey( fFrame.getRootPane(), "overview", helpSet );<a name="line.101"></a><a name=line.101></a>
+<span class="sourceLineNo">102</span>      fDisplayHelp = new CSH.DisplayHelpFromSource(fHelpBroker);<a name="line.102"></a><a name=line.102></a>
+<span class="sourceLineNo">103</span>    }<a name="line.103"></a><a name=line.103></a>
+<span class="sourceLineNo">104</span>    catch (HelpSetException ex) {<a name="line.104"></a><a name=line.104></a>
+<span class="sourceLineNo">105</span>      fLogger.severe("Cannot create help system with: " + helpSetURL);<a name="line.105"></a><a name=line.105></a>
+<span class="sourceLineNo">106</span>    }<a name="line.106"></a><a name=line.106></a>
+<span class="sourceLineNo">107</span>    assert fHelpBroker != null : "HelpBroker is null.";<a name="line.107"></a><a name=line.107></a>
+<span class="sourceLineNo">108</span>  }<a name="line.108"></a><a name=line.108></a>
+<span class="sourceLineNo">109</span>}<a name="line.109"></a><a name=line.109></a>
+<a name=line.110></a>
+<a name=line.111></a>
+<a name=line.112></a>
+<a name=line.113></a>
+<a name=line.114></a>
+<a name=line.115></a>
+<a name=line.116></a>
+<a name=line.117></a>
+<a name=line.118></a>
+<a name=line.119></a>
+<a name=line.120></a>
+<a name=line.121></a>
+<a name=line.122></a>
+<a name=line.123></a>
+<a name=line.124></a>
+<a name=line.125></a>
+<a name=line.126></a>
+<a name=line.127></a>
+<a name=line.128></a>
+<a name=line.129></a>
+<a name=line.130></a>
+<a name=line.131></a>
+<a name=line.132></a>
+<a name=line.133></a>
+<a name=line.134></a>
+<a name=line.135></a>
+<a name=line.136></a>
+<a name=line.137></a>
+<a name=line.138></a>
+<a name=line.139></a>
+<a name=line.140></a>
+<a name=line.141></a>
+<a name=line.142></a>
+<a name=line.143></a>
+<a name=line.144></a>
+<a name=line.145></a>
+<a name=line.146></a>
+<a name=line.147></a>
+<a name=line.148></a>
+<a name=line.149></a>
+<a name=line.150></a>
+<a name=line.151></a>
+<a name=line.152></a>
+<a name=line.153></a>
+<a name=line.154></a>
+<a name=line.155></a>
+<a name=line.156></a>
+<a name=line.157></a>
+<a name=line.158></a>
+<a name=line.159></a>
+<a name=line.160></a>
+<a name=line.161></a>
+<a name=line.162></a>
+<a name=line.163></a>
+<a name=line.164></a>
+<a name=line.165></a>
+<a name=line.166></a>
+<a name=line.167></a>
+<a name=line.168></a>
+<a name=line.169></a>
+</pre><a name=line.170></a>
+</div><a name=line.171></a>
+</body><a name=line.172></a>
+
+<!-- Mirrored from www.javapractices.com/apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/help/HelpAction.View.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:37 GMT -->
+</html><a name=line.173></a>

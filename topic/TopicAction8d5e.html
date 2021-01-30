@@ -1,0 +1,115 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=99 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="assertion,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Force enabling of assertions</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Force enabling of assertions</div>
+
+<br>It's sometimes useful to require assertions to be always enabled for
+a particular class at runtime.
+
+<p><b>Example</b>
+
+</p><p>If <code>NuclearReactor</code> is loaded into an environment which has disabled
+assertions, then its static initializer will throw a <code>RuntimeException</code>.
+
+</p><p>Two example runs of <code>NuclearReactor</code> give :
+<br><code>&gt;java -cp . -enableassertions NuclearReactor</code>
+<br><code>Proceeding normally...</code>
+<br><code>&gt;java -cp . NuclearReactor</code>
+<br><code>Exception in thread "main" java.lang.ExceptionInInitializerError</code>
+<br><code>Caused by: java.lang.RuntimeException: Asserts must be enabled
+for NuclearReactor.</code>
+<br><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; at NuclearReactor.&lt;clinit&gt;(NuclearReactor.java:22)</code>
+<br></p><pre>
+<span class="keyword">import</span> java.util.Objects;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> NuclearReactor {
+
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... arguments){
+    NuclearReactor reactor = <span class="keyword">new</span> NuclearReactor(<span class="literal">"Fermi"</span>);
+    System.out.println(<span class="literal">"Proceeding normally..."</span>);
+  }
+
+  <span class="comment">/**
+  * Prevent this class from running with assertions disabled.
+  *
+  * If assertions are disabled, then a RuntimeException will be
+  * thrown upon class loading.
+  */</span>
+  <span class="keyword">static</span> {
+    <span class="keyword">boolean</span> hasAssertEnabled = <span class="keyword">false</span>;
+    assert hasAssertEnabled = <span class="keyword">true</span>; <span class="comment">// rare - an intentional side effect!
+</span>    <span class="keyword">if</span>(!hasAssertEnabled){
+      <span class="keyword">throw</span> <span class="keyword">new</span> RuntimeException(<span class="literal">"Asserts must be enabled for NuclearReactor."</span>);
+    }
+  }
+
+  <span class="comment">/**
+  * @param name is non-null.
+  */</span>
+  <span class="keyword">public</span> NuclearReactor(String name){
+    <span class="comment">//do NOT use assert to verify parameters passed to
+</span>    <span class="comment">//non-private methods
+</span>    <span class="keyword">this</span>.name = Objects.requireNonNull(name);
+  }
+
+  <span class="keyword">public</span> String getName(){
+    <span class="keyword">return</span> name;
+  }
+  
+  <span class="comment">//..elided
+</span>
+  <span class="comment">// PRIVATE
+</span>  <span class="keyword">private</span> <span class="keyword">final</span> String name;
+}
+ 
+</pre>
+
+<br>
+<p></p>
+<p></p>
+
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=99 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+</html>

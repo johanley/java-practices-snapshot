@@ -1,0 +1,159 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=46 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="design pattern,singleton,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Singleton</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Singleton</div>
+
+<br>Singleton classes represent objects for which only one single instance should exist. 
+
+<p>The important question here is this: <b>will any actual harm come to the system</b> if more than 1 object is created?
+If the answer is "no" (and it usually is), then there's <b>no need whatsoever</b> to use a singleton.
+If the answer is "yes", then you will need to consider it. 
+The main point is that a singleton should only be used if it's really necessary. 
+
+
+</p><p>Here's an <a href="http://www.oracle.com/technetwork/articles/java/singleton-1577166.html">article</a>
+from Oracle describing them. This article, along with many others, reports many 
+subtle problems with singletons. You should likely exercise care when using this pattern.
+
+</p><p><b>Example 1</b>
+</p><p><b>This is the preferred style of implementing singletons.</b> It uses a simple enumeration.
+It has no special needs for serialization, and is immune to clever attacks.
+<br></p><pre>
+<span class="comment">/** Preferred style for singletons. */</span>
+<span class="keyword">public</span> <span class="keyword">enum</span> SantaClaus {
+  INSTANCE;
+  
+  <span class="comment">/**Add some behavior to the object. */</span>
+  <span class="keyword">public</span> <span class="keyword">void</span> distributePresents(){
+    <span class="comment">//elided    
+</span>  }
+  
+  <span class="comment">/** Demonstrate use of SantaClaus. */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args){
+    SantaClaus fatGuy = SantaClaus.INSTANCE;
+    fatGuy.distributePresents();
+    
+    <span class="comment">//doesn't compile :
+</span>    <span class="comment">//SantaClaus fatGuy = new SantaClaus();
+</span>  }
+} 
+</pre>
+
+<b>Example 2</b>
+<p></p><p>Here's an alternate style. 
+If you decide that the class should no longer be a singleton, you may simply change the implementation of <code>getInstance</code>.
+<br></p><pre>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Universe {
+
+  <span class="keyword">public</span> <span class="keyword">static</span> Universe getInstance() {
+     <span class="keyword">return</span> INSTANCE;
+  }
+
+  <span class="comment">// PRIVATE
+</span>
+  <span class="comment">/**
+  * Single instance created upon class loading.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Universe INSTANCE =  <span class="keyword">new</span> Universe();
+
+  <span class="comment">/**
+  * Private constructor prevents construction outside this class.
+  */</span>
+  <span class="keyword">private</span> Universe() {
+    <span class="comment">//..elided
+</span>  }
+} 
+</pre>
+
+<b>Example 3</b>
+<p></p><p>If the above style of singleton is to be <code>Serializable</code> as well, then you must add a <code>readResolve</code> method.
+<br></p><pre>
+<span class="keyword">import</span> java.io.*;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> EasterBunny <span class="keyword">implements</span> Serializable {
+
+  <span class="keyword">public</span> <span class="keyword">static</span> EasterBunny getInstance() {
+     <span class="keyword">return</span> INSTANCE;
+  }
+
+  <span class="comment">// PRIVATE
+</span>
+  <span class="comment">/**
+  * Single instance created upon class loading.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> EasterBunny INSTANCE =  <span class="keyword">new</span> EasterBunny();
+
+  <span class="comment">/**
+  * Private constructor prevents construction outside this class.
+  */</span>
+  <span class="keyword">private</span> EasterBunny() {
+    <span class="comment">//..elided
+</span>  }
+
+  <span class="comment">/**
+  * If the singleton implements Serializable, then this
+  * method must be supplied.
+  */</span>
+  <span class="keyword">private</span> Object readResolve() <span class="keyword">throws</span> ObjectStreamException {
+    <span class="keyword">return</span> INSTANCE;
+  }
+} 
+</pre>
+
+
+<p></p><p>You might also consider defining your own <a href="TopicAction7ce2.html?Id=240">tag interface</a> for singleton classes.
+
+<br>
+</p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction79e9.html?Id=40">Private constructor</a> <br>
+  <a href="TopicActionb750.html?Id=45">Implementing Serializable</a> <br>
+  <a href="TopicActionbf99.html?Id=121">Some classes need readResolve</a> <br>
+  <a href="TopicAction7ce2.html?Id=240">Tag or marker interfaces</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=46 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

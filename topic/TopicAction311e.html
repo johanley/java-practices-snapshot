@@ -1,0 +1,96 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=136 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Separate public and private members</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Separate public and private members</div>
+
+<br>It's a common practice to separate the members of a class according
+to their scope (private, package-private, protected, public).
+<p>It's a matter of some debate, however, which should come first.
+</p><p>Private-first style:
+</p><ul>
+<li>
+is advocated by Oracle's <a href="http://web.archive.org/web/20090904195252/http://java.sun.com/docs/codeconv/index.html">coding
+conventions.</a></li>
+
+<li>
+is significantly more popular among Java programmers, and is thus expected
+by many readers.</li>
+
+<li>
+emphasizes implementation details over exported API.</li>
+</ul>
+
+Public-first style (or, more precisely, largest-scope-first):
+<ul>
+<li>it 
+agrees with the idea that the exported API is an order of magnitude more
+important than the implementation - if the exported API should almost always
+be read first, then clearly it should appear first.</li>
+
+<li>it
+agrees with Steve McConnell's <i>Fundamental Theorem of Formatting</i>: 
+"good visual layout shows the logical structure of a program". Here,
+placing public members first puts a clear visual emphasis on the exported
+API, and relegates implementation details to the bottom.</li>
+
+<li>
+Joshua Bloch once stated that the Oracle coding conventions are not used or maintained
+by Oracle, and shouldn't be taken too seriously.</li>
+
+<li>
+public-first is popular among C++ programmers; for instance, the popular
+books <i>Design Patterns</i> and <i>Effective C++ </i>always follow the
+public-first style. Over time, the C++ community has apparently come to
+favor this style as more effective. Is the Java community ignoring a lesson
+already learned elsewhere?</li>
+</ul>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction59d6.html?Id=74">Construct classes from the outside in</a> <br>
+  <a href="TopicAction56bf.html?Id=227">Avoid basic style errors</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=136 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

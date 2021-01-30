@@ -1,0 +1,128 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=176 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="JSP,servlet,template,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Use templates to standardize layout</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Use templates to standardize layout</div>
+
+<br>Templates are commonly used to enforce a uniform appearance across
+a set of related pages - often even for an entire web site.
+<p>If using JSPs, templates can be easily implemented using either the
+<code>&lt;@include&gt;</code>
+directive or the <code>&lt;jsp:include&gt;</code> action.
+
+</p><h4>Example</h4>
+
+Here, a template JSP defines the layout. 
+It includes a header, footer, and navigation links.
+A <code>&lt;jsp:include&gt;</code> inserts the main content or "body" of the page. 
+There are two parameters to the template, which are passed in as request parameters :
+<ul>
+<li><code>TTitle</code>, used in the <code>&lt;title&gt;</code> tag</li>
+<li><code>TBody</code>, which is simply the name of the JSP which supplies all page content not otherwise defined
+in the template.</li>
+</ul>
+
+The <code>&lt;tags:xxx/&gt;</code> items refer to <code>.tag</code> files, that contain small JSP snippets.
+
+<pre>
+&lt;%@ include file="/JspHeader.jsp" %&gt;
+&lt;!doctype html&gt;
+&lt;html lang='en'&gt;
+&lt;head&gt;
+ &lt;meta http-equiv="Content-Type" content="text/html; charset=uTF-8"&gt;
+ &lt;%-- TTitle is a request parameter for the templated page title. --%&gt;
+ &lt;title&gt;
+  Fish and Chips Club - ${param.TTitle} &lt;/title&gt;
+ &lt;link rel="stylesheet" type="text/css" href="../../stylesheet.css" media="all"&gt;
+&lt;/head&gt;
+
+&lt;body&gt;
+&lt;div align="center"&gt;
+ &lt;img class="no-margin" src="../../images/logo.jpg" alt="Fish And Chips Club"&gt;
+&lt;/div&gt;
+
+&lt;div class="header"&gt;
+ "The Total Fish &amp; Chips Dining Experience"
+&lt;/div&gt;
+
+&lt;div class="menu-bar"&gt;
+ &lt;w:highlightCurrentPage styleClass='highlight'&gt;
+  &lt;c:url value="/main/home/HomePageAction.do" var="homeURL"/&gt; 
+  &lt;A href='${homeURL}'&gt;Home&lt;/a&gt;
+  &lt;c:url value="/main/rsvp/RsvpShow.do" var="showRsvpURL"/&gt; 
+  &lt;A href='${showRsvpURL}'&gt;Rsvp&lt;/a&gt;
+  &lt;c:url value="/all/logoff/LogoffAction.do" var="logoffURL"/&gt; 
+  &lt;A href='${logoffURL}'&gt;Log Off&lt;/a&gt;
+ &lt;/w:highlightCurrentPage&gt;
+&lt;/div&gt;
+
+&lt;%-- Display error and information messages. --%&gt;
+&lt;tags:displayMessages/&gt;
+
+&lt;%-- TBody is a request parameter for the templated page body. --%&gt;
+&lt;div class="body"&gt;
+ &lt;c:if test="${not empty param.TBody}"&gt;
+  &lt;jsp:include page='${param.TBody}' flush="true"/&gt;
+ &lt;/c:if&gt;
+ &lt;c:if test="${empty param.TBody}"&gt;
+  &lt;jsp:include page="Error.jsp" flush="true"/&gt;
+ &lt;/c:if&gt;
+&lt;/div&gt;
+
+&lt;tags:footer/&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;
+</pre>
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction1c49.html?Id=109">Always maintain HttpSessions </a> <br>
+  <a href="TopicAction159e.html?Id=175">Prefer JSTL tags</a> <br>
+  <a href="TopicActiond18f.html?Id=178">Prevent self linking</a> <br>
+  <a href="TopicAction5f31.html?Id=188">A Web App Framework   WEB4J</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=176 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

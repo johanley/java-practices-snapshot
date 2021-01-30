@@ -1,0 +1,242 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=183 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="database,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Encapsulate connections</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Encapsulate connections</div>
+
+<br>A database connection can be obtained in different ways. One should
+hide this design decision in a utility class, such that changes to this
+decision will have minimal ripple effects. Another important benefit is
+elimination of code repetition.
+
+<p><b>Example</b>
+
+</p><p>This is taken from the <a href="TopicAction5f31.html?Id=188">WEB4J</a> example application. 
+Here, a <code>Connection</code> is
+obtained from a JNDI <code>DataSource</code> configured on the server. An alternate
+implementation might obtain a <code>Connection</code> directly from the JDBC
+driver. (Some modern drivers include a built-in connection pool.)
+
+</p><p>This implementation is slightly unusual in that it can return a <code>Connection</code>
+for more than one database.
+<br></p><pre>
+<span class="keyword">package</span> hirondelle.web4j.config;
+
+<span class="keyword">import</span> java.util.*;
+<span class="keyword">import</span> java.util.logging.*;
+<span class="keyword">import</span> java.sql.Connection;
+<span class="keyword">import</span> java.sql.SQLException;
+<span class="keyword">import</span> javax.naming.Context;
+<span class="keyword">import</span> javax.naming.InitialContext;
+<span class="keyword">import</span> javax.naming.NamingException;
+<span class="keyword">import</span> javax.sql.DataSource;
+<span class="keyword">import</span> hirondelle.web4j.database.DAOException;
+<span class="keyword">import</span> hirondelle.web4j.database.ConnectionSource;
+<span class="keyword">import</span> hirondelle.web4j.util.Util;
+<span class="keyword">import</span> javax.servlet.ServletConfig;
+
+<span class="comment">/** 
+ Implementation of {@link ConnectionSource}, required by WEB4J. 
+ 
+ &lt;P&gt;This implementation uses a &lt;tt&gt;Connection&lt;/tt&gt; pool managed by the container.
+ This class is non-final only since it is convenient for 
+ {@link hirondelle.fish.test.doubles.FakeConnectionSrc}.
+ Only one method can be overridden - {@link #getConnectionByName(String)}. 
+*/</span>
+<span class="keyword">public</span> <span class="keyword">class</span> ConnectionSrc <span class="keyword">implements</span> ConnectionSource  {
+
+  <span class="comment">/** Read in connection strings from &lt;tt&gt;web.xml&lt;/tt&gt;. */</span>
+  <span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">void</span> init(ServletConfig aConfig){
+    fDefaultDbConnString = aConfig.getInitParameter(DEFAULT_CONN_STRING);
+    fAccessControlDbConnectionString = 
+      aConfig.getInitParameter(ACCESS_CONTROL_CONN_STRING)
+    ;
+    fTranslationDbConnectionString = aConfig.getInitParameter(TRANSLATION_CONN_STRING);
+    ensureAllSettingsPresent();
+    
+    fMapNameToConnectionString = <span class="keyword">new</span> LinkedHashMap&lt;String, String&gt;();
+    fMapNameToConnectionString.put(DEFAULT, fDefaultDbConnString);
+    fMapNameToConnectionString.put(ACCESS_CONTROL, fAccessControlDbConnectionString);
+    fMapNameToConnectionString.put(TRANSLATION, fTranslationDbConnectionString);
+    fLogger.config(
+      <span class="literal">"Connection strings : "</span> + Util.logOnePerLine(fMapNameToConnectionString)
+    );
+  }
+
+  <span class="comment">/**
+   Return value contains only {@link #DEFAULT}, {@link #ACCESS_CONTROL}, 
+   and {@link #TRANSLATION}.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">final</span> Set&lt;String&gt; getDatabaseNames(){
+    <span class="keyword">return</span> Collections.unmodifiableSet(fMapNameToConnectionString.keySet()); 
+  }
+  
+  <span class="comment">/**
+   Return a {@link Connection} for the default database.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">final</span> Connection getConnection() <span class="keyword">throws</span> DAOException {
+    <span class="keyword">return</span> getConnectionByName(DEFAULT);
+  }
+
+  <span class="comment">/**
+   Return a {@link Connection} for the identified database.
+   
+   @param aDatabaseName one of the values {@link #DEFAULT}, 
+   {@link #TRANSLATION}, or {@link #ACCESS_CONTROL}.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">final</span> Connection getConnection(String aDatabaseName) <span class="keyword">throws</span> DAOException {
+    <span class="keyword">return</span> getConnectionByName(aDatabaseName);
+  }
+  
+  <span class="comment">/** 
+   Name used to identify the default database. The default database is 
+   the main database, carrying core business data. It is the data that is 
+   most often accessed. 
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String DEFAULT = <span class="literal">"DEFAULT"</span>;
+  
+  <span class="comment">/** Name used to identify the access control database (users, roles, etc.).*/</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String ACCESS_CONTROL = <span class="literal">"ACCESS_CONTROL"</span>;
+  
+  <span class="comment">/** Name used to identify the translation database.  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String TRANSLATION = <span class="literal">"TRANSLATION"</span>;
+
+  <span class="comment">/** 
+   This method can be overridden by a subclass.
+   Such overrides are intended for testing. 
+  */</span> 
+  <span class="keyword">protected</span> Connection getConnectionByName(String aDbName) <span class="keyword">throws</span> DAOException {
+    Connection result = <span class="keyword">null</span>;
+    String dbConnString = getConnectionString(aDbName);  
+    <span class="keyword">if</span>( ! Util.textHasContent(dbConnString) ){
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(
+        <span class="literal">"Unknown database name : "</span> + Util.quote(aDbName)
+      );      
+    }
+    <span class="keyword">try</span> {
+      Context initialContext = <span class="keyword">new</span> InitialContext();
+      <span class="keyword">if</span> ( initialContext == <span class="keyword">null</span> ) {
+        fLogger.severe(
+          <span class="literal">"DataSource problem. InitialContext is null. Db : "</span> + Util.quote(dbConnString)
+        );
+      }
+      DataSource datasource = (DataSource)initialContext.lookup(dbConnString);
+      <span class="keyword">if</span> ( datasource == <span class="keyword">null</span> ){
+        fLogger.severe(<span class="literal">"Datasource is null for : "</span> + dbConnString);
+      }
+      result = datasource.getConnection();
+    }
+    <span class="keyword">catch</span> (NamingException ex){
+      <span class="keyword">throw</span> <span class="keyword">new</span> DAOException(
+        <span class="literal">"Config error with JNDI and datasource, for db "</span> + Util.quote(dbConnString), ex
+      );
+    }
+    <span class="keyword">catch</span> (SQLException ex ){
+      <span class="keyword">throw</span> <span class="keyword">new</span> DAOException(
+        <span class="literal">"Cannot get JNDI connection from datasource, for db "</span> + Util.quote(dbConnString), 
+        ex
+      );
+    }
+    <span class="keyword">return</span> result;
+  }
+  
+  <span class="comment">/**
+   This item is protected, in order to make it visible to any subclasses created 
+   for testing outside of the normal runtime environment.
+  */</span>
+  <span class="keyword">protected</span> String getConnectionString(String aDbName){
+    <span class="keyword">return</span> fMapNameToConnectionString.get(aDbName);
+  }
+  
+  <span class="comment">// PRIVATE
+</span>  
+  <span class="comment">/**
+   Maps the database name passed to {@link #getConnection(String)} to the 
+   actual connection string.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> Map&lt;String, String&gt; fMapNameToConnectionString;
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String DEFAULT_CONN_STRING = <span class="literal">"DefaultDbConnectionString"</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> String fDefaultDbConnString;
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String ACCESS_CONTROL_CONN_STRING =  
+    <span class="literal">"AccessControlDbConnectionString"</span>
+  ;
+  <span class="keyword">private</span> <span class="keyword">static</span> String fAccessControlDbConnectionString;
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String TRANSLATION_CONN_STRING = <span class="literal">"TranslationDbConnectionString"</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> String fTranslationDbConnectionString;
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Logger fLogger = Util.getLogger(ConnectionSrc.<span class="keyword">class</span>);
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> ensureAllSettingsPresent(){
+    <span class="keyword">if</span>( ! Util.textHasContent(fDefaultDbConnString) ) {
+      logError(DEFAULT_CONN_STRING);
+    }
+    <span class="keyword">if</span>( ! Util.textHasContent(fTranslationDbConnectionString) ) {
+      logError(TRANSLATION_CONN_STRING);
+    }
+    <span class="keyword">if</span> ( ! Util.textHasContent(fAccessControlDbConnectionString) ) {
+      logError(ACCESS_CONTROL_CONN_STRING);
+    }
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> logError(String aSettingName){
+    fLogger.severe(<span class="literal">"Web.xml missing init-param setting for "</span> + aSettingName);
+  }
+}
+  
+ 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction12eb.html?Id=75">Connection pools</a> <br>
+  <a href="TopicAction5f31.html?Id=188">A Web App Framework   WEB4J</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=183 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+</html>

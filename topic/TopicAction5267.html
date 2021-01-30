@@ -1,0 +1,208 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=274 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="stream,lambda,method reference,functional interface,functional,style,pure function,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Understand the functional style</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Understand the functional style</div>
+
+<br>
+
+The functional style of programming was introduced in Java 8.
+It's quite different from previous forms of Java programming, and the syntax seems strange when you first see it.
+
+<p>If you've never used functional programming in Java before, you should:
+</p><ul>
+ <li>read the relevant documentation fairly carefully 
+ </li><li><em>understand the spirit in which it was designed</em>
+ </li><li>write some code for practice
+</li></ul>
+After a few days, functional programming will seem natural.
+
+<p>The basic concepts are: 
+</p><ul>
+ <li><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/FunctionalInterface.html">functional interfaces</a> (in particular the <a href="TopicActioncd1a.html?Id=277">standard ones</a>)
+ </li><li><a href="https://docs.oracle.com/javase/tutorial/java/javaOO/methodreferences.html">method reference expressions</a>
+ </li><li><a href="https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html">lambda expressions</a>
+ </li><li><a href="https://docs.oracle.com/javase/10/docs/api/java/util/stream/package-summary.html">streams</a> (not to be confused with file streams!)
+ </li><li><a href="https://docs.oracle.com/javase/10/docs/api/java/util/stream/Collectors.html">collectors</a> (not to be confused with <code>Collection</code>s, though they're related)
+</li></ul>
+
+<p>To understand the <em>spirit</em> of functional programming, you need to know that it works best with 
+what you might call <em>pure functions</em>:
+</p><ul>
+ <li>input-output only
+ </li><li>the same input always generates the same output
+ </li><li>no side-effects
+ </li><li>no <em>explicit</em> changing of state
+</li></ul>
+
+<p>It's also useful to note that, in comparison with regular programming, functional programming:
+</p><ul> 
+ <li>is usually at a higher level of abstraction
+ </li><li>is usually more terse
+ </li><li>usually lacks explicit type declarations (since the system usually <em>infers</em> types)
+ </li><li>has a syntax that doesn't scale very well. Large blocks of code that use streams
+ exclusively are often hard to understand, and should usually be avoided.
+</li></ul>
+
+<p><b>Example</b>
+</p><p>Here's a quick example of what functional programming looks like in Java.
+
+<br></p><pre>
+<span class="comment">//these methods are commonly used with streams
+</span><span class="keyword">import</span> <span class="keyword">static</span> java.util.stream.Collectors.*;
+
+<span class="keyword">import</span> java.util.Collection;
+<span class="keyword">import</span> java.util.Optional;
+<span class="keyword">import</span> java.util.function.Predicate;
+<span class="keyword">import</span> java.util.function.ToIntFunction;
+<span class="keyword">import</span> java.util.stream.Stream;
+
+<span class="comment">/**
+ Example run:
+
+  Lightest unstable element:
+   Technetium
+  Heavier than gold:
+   [Pb, Pu, Fm]
+  Heavier than gold and unstable:
+   [Pu, Fm]
+  Sum of protons, all elements heavier than gold:
+   276
+  Done.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> PeriodicTable {
+  
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args) {
+    PeriodicTable pt = <span class="keyword">new</span> PeriodicTable();
+    
+    <span class="comment">//hard-coded to one specific policy
+</span>    pt.findLightestUnstableElement();
+    
+    <span class="comment">//here, can pass in different predicates to filter by
+</span>    Predicate&lt;Atom&gt; heavierThanGold = atom -&gt; atom.numProtons &gt; Atom.Au.numProtons;
+    log(<span class="literal">"Heavier than gold:"</span>, <span class="literal">" "</span> + pt.filter(heavierThanGold));
+
+    Predicate&lt;Atom&gt; heavierThanGoldUnstable = (
+        atom -&gt; atom.numProtons &gt; Atom.Au.numProtons &amp;&amp; 
+        atom.isAlwaysUnstable
+    );
+    log(<span class="literal">"Heavier than gold and unstable:"</span>, <span class="literal">" "</span> + pt.filter(heavierThanGoldUnstable));
+    
+    <span class="comment">//here, pass a predicate and a way of reducing an Atom to an int
+</span>    <span class="comment">//(this is contrived; but you get the idea)
+</span>    ToIntFunction&lt;Atom&gt; sumProtons = atom -&gt; atom.numProtons; 
+    log(
+      <span class="literal">"Sum of protons, all elements heavier than gold:"</span>, 
+      <span class="literal">" "</span> + pt.filterAndSum(heavierThanGold, sumProtons), <span class="literal">"Done."</span>
+    );
+  }
+
+  <span class="comment">/**
+   Find the lightest Atom that's always unstable.
+   A very specific policy! Not a flexible method.
+  */</span>
+  <span class="keyword">void</span> findLightestUnstableElement(){
+    Optional&lt;Atom&gt; answer = Stream.of(Atom.values())
+      .filter(Atom::isAlwaysUnstable)
+      .max((a,b) -&gt; b.numProtons.compareTo(a.numProtons))
+    ;
+    answer.ifPresent(atom -&gt; log(<span class="literal">"Lightest unstable element:"</span>, <span class="literal">" "</span> + atom.getName()));
+  }
+  
+  <span class="comment">/** Filter the Atoms somehow, and return them in a Collection. */</span>
+  Collection&lt;Atom&gt; filter(Predicate&lt;Atom&gt; predicate){
+    <span class="keyword">return</span> Stream.of(Atom.values())
+      .filter(predicate)
+      .collect(toList()) <span class="comment">//static import of Collectors!
+</span>    ;
+  }
+  
+  <span class="comment">/** 
+   Filter the Atoms somehow, and summarize by turning each Atom into 
+   an int of some sort, and then summing the int's. 
+  */</span>
+  <span class="keyword">int</span> filterAndSum(Predicate&lt;Atom&gt; predicate, ToIntFunction&lt;Atom&gt; summarizer){
+    <span class="keyword">int</span> result = Stream.of(Atom.values())
+      .filter(predicate)
+      .collect(summingInt(summarizer)) <span class="comment">//static import of Collectors!
+</span>    ;
+    <span class="keyword">return</span> result;
+  }
+
+  <span class="comment">/**
+   Some data from the periodic table of the elements (incomplete!). 
+  */</span>
+  <span class="keyword">enum</span> Atom {
+    H(<span class="literal">"Hydrogen"</span>, <span class="literal">1</span>, <span class="keyword">false</span>),
+    Tc(<span class="literal">"Technetium"</span>, <span class="literal">43</span>, <span class="keyword">true</span>),
+    Au(<span class="literal">"Gold"</span>, <span class="literal">79</span>, <span class="keyword">false</span>),
+    Pb(<span class="literal">"Lead"</span>, <span class="literal">82</span>, <span class="keyword">false</span>),
+    Pu(<span class="literal">"Plutonium"</span>, <span class="literal">94</span>, <span class="keyword">true</span>),
+    Fm(<span class="literal">"Fermium"</span>, <span class="literal">100</span>, <span class="keyword">true</span>);
+    <span class="keyword">private</span> Atom(String name, Integer numProtons, Boolean isAlwaysUnstable){
+      <span class="keyword">this</span>.name = name;
+      <span class="keyword">this</span>.numProtons = numProtons;
+      <span class="keyword">this</span>.isAlwaysUnstable = isAlwaysUnstable;
+    }
+    Boolean isAlwaysUnstable() { <span class="keyword">return</span> isAlwaysUnstable; }
+    String getName() { <span class="keyword">return</span> name;  }
+    Integer getNumProtons() { <span class="keyword">return</span> numProtons; }
+    <span class="keyword">private</span> String name;
+    <span class="keyword">private</span> Integer numProtons;
+    <span class="keyword">private</span> Boolean isAlwaysUnstable;
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(Object... msgs){
+    Stream.of(msgs).forEach(System.out::println);
+  }
+} 
+</pre>
+
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction6a80.html?Id=278">Beware forEach terminals</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=274 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

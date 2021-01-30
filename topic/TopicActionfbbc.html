@@ -1,0 +1,132 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=84 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="constructor,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Avoid JavaBeans style of construction</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Avoid JavaBeans style of construction</div>
+
+<br>Some argue that to construct a <a href="TopicActiond08d.html?Id=187">Model Object</a> in many steps, first by calling
+a no-argument constructor, and then by calling a series of <code>setXXX</code>
+methods, is something to be avoided, if possible:
+<ul>
+<li>
+it's more complex, since one call is replaced with many</li>
+
+<li>
+there is no simple way to ensure that all necessary <code>setXXX</code> methods
+are called</li>
+
+<li>
+there is no simple way to implement a <a href="TopicAction0d31.html?Id=6">class invariant</a></li>
+
+<li>
+it allows the object to be in intermediate states which are not immediately
+useful, and perhaps even invalid</li>
+
+<li>
+it's not compatible with the (very useful) <a href="TopicActiond838.html?Id=29">immutable
+object</a> pattern</li>
+
+<li>
+it does not follow the style of many design patterns, in which concrete
+classes usually have arguments passed to their constructor. This is a recurring
+theme in the <i>Design Patterns</i> book. Constructors usually act as a
+"back door" for data which is needed by an implementation, but which cannot
+appear in the signature of some higher-level abstraction (since it would
+pollute such an abstraction with data specific to an implementation).</li>
+</ul>
+Of course, JavaBeans follow this pattern of "no-argument constructor plus
+<code>setXXX</code>".
+However, JavaBeans were originally intended for a very narrow problem domain - manipulation 
+of graphical components in an IDE.
+<span class="highlight">As a model for the
+construction of typical data-centric objects (Model Objects), JavaBeans
+seem completely inappropriate</span>. One can even argue strongly that, for Model Objects,
+the JavaBeans style is an <i>anti-pattern</i>, and should be avoided unless
+absolutely necessary.
+
+<p><b><em>"The JavaBeans pattern has serious disadvantages."</em> - Joshua Bloch, <em>Effective Java</em></b>
+
+</p><p>
+</p><hr width="30%">
+
+If you need more convincing, read on.
+
+<p>Here is the definition of a Java Bean, directly from the original <a href="http://www.oracle.com/technetwork/java/javase/documentation/spec-136004.html">specification</a>:
+</p><p><b>"A Java Bean is a reusable software component that can be manipulated visually
+in a builder tool."</b>
+
+</p><p>This is very clear and simple. No mention is made here, or anywhere else in the 
+specification, of Model Objects used to encapsulate database records. The whole idea 
+of a Model Object is entirely absent from the Java Bean specification, and for good reason: the manipulation of 
+graphical controls and the representation of database records are unrelated issues.
+
+</p><p>The life cycle of a Java Bean, starting with its no-argument constructor, is derived mainly from 
+the task of <em>configuring</em> a graphical control having some default initial state. 
+For the intended domain, this is indeed a reasonable design. 
+For <a href="TopicActiond08d.html?Id=187">Model Objects</a>, however, the idea of <em>configuration</em> in this sense is entirely meaningless. 
+
+</p><p>The role of a Model Object is to carry data. Since a no-argument constructor can only build an object that is initially 
+empty, then it cannot contribute directly to this aim. It does not form a natural candidate for the 
+design of a Model Object.
+
+</p><p>To put data into empty Java Beans, frameworks typically call various <code>setXXX</code> methods using reflection. 
+There is nothing to prevent them from calling constructors in exactly the same way. 
+
+</p><p>A demonstration that a framework does <em>not</em> need JavaBeans for its Model Objects is 
+found in the <a href="TopicAction5f31.html?Id=188">WEB4J</a> tool. WEB4J calls (surprise, surprise) a constructor to 
+build Model Objects. It recommends implementing Model Objects as <a href="TopicActiond838.html?Id=29">immutable objects</a>, 
+not Java Beans.
+
+</p><p>The widespread adoption of Java Beans as a supposedly appropriate design for Model Objects seems to be an error. 
+<br>
+</p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction0d31.html?Id=6">Validate state with class invariants</a> <br>
+  <a href="TopicActiond838.html?Id=29">Immutable objects</a> <br>
+  <a href="TopicActiond08d.html?Id=187">Model Objects</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=84 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+</html>

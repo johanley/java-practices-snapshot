@@ -1,0 +1,128 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=2 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="constants,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Class for constants</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Class for constants</div>
+
+<br>Creating a class whose sole job is to define widely-used constants
+is simple.
+
+<p><b>Example</b>
+<br></p><pre>
+<span class="keyword">package</span> hirondelle.web4j.util;
+
+<span class="comment">/**
+ Collected constants of general utility.
+
+&lt;P&gt;All members of this class are immutable. 
+
+ &lt;P&gt;(This is an example of 
+ &lt;a href='http://www.javapractices.com/Topic2.cjp'&gt;class for constants&lt;/a&gt;.)
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Consts  {
+
+  <span class="comment">/** Opposite of {@link #FAILS}.  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">boolean</span> PASSES = <span class="keyword">true</span>;
+  <span class="comment">/** Opposite of {@link #PASSES}.  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">boolean</span> FAILS = <span class="keyword">false</span>;
+  
+  <span class="comment">/** Opposite of {@link #FAILURE}.  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">boolean</span> SUCCESS = <span class="keyword">true</span>;
+  <span class="comment">/** Opposite of {@link #SUCCESS}.  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">boolean</span> FAILURE = <span class="keyword">false</span>;
+
+  <span class="comment">/** 
+   Useful for {@link String} operations, which return an index of &lt;tt&gt;-1&lt;/tt&gt; when 
+   an item is not found. 
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> NOT_FOUND = -<span class="literal">1</span>;
+  
+  <span class="comment">/** System property - &lt;tt&gt;line.separator&lt;/tt&gt;*/</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String NEW_LINE = System.getProperty(<span class="literal">"line.separator"</span>);
+  <span class="comment">/** System property - &lt;tt&gt;file.separator&lt;/tt&gt;*/</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String FILE_SEPARATOR = System.getProperty(<span class="literal">"file.separator"</span>);
+  <span class="comment">/** System property - &lt;tt&gt;path.separator&lt;/tt&gt;*/</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String PATH_SEPARATOR = System.getProperty(<span class="literal">"path.separator"</span>);
+  
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String EMPTY_STRING = <span class="literal">""</span>;
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String SPACE = <span class="literal">" "</span>;
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String TAB = <span class="literal">"\t"</span>;
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String SINGLE_QUOTE = <span class="literal">"'"</span>;
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String PERIOD = <span class="literal">"."</span>;
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String DOUBLE_QUOTE = <span class="literal">"\""</span>;
+
+  <span class="comment">// PRIVATE //
+</span>
+  <span class="comment">/**
+   The caller references the constants using &lt;tt&gt;Consts.EMPTY_STRING&lt;/tt&gt;, 
+   and so on. Thus, the caller should be prevented from constructing objects of 
+   this class, by declaring this private constructor. 
+  */</span>
+  <span class="keyword">private</span> Consts(){
+    <span class="comment">//this prevents even the native class from 
+</span>    <span class="comment">//calling this ctor as well :
+</span>    <span class="keyword">throw</span> <span class="keyword">new</span> AssertionError();
+  }
+}
+ 
+</pre>
+
+The caller refers to these constants using static references, such as <code>Consts.EMPTY_STRING</code>, <code>Consts.SUCCESS</code>, and so on.
+Since the caller will never need to create a <code>Consts</code> object, a <a href="TopicAction79e9.html?Id=40">private constructor</a> is used to enforce that policy.
+The members of such a constants class are excellent candidates for a <a href="TopicActionda46.html?Id=195">static import</a>.
+
+<p></p><p>It's also possible to <a href="TopicActiona166-2.html?Id=32">use an interface</a> to
+bring constants into scope. Many argue strongly that such a practice is a strange
+use of interfaces, which are intended to state the services provided by a class. 
+<br>
+</p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActiona166-2.html?Id=32">Interface for constants</a> <br>
+  <a href="TopicAction79e9.html?Id=40">Private constructor</a> <br>
+  <a href="TopicActionda46.html?Id=195">Use static imports rarely</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=2 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

@@ -1,0 +1,161 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/quotes/ColorTip.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+ColorTip.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.stocks.quotes;<a name=line.1></a>
+<a name=line.2></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Args;<a name=line.3></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Consts;<a name=line.4></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Util;<a name=line.5></a>
+<a name=line.6></a>
+<span class='keyword'>import</span> java.awt.Color;<a name=line.7></a>
+<span class='keyword'>import</span> java.awt.EventQueue;<a name=line.8></a>
+<span class='keyword'>import</span> java.util.logging.Logger;<a name=line.9></a>
+<a name=line.10></a>
+<span class='keyword'>import</span> javax.swing.JComponent;<a name=line.11></a>
+<a name=line.12></a>
+<span class='comment'>/**<a name=line.13></a>
+* Calls user's attention to an aspect of the GUI (much like a <a name=line.14></a>
+* &lt;tt&gt;ToolTip&lt;/tt&gt;) by changing the background color of a <a name=line.15></a>
+* component (typically a &lt;tt&gt;JLabel&lt;/tt&gt;) for a few seconds; <a name=line.16></a>
+* the component will always revert to its original background color <a name=line.17></a>
+* after a short time has passed. This is done once, without repeating.<a name=line.18></a>
+*<a name=line.19></a>
+* &lt;p&gt;Example use case:<a name=line.20></a>
+&lt;pre&gt;<a name=line.21></a>
+ //no initial delay, and show the new color for 2 seconds only<a name=line.22></a>
+ ColorTip tip = new ColorTip(0, 2, someLabel, temporaryColor);<a name=line.23></a>
+ tip.start();<a name=line.24></a>
+&lt;/pre&gt;<a name=line.25></a>
+* <a name=line.26></a>
+* Uses a daemon thread, so this class will not prevent a program from <a name=line.27></a>
+* terminating. Will not lock the GUI.<a name=line.28></a>
+*/</span><a name=line.29></a>
+<span class='keyword'>final</span> <span class='keyword'>class</span> ColorTip {<a name=line.30></a>
+  <a name=line.31></a>
+  <span class='comment'>/**<a name=line.32></a>
+  * Constructor. <a name=line.33></a>
+  *  <a name=line.34></a>
+  * @param aInitialDelay number of seconds to wait before changing the <a name=line.35></a>
+  * background color of &lt;tt&gt;aComponent&lt;/tt&gt;, and must be in range 0..60 (inclusive).<a name=line.36></a>
+  * @param aActivationInterval number of seconds to display &lt;tt&gt;aTempColor&lt;/tt&gt;, <a name=line.37></a>
+  * and must be in range 1..60 (inclusive).<a name=line.38></a>
+  * @param aComponent GUI item whose background color will be changed.<a name=line.39></a>
+  * @param aTempColor background color which &lt;tt&gt;aComponent&lt;/tt&gt; will take for <a name=line.40></a>
+  * &lt;tt&gt;aActivationInterval&lt;/tt&gt; seconds.<a name=line.41></a>
+  */</span><a name=line.42></a>
+  ColorTip (<a name=line.43></a>
+    <span class='keyword'>int</span> aInitialDelay, <span class='keyword'>int</span> aActivationInterval, JComponent aComponent, Color aTempColor<a name=line.44></a>
+   ) {<a name=line.45></a>
+    Args.checkForRange(aInitialDelay, <span class='literal'>0</span>, Consts.SECONDS_PER_MINUTE);<a name=line.46></a>
+    Args.checkForRange(aActivationInterval, <span class='literal'>1</span>, Consts.SECONDS_PER_MINUTE);<a name=line.47></a>
+    Args.checkForNull(aTempColor);<a name=line.48></a>
+    fInitialDelay = aInitialDelay;<a name=line.49></a>
+    fActivationInterval = aActivationInterval;<a name=line.50></a>
+    fComponent = aComponent;<a name=line.51></a>
+    fTemporaryColor = aTempColor;<a name=line.52></a>
+    fOriginalColor = aComponent.getBackground();<a name=line.53></a>
+    fOriginalOpacity = aComponent.isOpaque();<a name=line.54></a>
+  }<a name=line.55></a>
+<a name=line.56></a>
+  <span class='comment'>/**<a name=line.57></a>
+  * Temporarily change the background color of the component, without interfering with <a name=line.58></a>
+  * the user's control of the gui, and without preventing program termination.<a name=line.59></a>
+  *<a name=line.60></a>
+  * &lt;P&gt;If the target temporary color is the same as the current background color, then <a name=line.61></a>
+  * do nothing. (This condition occurs when two &lt;tt&gt;ColorTip&lt;/tt&gt; objects are <a name=line.62></a>
+  * altering the same item at nearly the same time, such that they "overlap".)<a name=line.63></a>
+  */</span><a name=line.64></a>
+  <span class='keyword'>void</span> start(){<a name=line.65></a>
+    <span class='keyword'>if</span> (isSameColor()) <span class='keyword'>return</span>;<a name=line.66></a>
+    <span class='comment'>/*<a name=line.67></a>
+     * The use of a low-level Thread, instead of a more modern class, is unusual here.<a name=line.68></a>
+     * It's acceptable since other tools aren't a great match for this task, which is to <a name=line.69></a>
+     * go back and forth TWICE (wait, color-on, wait, color-off) between a worker thread<a name=line.70></a>
+     * and the Event Dispatch Thread; that's not a good match for either SwingWorker <a name=line.71></a>
+     * or javax.swing.Timer.<a name=line.72></a>
+     */</span><a name=line.73></a>
+    Thread thread = <span class='keyword'>new</span> Thread(<span class='keyword'>new</span> Worker());<a name=line.74></a>
+    thread.setDaemon(<span class='keyword'>true</span>);<a name=line.75></a>
+    thread.start();<a name=line.76></a>
+  }<a name=line.77></a>
+  <a name=line.78></a>
+  <span class='comment'>// PRIVATE <a name=line.79></a>
+</span>  <span class='keyword'>private</span> <span class='keyword'>final</span> <span class='keyword'>int</span> fInitialDelay;<a name=line.80></a>
+  <span class='keyword'>private</span> <span class='keyword'>final</span> <span class='keyword'>int</span> fActivationInterval;<a name=line.81></a>
+  <span class='keyword'>private</span> <span class='keyword'>final</span> JComponent fComponent;<a name=line.82></a>
+  <span class='keyword'>private</span> <span class='keyword'>final</span> Color fTemporaryColor;<a name=line.83></a>
+  <span class='keyword'>private</span> <span class='keyword'>final</span> Color fOriginalColor;<a name=line.84></a>
+  <span class='keyword'>private</span> <span class='keyword'>final</span> <span class='keyword'>int</span> fCONVERSION_FACTOR = Consts.MILLISECONDS_PER_SECOND;<a name=line.85></a>
+  <a name=line.86></a>
+  <span class='comment'>/**<a name=line.87></a>
+  * Stores the original value of the opaque property of fComponent.<a name=line.88></a>
+  *  <a name=line.89></a>
+  * Changes to the background color of a component <a name=line.90></a>
+  * take effect only if the component is in charge of drawing its background.<a name=line.91></a>
+  * This is defined by the opaque property, which needs to be true for these<a name=line.92></a>
+  * changes to take effect.<a name=line.93></a>
+  *<a name=line.94></a>
+  * &lt;P&gt;If fComponent is not opaque, then this property is temporarily<a name=line.95></a>
+  * changed by this class in order to change the background color.<a name=line.96></a>
+  */</span><a name=line.97></a>
+  <span class='keyword'>private</span> <span class='keyword'>final</span> <span class='keyword'>boolean</span> fOriginalOpacity;<a name=line.98></a>
+  <a name=line.99></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> Logger fLogger = Util.getLogger(ColorTip.<span class='keyword'>class</span>);<a name=line.100></a>
+<a name=line.101></a>
+  <span class='comment'>/**<a name=line.102></a>
+  * Return true only if fTemporaryColor is the same as the fOriginalColor. <a name=line.103></a>
+  */</span><a name=line.104></a>
+  <span class='keyword'>private</span> <span class='keyword'>boolean</span> isSameColor(){<a name=line.105></a>
+    <span class='keyword'>return</span> fTemporaryColor.equals(fOriginalColor);<a name=line.106></a>
+  }<a name=line.107></a>
+  <a name=line.108></a>
+  <span class='comment'>/** <a name=line.109></a>
+   The sleeping done by this class is NOT done on the Event Dispatch Thread; <a name=line.110></a>
+   that would lock the GUI. <a name=line.111></a>
+  */</span><a name=line.112></a>
+  <span class='keyword'>private</span> <span class='keyword'>final</span> <span class='keyword'>class</span> Worker <span class='keyword'>implements</span> Runnable {<a name=line.113></a>
+    <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> run(){<a name=line.114></a>
+      <span class='keyword'>try</span> {<a name=line.115></a>
+        fLogger.fine(<span class='literal'>"Initial Sleeping..."</span>);<a name=line.116></a>
+        Thread.sleep(fCONVERSION_FACTOR * fInitialDelay);<a name=line.117></a>
+        EventQueue.invokeLater(<span class='keyword'>new</span> ChangeColor());<a name=line.118></a>
+        fLogger.fine(<span class='literal'>"Activation Sleeping..."</span>);<a name=line.119></a>
+        Thread.sleep(fCONVERSION_FACTOR * fActivationInterval);<a name=line.120></a>
+        EventQueue.invokeLater(<span class='keyword'>new</span> RevertColor());<a name=line.121></a>
+      }<a name=line.122></a>
+      <span class='keyword'>catch</span> (InterruptedException ex) {<a name=line.123></a>
+        fLogger.severe(<span class='literal'>"Cannot sleep."</span>);<a name=line.124></a>
+      }<a name=line.125></a>
+      fLogger.fine(<span class='literal'>"Color worker done."</span>);<a name=line.126></a>
+    }<a name=line.127></a>
+  }<a name=line.128></a>
+  <a name=line.129></a>
+  <span class='keyword'>private</span> <span class='keyword'>final</span> <span class='keyword'>class</span> ChangeColor <span class='keyword'>implements</span> Runnable {<a name=line.130></a>
+    <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> run(){<a name=line.131></a>
+      <span class='keyword'>if</span> (! fOriginalOpacity) {<a name=line.132></a>
+        fComponent.setOpaque(<span class='keyword'>true</span>);<a name=line.133></a>
+      }<a name=line.134></a>
+      fComponent.setBackground(fTemporaryColor);<a name=line.135></a>
+    }<a name=line.136></a>
+  }<a name=line.137></a>
+  <a name=line.138></a>
+  <span class='keyword'>private</span> <span class='keyword'>final</span> <span class='keyword'>class</span> RevertColor <span class='keyword'>implements</span> Runnable {<a name=line.139></a>
+    <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> run(){<a name=line.140></a>
+      fComponent.setBackground(fOriginalColor);<a name=line.141></a>
+      fComponent.setOpaque(fOriginalOpacity);<a name=line.142></a>
+    }<a name=line.143></a>
+  }<a name=line.144></a>
+}<a name=line.145></a>
+ <a name=line.146></a>
+</PRE><a name=line.147></a>
+ </BODY><a name=line.148></a>
+<HTML><a name=line.149></a>

@@ -1,0 +1,89 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=195 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Use static imports rarely</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Use static imports rarely</div>
+
+<br><a href="http://docs.oracle.com/javase/1.5.0/docs/guide/language/static-import.html">Static
+imports</a> allow the static items of one class to be referenced in another without qualification. 
+Used indiscriminately, this will likely make code more difficult to understand, not easier to understand.
+<p><b>Example</b>
+<br></p><pre>
+<span class="keyword">import</span> java.util.*;
+<span class="keyword">import</span> <span class="keyword">static</span> java.util.Collections.*;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> StaticImporter {
+
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args){
+    List&lt;String&gt; things = <span class="keyword">new</span> ArrayList&lt;&gt;();
+    things.add(<span class="literal">"blah"</span>);
+
+    <span class="comment">//This looks like a simple call of a method belonging to this class:
+</span>    List&lt;String&gt; syncThings = synchronizedList(things);
+
+    <span class="comment">//However, it actually resolves to :
+</span>    <span class="comment">//List&lt;String&gt; syncThings = Collections.synchronizedList(things);
+</span>  }
+} 
+</pre>
+
+<br>An example in which a static import is likely acceptable is a <a href="TopicAction03b1.html?Id=2">constants
+class</a>. For example, a scientific or engineering application might make
+wide use of&nbsp;<code>Math.PI</code>. A static import of&nbsp;<code>java.lang.Math.*</code>
+would allow a class to replace&nbsp;<code>Math.PI</code> with&nbsp;<code>PI</code>.
+<p></p><p>More generally, a business application might define a constants class,
+and import it statically. This would allow&nbsp;<code>Consts.NEW_LINE</code>
+to be referenced as&nbsp;<code>NEW_LINE</code>, for example.
+<br>
+</p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction03b1.html?Id=2">Class for constants</a> <br>
+  <a href="TopicActionb3ca.html?Id=30">Uncommon classes need explicit imports</a> <br>
+  <a href="TopicActiona166-2.html?Id=32">Interface for constants</a> <br>
+  <a href="TopicActione9a0.html?Id=275">Static import of Collectors</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=195 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

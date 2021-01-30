@@ -1,0 +1,127 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=39 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="collection,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Prefer Collections over older classes</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Prefer Collections over older classes</div>
+
+<br>Most programmers prefer the Java 
+<a href="http://docs.oracle.com/javase/8/docs/technotes/guides/collections/index.html">Collections Framework</a> 
+to arrays, <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Vector.html">Vector</a></code>,
+and <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Hashtable.html">Hashtable</a></code>, 
+for the following reasons:
+<ul>
+<li>the intent of the Collections Framework is to replace the older, less comprehensive
+tools</li>
+<li>synchronization can be easily controlled (while <code>Hashtable</code> and <code>Vector</code>
+are always synchronized)</li>
+<li>immutability can be easily controlled</li>
+<li>search and sort algorithms are ready-made</li>
+<li>the type of a reference to a <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Collection.html">Collection</a></code>
+can be generic, while underlying implementation can be easily changed</li>
+<li>arrays are of fixed size, and are more error prone - off-by-one errors
+with array indexes have always been a fruitful source of error</li>
+<li><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Arrays.html#asList(T...)">Arrays.asList</a></code>
+may be used to pass an array to a method expecting a <code>Collection</code>
+or a <code>List</code></li>
+<li><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Collection.html">Collection</a>.toArray</code>
+may be used to convert a <code>Collection</code> to an <code>Object[]</code> or
+a <code>T[]</code></li>
+
+<li><code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Collections.html#enumeration(java.util.Collection)">Collections.enumeration</a></code> and 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Collections.html#list(java.util.Enumeration)">Collections.list</a></code> may be used to convert between enumerations and collections
+
+</li></ul>
+Since JDK 1.5, a strong case can be made that Collections should almost always
+be preferred over arrays.
+
+<p>Prior to JDK 1.5, the main disadvantage of using collections is that
+they always held an <code>Object</code>, and retrieval of their contents required
+casting. Casting cannot be checked at compile-time. Arrays, on the other
+hand, have the advantage of always being "parameterized" to hold objects
+of a specific type (in all versions of the JDK), and this is verified by
+the compiler. Thus, in older versions of the JDK, changing from a collection to an array forces one particular
+kind of error to appear at compile-time instead of run-time.
+
+</p><p>One minor advantage of arrays is that they are slightly easier to initialize. However, using
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Arrays.html#asList(T...)">Arrays.asList</a></code>
+makes the difference trivial:
+<br></p><pre>
+<span class="keyword">import</span> java.util.*;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> ArrayInit {
+
+  <span class="comment">/** Initialize arrays and Lists.  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args){
+    <span class="comment">//Array initializers are compact
+</span>    String[] paintings = {<span class="literal">"oil"</span>, <span class="literal">"watercolour"</span>};
+
+    <span class="comment">//Build a List using Arrays.asList(T...)
+</span>    <span class="comment">//This works for any type, not just for String
+</span>    List&lt;String&gt; languages = Arrays.asList(
+      <span class="literal">"urdu"</span>, <span class="literal">"hindi"</span>, <span class="literal">"pali"</span>, <span class="literal">"sanskrit"</span>
+    );
+    
+    <span class="comment">//Build a List in a more verbose way 
+</span>    List&lt;String&gt; nicePlaces = <span class="keyword">new</span> ArrayList&lt;&gt;();
+    nicePlaces.add(<span class="literal">"luxembourg gardens"</span>);
+    nicePlaces.add(<span class="literal">"sea side"</span>);
+    nicePlaces.add(<span class="literal">"large magellanic cloud"</span>);
+    
+    <span class="comment">//this is compact, but the returned list is not modifiable
+</span>    List&lt;Integer&gt; years = List.of(<span class="literal">1915</span>, <span class="literal">1925</span>, <span class="literal">1957</span>);
+    <span class="comment">//years.add(1984); //fails
+</span>  }
+} 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActionc6f5.html?Id=65">Choosing the right Collection</a> <br>
+  <a href="TopicAction56bf.html?Id=227">Avoid basic style errors</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=39 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+</html>

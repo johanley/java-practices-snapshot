@@ -1,0 +1,110 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=238 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Read jar version information</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Read jar version information</div>
+
+<br>
+A <a href="http://docs.oracle.com/javase/tutorial/deployment/jar/index.html">jar file</a> 
+is simply a zipped (compressed) collection of class files, and any associated resources.
+
+<p>It's often important to know which version of a jar file is being used by an application. 
+For example, upon startup, an application might find it useful to log the version numbers of all of its known jars.
+This can be very useful for debugging problems later on.
+
+</p><p>
+The <a href="http://docs.oracle.com/javase/tutorial/deployment/jar/packageman.html">MANIFEST</a> file is a 
+text file included with each jar, which specifies high-level information about its contents. 
+The MANIFEST file usually includes version information. 
+That version information is, in turn, accessible at run time using methods of the 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Package.html#getSpecificationVersion()">Package</a></code> class.
+
+</p><p><b>Example</b>
+</p><p>The following example extracts the name and version of the package containing the class 
+<code>InternetAddress</code>. (If the javax.mail.internet package is not on your class path, 
+you can easily modify this code to examine some other package.)
+<br></p><pre>
+<span class="keyword">import</span> javax.mail.internet.InternetAddress;
+
+<span class="comment">/**
+ Display package name and version information for 
+ javax.mail.internet.
+
+ As long as you can build on object of some known class,
+ you may get its related package info in this way.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> ReadVersion {
+  
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args){
+    ReadVersion readVersion = <span class="keyword">new</span> ReadVersion();
+    readVersion.readVersionInfoInManifest();
+  }
+  
+  <span class="keyword">public</span> <span class="keyword">void</span> readVersionInfoInManifest(){
+    
+    <span class="comment">//build an object whose class is in the target jar
+</span>    InternetAddress object = <span class="keyword">new</span> InternetAddress();
+    
+    <span class="comment">//navigate from its class object to a package object
+</span>    Package objPackage = object.getClass().getPackage();
+    
+    <span class="comment">//examine the package object 
+</span>    String name = objPackage.getSpecificationTitle();
+    String version = objPackage.getSpecificationVersion();
+    <span class="comment">//some jars may use 'Implementation Version' entries in the manifest instead
+</span>    
+    System.out.println(<span class="literal">"Package name: "</span> + name);
+    System.out.println(<span class="literal">"Package version: "</span> + version);
+  }
+} 
+</pre>
+
+Example output of this class:
+<p></p><pre>Package name: JavaMail(TM) API Design Specification
+Package version: 1.3</pre>
+<p></p>
+
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=238 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

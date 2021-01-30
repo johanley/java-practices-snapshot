@@ -1,0 +1,148 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=216 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Passwords never in clear text</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Passwords never in clear text</div>
+
+<br>
+Applications should not refer to the clear text versions of passwords - not in the database, 
+not when logging, nor in any other area. 
+The clear text version of the password should be the end user's secret.
+It should never be directly repeated or stored by an application.
+
+<p><b>Clear Text Versus Hash</b><br>
+A user inputs a password in its original, unaltered form - that is, in "clear text".
+However, a database should never store passwords in clear text. 
+Instead, the value stored by the database should be calculated as </p><pre>
+stored-value = hash(clear-text-password + salt-value)</pre>
+
+<b>The intent here is to store text which cannot be easily reverse-engineered back into the original password.</b>
+The <code>salt-value</code> is a random string added to the password.
+It's added to prevent simple dictionary-style reverse engineering of the hashed value of the plain text password.
+<p>(Regarding Tomcat5: its implementation of form-based login doesn't allow for the salt value.)
+
+</p><p><b>Hash Functions</b><br>
+SHA-1, SHA-256, SHA-384, and SHA-512 are all examples of hash functions. A hash function is also called a 
+<a href="https://docs.oracle.com/javase/10/docs/api/java/security/MessageDigest.html"><code>MessageDigest</code></a>.
+(The MD5 hash has been shown to be defective, and should usually be avoided.) 
+
+</p><p><i>A <a href="http://en.wikipedia.org/wiki/Cryptographic_hash_function">hash function</a> 
+is not an encryption</i>. Encrypted items are always meant for eventual <em>decryption</em>. 
+A hash function, on the other hand, is meant only as a <em>one-way operation</em>. The whole 
+idea of a hash function is that it should be very difficult to calculate the original 
+input value, given the hash value.
+
+</p><p>If <code>y = hash(x)</code> is a hash function, and <code>y</code> and <code>x</code> both represent text strings, then 
+</p><ul>
+<li>given the output <code>y</code>, it's very hard to deduce the original input <code>x</code>
+</li><li>similar inputs will give markedly different outputs
+</li><li>input <code>x</code> can have <em>arbitrary</em> length
+</li><li>output <code>y</code> will have <em>fixed</em> length
+</li><li>there is only a trivial chance of "collisions", where different inputs give the same output
+</li></ul>
+
+<p>The above properties allow for passwords (or pass phrases) of arbitrary length, while still
+letting the underlying database column which stores the hash value to be of fixed width.
+
+</p><p><b>Example</b>
+</p><p>This example uses <a href="https://docs.oracle.com/javase/10/docs/api/java/security/MessageDigest.html"><code>MessageDigest</code></a> 
+and the SHA-1 hash function:
+<br></p><pre>
+<span class="keyword">import</span> java.security.MessageDigest;
+<span class="keyword">import</span> java.security.NoSuchAlgorithmException;
+
+<span class="comment">/** Example hash function values.*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> HashExamples {
+  
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args) {
+    <span class="keyword">try</span> {
+      MessageDigest sha = MessageDigest.getInstance(<span class="literal">"SHA-1"</span>);
+      <span class="keyword">byte</span>[] hashOne = sha.digest(<span class="literal">"color"</span>.getBytes());
+      log(<span class="literal">"Hash of 'color':  "</span> + hexEncode(hashOne));
+      sha.reset();
+      <span class="keyword">byte</span>[]  hashTwo = sha.digest(<span class="literal">"colour"</span>.getBytes());
+      log(<span class="literal">"Hash of 'colour': "</span> + hexEncode(hashTwo));
+    }
+    <span class="keyword">catch</span> (NoSuchAlgorithmException ex){
+      log(<span class="literal">"No such algorithm found in JRE."</span>);
+    }
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(Object thing) {
+    System.out.println(String.valueOf(thing));
+  }
+
+  <span class="comment">/**
+  * The byte[] returned by MessageDigest does not have a nice
+  * textual representation, so some form of encoding is usually performed.
+  *
+  * This implementation follows the example of David Flanagan's book
+  * "Java In A Nutshell", and converts a byte array into a String
+  * of hex characters.
+  */</span>
+  <span class="keyword">static</span> <span class="keyword">private</span> String hexEncode( <span class="keyword">byte</span>[] input){
+    StringBuffer result = <span class="keyword">new</span> StringBuffer();
+    <span class="keyword">char</span>[] digits = {<span class="literal">'0'</span>, <span class="literal">'1'</span>, <span class="literal">'2'</span>, <span class="literal">'3'</span>, <span class="literal">'4'</span>,<span class="literal">'5'</span>,<span class="literal">'6'</span>,<span class="literal">'7'</span>,<span class="literal">'8'</span>,<span class="literal">'9'</span>,<span class="literal">'a'</span>,<span class="literal">'b'</span>,<span class="literal">'c'</span>,<span class="literal">'d'</span>,<span class="literal">'e'</span>,<span class="literal">'f'</span>};
+    <span class="keyword">for</span> (<span class="keyword">int</span> idx = <span class="literal">0</span>; idx &lt; input.length; ++idx) {
+      <span class="keyword">byte</span> b = input[idx];
+      result.append( digits[ (b&amp;<span class="literal">0xf0</span>) &gt;&gt; <span class="literal">4</span> ] );
+      result.append( digits[ b&amp;<span class="literal">0x0f</span>] );
+    }
+    <span class="keyword">return</span> result.toString();
+  }  
+}
+ 
+</pre>
+
+Example run:
+<p></p><pre>
+Hash of 'color':  6dd0fe8001145bec4a12d0e22da711c4970d000b
+Hash of 'colour': 79d41a47e8fec55856a6a6c5ba53c2462be4852e
+</pre>
+<br>
+<p></p>
+
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=216 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

@@ -1,0 +1,630 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=1 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="design pattern,enumeration,type-safe,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Type Safe Enumerations</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Type Safe Enumerations</div>
+
+<br>Enumerations are sets of closely related items, for example:
+<ul>
+<li>
+cardinal directions - north, south, east, west</li>
+
+<li>
+types of novels - mystery, classic, fantasy, romance, science-fiction</li>
+
+<li>
+flavours of ice cream - chocolate, vanilla, raspberry, maple</li>
+</ul>
+<a href="http://docs.oracle.com/javase/1.5.0/docs/guide/language/enums.html">Type-safe
+enumerations</a> (also called "enum types", or simply "enums") were added
+to the Java language in JDK 1.5, and represent a special kind of class.
+If JDK 1.5 is not available, type-safe enumerations can still be
+<a href="#Legacy">implemented
+as a regular Java class</a>.
+
+<p>Type-safe enumerations should be used liberally. In particular, they
+are a robust alternative to the simple
+<code>String</code> or <code>int</code>
+constants used in many older APIs to represent sets of related items.
+
+</p><p>Reminders:
+</p><ul>
+<li>
+enums are implicitly <code>final</code> subclasses of <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Enum.html">java.lang.Enum</a></code></li>
+
+<li>
+if an enum is a member of a class, it's implicitly <code>static</code></li>
+
+<li>
+<code>new</code> can never be used with an enum, even within the enum type
+itself</li>
+
+<li>
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Enum.html#name()">name</a></code>
+and <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Enum.html#valueOf(java.lang.Class,java.lang.String)">valueOf</a></code>
+simply use the text of the enum constants, while <code>toString</code> may
+be overridden to provide any content, if desired</li>
+
+<li>
+for enum constants, <code>equals</code> and <code>==</code> amount to the same
+thing, and can be used interchangeably</li>
+
+<li>
+enum constants are implicitly <code>public static final</code></li>
+
+<li>
+the order of appearance of enum constants is called their "natural order",
+and defines the order used by other items as well : <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Enum.html#compareTo(E)">compareTo</a></code>,
+iteration order of <code>values</code> , <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/EnumSet.html">EnumSet</a></code>, <code>EnumSet.range</code>.</li>
+<li>enums have a built-in 
+<a href="http://docs.oracle.com/javase/6/docs/platform/serialization/spec/serial-arch.html#6469">serialization</a> 
+mechanism, which can't be overridden. The mechanism uses the  
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Enum.html#name()">name</a></code>
+and <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Enum.html#valueOf(java.lang.Class,java.lang.String)">valueOf</a></code> methods.
+</li></ul>
+
+Warning:
+<p>As with any class, it's easy to provide methods in an enum type which
+change the state of an enum constant. Thus, the term "enum constant" is
+rather misleading. What is constant is the <i>identity</i> of the enum
+element, not its state. Perhaps a better term would have been "enum element"
+instead of "enum constant".
+
+</p><p>Constructors for an enum type should be declared as <code>private</code>. The
+compiler allows non <code>private</code> declares for constructors, but this seems misleading
+to the reader, since <code>new</code> can never be used with enum types.
+
+</p><p>Here are some simple examples of defining and using enums:
+<br></p><pre>
+<span class="keyword">import</span> java.util.EnumSet;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> EnumExamples {
+
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">void</span> main(String... args){
+    log(<span class="literal">"Exercising enumerations..."</span>);
+    exerEnumsMiscellaneous();
+    exerMutableEnum();
+    exerEnumRange();
+    exerBitFlags();
+    exerEnumToStringAndValueOf();
+    log(<span class="literal">"Done."</span>);
+  }
+
+  <span class="comment">// PRIVATE //
+</span>  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(Object text){
+    System.out.println(String.valueOf(text));
+  }
+
+  <span class="comment">/** Example 1 - simple list of enum constants.  */</span>
+  <span class="keyword">enum</span> Quark {
+    <span class="comment">/*
+    * These are called "enum constants".
+    * An enum type has no instances other than those defined by its
+    * enum constants. They are implicitly "public static final".
+    * Each enum constant corresponds to a call to a constructor.
+    * When no args follow an enum constant, then the no-argument constructor
+    * is used to create the corresponding object.
+    */</span>
+    UP,
+    DOWN,
+    CHARM,
+    STRANGE,
+    BOTTOM,
+    TOP
+  }
+  
+  <span class="comment">//does not compile, since Quark is "implicitly final":
+</span>  <span class="comment">//private static class Quarky extends Quark {}
+</span>
+  <span class="comment">/**
+  * Example 2 - adding a constructor to an enum.
+  *
+  * If no constructor is added, then the usual default constructor
+  * is created by the system, and declarations of the
+  * enum constants will correspond to calling this default constructor.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">enum</span> Lepton {
+    <span class="comment">//each constant implicity calls a constructor :
+</span>    ELECTRON(-<span class="literal">1</span>, <span class="literal">1.0E-31</span>),
+    NEUTRINO(<span class="literal">0</span>, <span class="literal">0.0</span>);
+    
+    <span class="comment">/* 
+    * This constructor is private.
+    * Legal to declare a non-private constructor, but not legal
+    * to use such a constructor outside the enum.
+    * Can never use "new" with any enum, even inside the enum 
+    * class itself.
+    */</span>
+    <span class="keyword">private</span> Lepton(<span class="keyword">int</span> charge, <span class="keyword">double</span> mass){
+      <span class="comment">//cannot call super ctor here
+</span>      <span class="comment">//calls to "this" ctors allowed
+</span>      <span class="keyword">this</span>.charge = charge;
+      <span class="keyword">this</span>.mass = mass;
+    }
+    <span class="keyword">final</span> <span class="keyword">int</span> getCharge() {
+      <span class="keyword">return</span> charge;
+    }
+    <span class="keyword">final</span> <span class="keyword">double</span> getMass() {
+      <span class="keyword">return</span> mass;
+    }
+    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">int</span> charge;
+    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">double</span> mass;
+  }
+
+  <span class="comment">/**
+  * Example 3 - adding methods to an enum.
+  *
+  * Here, "static" may be left out, since enum types which are class
+  * members are implicitly static.
+  */</span>
+  <span class="keyword">static</span> <span class="keyword">enum</span> Direction {
+    NORTH,
+    SOUTH,
+    EAST,
+    WEST; <span class="comment">//note semicolon needed only when extending behavior
+</span>    
+    <span class="comment">//overrides and additions go here, below the enum constants
+</span>
+    <span class="keyword">@Override</span> <span class="keyword">public</span> String toString(){
+      <span class="comment">/*
+      * Either name() or super.toString() may be called here.
+      * name() is final, and always returns the exact name as specified in
+      * declaration; toString() is not final, and is intended for presentation
+      * to the user. It seems best to call name() here.
+      */</span>
+      <span class="keyword">return</span> <span class="literal">"Direction: "</span> + name();
+    }
+    <span class="comment">/** An added method.  */</span>
+    <span class="keyword">public</span> <span class="keyword">boolean</span> isCold() {
+      <span class="comment">//only NORTH is 'cold'
+</span>      <span class="keyword">return</span>  <span class="keyword">this</span> == NORTH;
+    }
+  }
+
+  <span class="comment">/**
+  * Example 4 - adding a method which changes the state of enum constants.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">enum</span> Flavor {
+    CHOCOLATE(<span class="literal">100</span>),
+    VANILLA(<span class="literal">120</span>),
+    STRAWBERRY(<span class="literal">80</span>);
+    
+    <span class="keyword">void</span> setCalories(<span class="keyword">int</span> calories){
+      <span class="comment">//changes the state of the enum 'constant'
+</span>      <span class="keyword">this</span>.calories = calories;
+    }
+    <span class="keyword">int</span> getCalories(){
+      <span class="keyword">return</span> calories;
+    }
+    <span class="keyword">private</span> Flavor(<span class="keyword">int</span> aCalories){
+      calories = aCalories;
+    }
+    <span class="keyword">private</span> <span class="keyword">int</span> calories;
+  }
+  
+  <span class="comment">/*
+  * What follows are various methods which exercise the above enums. 
+  */</span>
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> exerEnumsMiscellaneous(){
+    <span class="comment">//toString method by default uses the identifier
+</span>    log(<span class="literal">"toString: "</span> + Quark.BOTTOM);
+
+    <span class="comment">//equals and == amount to the same thing
+</span>    <span class="keyword">if</span> ( Quark.UP == Quark.UP ) {
+      log(<span class="literal">"UP == UP"</span>);
+    }
+
+    <span class="keyword">if</span> ( Quark.UP.equals(Quark.UP) ) {
+      log(<span class="literal">"UP.equals(UP)"</span>);
+    }
+
+    <span class="comment">//compareTo order is defined by order of appearance in the definition of
+</span>    <span class="comment">//the enum
+</span>    <span class="keyword">if</span> ( Quark.UP.compareTo(Quark.DOWN) &lt; <span class="literal">0</span> ) {
+      <span class="comment">//this branch is chosen
+</span>      log(<span class="literal">"UP before DOWN"</span>);
+    }
+    <span class="keyword">else</span> <span class="keyword">if</span> ( Quark.UP.compareTo(Quark.DOWN) &gt; <span class="literal">0</span> ) {
+      log(<span class="literal">"DOWN before UP"</span>);
+    }
+    <span class="keyword">else</span> {
+      log(<span class="literal">"UP same as DOWN"</span>);
+    }
+
+    <span class="comment">//values() returns Quark[], not List&lt;Quark&gt;
+</span>    log(<span class="literal">"Quark values : "</span> + Quark.values());
+    <span class="comment">//the order of values matches the order of appearance :
+</span>    <span class="keyword">for</span> ( Quark quark : Quark.values() ){
+      log(<span class="literal">"Item in Quark.values() : "</span> + quark);
+    }
+
+    log(<span class="literal">"toString : "</span> + Direction.NORTH);
+    <span class="keyword">if</span> ( Direction.EAST.isCold() ){
+      log(<span class="literal">"East is cold"</span>);
+    }
+    <span class="keyword">else</span> {
+      log(<span class="literal">"East is not cold."</span>);
+    }
+
+    log(<span class="literal">"Electron charge : "</span> + Lepton.ELECTRON.getCharge());
+
+    <span class="comment">//parsing text into an enum constant :
+</span>    Lepton lepton = Enum.valueOf(Lepton.<span class="keyword">class</span>, <span class="literal">"ELECTRON"</span>);
+    log(<span class="literal">"Lepton mass : "</span> + lepton.getMass());
+
+    <span class="comment">//throws IllegalArgumentException if text is not known to enum type :
+</span>    <span class="keyword">try</span> {
+      Lepton anotherLepton = Enum.valueOf(Lepton.<span class="keyword">class</span>, <span class="literal">"Proton"</span>);
+    }
+    <span class="keyword">catch</span> (IllegalArgumentException ex){
+      log(<span class="literal">"Proton is not a Lepton."</span>);
+    }
+
+    <span class="comment">//More compact style for parsing text:
+</span>    Lepton thirdLepton = Lepton.valueOf(<span class="literal">"NEUTRINO"</span>);
+    log(<span class="literal">"Neutrino charge : "</span> + thirdLepton.getCharge() );
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> exerMutableEnum(){
+    Flavor.VANILLA.setCalories(<span class="literal">75</span>); <span class="comment">//change the state of the enum "constant"
+</span>    log(<span class="literal">"Calories in Vanilla: "</span> + Flavor.VANILLA.getCalories());
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> exerEnumRange(){
+    <span class="keyword">for</span> (Direction direction : EnumSet.range(Direction.NORTH, Direction.SOUTH)){
+      log(<span class="literal">"NORTH-SOUTH: "</span> + direction);
+    }
+  }
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> exerBitFlags(){
+    EnumSet&lt;Direction&gt; directions = EnumSet.of(Direction.EAST, Direction.NORTH);
+    <span class="keyword">for</span>(Direction direction : directions) {
+      log(direction);
+    }
+  }
+
+  <span class="comment">/**
+  * The valueOf method uses name(), not toString(). There is no need
+  * to synchronize valueOf with toString.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> exerEnumToStringAndValueOf(){
+    Direction dir = Direction.valueOf(<span class="literal">"EAST"</span>); <span class="comment">//successful
+</span>    log(<span class="literal">"Direction toString : "</span> + dir);
+    dir = Direction.valueOf(<span class="literal">"Direction: EAST"</span>); <span class="comment">//fails
+</span>  }
+}
+ 
+</pre>
+
+Here's a simple example of using <code>EnumSet</code>:
+<br><pre>
+<span class="keyword">import</span> java.util.*;
+
+<span class="keyword">public</span> <span class="keyword">class</span> CommonLanguage {
+  
+  <span class="keyword">enum</span> Lang {ENGLISH, FRENCH, URDU, JAPANESE}
+
+  <span class="comment">/** Find the languages in common between two people. */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args){
+    EnumSet&lt;Lang&gt; ariane = EnumSet.of(Lang.FRENCH, Lang.ENGLISH);
+    EnumSet&lt;Lang&gt; noriaki = EnumSet.of(Lang.JAPANESE, Lang.ENGLISH);
+    log( <span class="literal">"Languages in common: "</span> + commonLangsFor(ariane, noriaki) );
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> Set&lt;Lang&gt; commonLangsFor(Set&lt;Lang&gt; a, Set&lt;Lang&gt; b){
+    Set&lt;Lang&gt; result = <span class="keyword">new</span> LinkedHashSet&lt;&gt;();
+    <span class="keyword">for</span>(Lang lang: a){
+      <span class="keyword">if</span>( b.contains(lang) ) {
+        result.add(lang);
+      }
+    }
+    <span class="keyword">return</span> result;
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(Object message){
+    System.out.println(String.valueOf(message));
+  }
+}  
+</pre>
+
+<p></p><p><a name="Legacy"></a><b>Creating type-safe enumerations in older versions
+of Java</b>
+</p><p>(This discussion closely follows the techniques described in the first edition of <i><a href="http://www.amazon.com/exec/obidos/ASIN/0134685997/ref=nosim/javapractices-20">Effective
+Java</a></i>.)
+</p><p>Prior to JDK 1.5, type-safe enumerations can be implemented as a regular
+Java class. They come in various styles, corresponding to the features
+they include:
+</p><ul>
+<li>
+a <code>List</code> of <code>VALUES</code>, for iterating over all values of the
+enumeration</li>
+
+<li>
+implementing a&nbsp;<code>valueOf</code> method for parsing text into an enumeration
+element</li>
+
+<li>
+implementing <code>Comparable</code></li>
+
+<li>
+implementing <code>Serializable</code></li>
+</ul>
+Exporting a <code>List</code> of <code>VALUES</code> is highly recommended. It
+gives users an <code>Iterator</code> for cycling through all possible values.
+The alternative (hard-coding particular values of the enumeration) will
+break when those values change or are extended to include new values.
+<p>Comparison of two objects belonging to an enumeration is the same in
+all styles :
+</p><ul>
+<li>
+the <code>Object.equals</code> method is never overridden</li>
+
+<li>
+either <code>equals</code> or <code>==</code> can be used to perform comparisons,
+since they amount to the same thing</li>
+</ul>
+<b>Example 1</b>
+<p><code>VerySimpleSuit</code> is a minimal type-safe enumeration. It is almost
+as simple as defining a set of related <code>String</code>s or <code>int</code>s,
+apart from the private, empty constructor.
+<br></p><pre>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> VerySimpleSuit {
+
+  <span class="comment">/**
+  * Enumeration elements are constructed once upon class loading.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> VerySimpleSuit CLUBS = <span class="keyword">new</span> VerySimpleSuit();
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> VerySimpleSuit DIAMONDS = <span class="keyword">new</span> VerySimpleSuit();
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> VerySimpleSuit HEARTS = <span class="keyword">new</span> VerySimpleSuit();
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> VerySimpleSuit SPADES = <span class="keyword">new</span> VerySimpleSuit();
+
+  <span class="comment">/**
+  * Private constructor prevents construction outside of this class.
+  */</span>
+  <span class="keyword">private</span> VerySimpleSuit() {
+    <span class="comment">//empty
+</span>  }
+}
+ 
+</pre>
+
+<br><b>Example 2</b>
+<p></p><p><code>SimpleSuit</code> is another simple style of implementing a type-safe
+enumeration, which includes an implementation of <code>toString</code>:
+<br></p><pre>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> SimpleSuit {
+
+  <span class="comment">/**
+  * Enumeration elements are constructed once upon class loading.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> SimpleSuit CLUBS = <span class="keyword">new</span> SimpleSuit (<span class="literal">"Clubs"</span>);
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> SimpleSuit DIAMONDS = <span class="keyword">new</span> SimpleSuit (<span class="literal">"Diamonds"</span>);
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> SimpleSuit HEARTS = <span class="keyword">new</span> SimpleSuit (<span class="literal">"Hearts"</span>);
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> SimpleSuit SPADES = <span class="keyword">new</span> SimpleSuit (<span class="literal">"Spades"</span>);
+
+  <span class="keyword">public</span> String toString() {
+    <span class="keyword">return</span> name;
+  }
+
+  <span class="comment">// PRIVATE 
+</span>  <span class="keyword">private</span> <span class="keyword">final</span> String name;
+
+  <span class="comment">/**
+  * Private constructor prevents construction outside of this class.
+  */</span>
+  <span class="keyword">private</span> SimpleSuit(String name) {
+    <span class="keyword">this</span>.name = name;
+  }
+}
+ 
+</pre>
+
+<br><b>Example 3</b>
+<p></p><p><code>Suit</code> adds these features:
+</p><ul>
+<li>
+a&nbsp;<code>valueOf</code> method for parsing text into an enumeration element</li>
+
+<li>
+exports a <code>List</code> of <code>VALUES</code></li>
+
+<li>
+implements <code>Comparable</code></li>
+</ul>
+<br><pre>
+<span class="keyword">import</span> java.util.*;
+
+<span class="comment">/** Java 1.4 (old) */</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Suit <span class="keyword">implements</span> Comparable {
+
+  <span class="comment">/**
+  * Enumeration elements are constructed once upon class loading.
+  * Order of appearance here determines the order of compareTo.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> Suit CLUBS = <span class="keyword">new</span> Suit (<span class="literal">"Clubs"</span>);
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> Suit DIAMONDS = <span class="keyword">new</span> Suit (<span class="literal">"Diamonds"</span>);
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> Suit HEARTS = <span class="keyword">new</span> Suit (<span class="literal">"Hearts"</span>);
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> Suit SPADES = <span class="keyword">new</span> Suit (<span class="literal">"Spades"</span>);
+
+  <span class="keyword">public</span> String toString() {
+    <span class="keyword">return</span> name;
+  }
+
+  <span class="comment">/**
+  * Parse text into an element of this enumeration.
+  *
+  * @param aText takes one of the values 'Clubs',
+  * 'Diamonds', 'Hearts', 'Spades'.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> Suit valueOf(String aText){
+    Iterator iter = VALUES.iterator();
+    <span class="keyword">while</span> (iter.hasNext()) {
+      Suit suit = (Suit)iter.next();
+      <span class="keyword">if</span> ( aText.equals(suit.toString()) ){
+        <span class="keyword">return</span> suit;
+      }
+    }
+    <span class="comment">//this method is unusual in that IllegalArgumentException is
+</span>    <span class="comment">//possibly thrown not at its beginning, but at its end.
+</span>    <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(
+      <span class="literal">"Cannot parse into an element of Suit : '"</span> + aText + <span class="literal">"'"</span>
+    );
+  }
+
+  <span class="keyword">public</span> <span class="keyword">int</span> compareTo(Object that) {
+    <span class="keyword">return</span> ordinal - ( (Suit)that ).ordinal;
+  }
+
+  <span class="keyword">private</span> <span class="keyword">final</span> String name;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> nextOrdinal = <span class="literal">0</span>;
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">int</span> ordinal = nextOrdinal++;
+
+  <span class="comment">/**
+  * Private constructor prevents construction outside of this class.
+  */</span>
+  <span class="keyword">private</span> Suit(String name) {
+    <span class="keyword">this</span>.name = name;
+  }
+
+  <span class="comment">/**
+  * These two lines are all that's necessary to export a List of VALUES.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Suit[] values = {CLUBS, DIAMONDS, HEARTS, SPADES};
+  <span class="comment">//VALUES needs to be located here, otherwise illegal forward reference
+</span>  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> List VALUES = Collections.unmodifiableList(Arrays.asList(values));
+}
+ 
+</pre>
+
+<br><b>Example 4</b>
+<p>The <code>AccountType</code> enumeration:
+</p><ul>
+<li>
+exports a&nbsp;<code>valueOf</code> method for parsing text into an enumeration
+element</li>
+
+<li>
+exports a <code>List</code> of <code>VALUES</code></li>
+
+<li>
+implements <code>Comparable</code></li>
+
+<li>
+implements <code>Serializable</code></li>
+</ul>
+<br><pre>
+<span class="keyword">import</span> java.io.*;
+<span class="keyword">import</span> java.util.*;
+
+<span class="comment">/**
+* The only element which is serialized is an ordinal identifier. Thus,
+* any enumeration values added in the future must be constructed AFTER the
+* already existing objects, otherwise serialization will be broken.
+* 
+* Java 1.4 (old)
+*/</span>
+<span class="keyword">public</span> <span class="keyword">class</span> AccountType <span class="keyword">implements</span> Serializable, Comparable {
+
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> AccountType CASH =  <span class="keyword">new</span> AccountType(<span class="literal">"Cash"</span>);
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> AccountType MARGIN = <span class="keyword">new</span> AccountType(<span class="literal">"Margin"</span>);
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> AccountType RSP =  <span class="keyword">new</span> AccountType(<span class="literal">"RSP"</span>);
+  <span class="comment">//FUTURE VALUES MUST BE CONSTRUCTED HERE, AFTER ALL THE OTHERS
+</span>
+  <span class="keyword">public</span> String toString() {
+    <span class="keyword">return</span> name;
+  }
+
+  <span class="comment">/**
+  * Parse text into an element of this enumeration.
+  *
+  * @param takes one of the values 'Cash', 'Margin', 'RSP'.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> AccountType valueOf(String text){
+    Iterator iter = VALUES.iterator();
+    <span class="keyword">while</span> (iter.hasNext()){
+      AccountType account = (AccountType)iter.next();
+      <span class="keyword">if</span> ( text.equals(account.toString()) ){
+        <span class="keyword">return</span> account;
+      }
+    }
+    <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(
+      <span class="literal">"Cannot be parsed into an enum element : '"</span> + text + <span class="literal">"'"</span>
+    );
+  }
+
+  <span class="keyword">public</span> <span class="keyword">int</span> compareTo(Object thing) {
+    <span class="keyword">return</span> ordinal - ((AccountType)thing).ordinal;
+  }
+
+  <span class="comment">// PRIVATE
+</span>  <span class="keyword">private</span> <span class="keyword">transient</span> <span class="keyword">final</span> String name;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> nextOrdinal = <span class="literal">1</span>;
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">int</span> ordinal = nextOrdinal++;
+
+  <span class="keyword">private</span> AccountType (String name) {
+    <span class="keyword">this</span>.name = name;
+  }
+
+  <span class="comment">//export VALUES with these two items
+</span>  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> AccountType[] values = {CASH, MARGIN, RSP};
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> List VALUES = Collections.unmodifiableList(Arrays.asList(values));
+
+  <span class="comment">//Implement Serializable with these two items
+</span>  <span class="keyword">private</span> Object readResolve() <span class="keyword">throws</span> ObjectStreamException {
+    <span class="keyword">return</span> values[ordinal];
+  }
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">long</span> serialVersionUID = <span class="literal">64616131365L</span>;
+} 
+</pre>
+
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction37c7.html?Id=186">Use enums to restrict arguments</a> <br>
+  <a href="TopicActionaa3f.html?Id=225">Modernize old code</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=1 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

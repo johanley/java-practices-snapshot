@@ -1,0 +1,47 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/movies/javadoc/src-html/hirondelle/movies/edit/MovieActionAdd.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:32 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+MovieActionAdd.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.movies.edit;<a name=line.1></a>
+<a name=line.2></a>
+<span class='keyword'>import</span> hirondelle.movies.util.Util;<a name=line.3></a>
+<a name=line.4></a>
+<span class='keyword'>import</span> java.awt.event.ActionEvent;<a name=line.5></a>
+<span class='keyword'>import</span> java.awt.event.KeyEvent;<a name=line.6></a>
+<span class='keyword'>import</span> java.util.logging.Logger;<a name=line.7></a>
+<a name=line.8></a>
+<span class='keyword'>import</span> javax.swing.AbstractAction;<a name=line.9></a>
+<span class='keyword'>import</span> javax.swing.JFrame;<a name=line.10></a>
+<a name=line.11></a>
+<span class='comment'>/** Show dialog for adding a new {@link Movie}. */</span><a name=line.12></a>
+<span class='keyword'>public</span> <span class='keyword'>final</span> <span class='keyword'>class</span> MovieActionAdd <span class='keyword'>extends</span> AbstractAction  {<a name=line.13></a>
+  <a name=line.14></a>
+  <span class='comment'>/** Constructor. */</span><a name=line.15></a>
+  <span class='keyword'>public</span> MovieActionAdd(JFrame aFrame){<a name=line.16></a>
+    <span class='keyword'>super</span>(<span class='literal'>"Add..."</span>, <span class='keyword'>null</span> );<a name=line.17></a>
+    putValue(SHORT_DESCRIPTION, <span class='literal'>"Add a new movie"</span>); <a name=line.18></a>
+    putValue(MNEMONIC_KEY, <span class='keyword'>new</span> Integer(KeyEvent.VK_A) );<a name=line.19></a>
+    fFrame = aFrame;<a name=line.20></a>
+  }<a name=line.21></a>
+  <a name=line.22></a>
+  <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> actionPerformed(ActionEvent aActionEvent) {<a name=line.23></a>
+    fLogger.config(<span class='literal'>"Adding a new movie."</span>);<a name=line.24></a>
+    MovieView view = <span class='keyword'>new</span> MovieView(fFrame);<a name=line.25></a>
+  }<a name=line.26></a>
+  <a name=line.27></a>
+  <span class='comment'>// PRIVATE<a name=line.28></a>
+</span>  <span class='keyword'>private</span> JFrame fFrame;<a name=line.29></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> Logger fLogger = Util.getLogger(MovieActionAdd.<span class='keyword'>class</span>);<a name=line.30></a>
+}<a name=line.31></a>
+ <a name=line.32></a>
+</PRE><a name=line.33></a>
+ </BODY><a name=line.34></a>
+<HTML><a name=line.35></a>

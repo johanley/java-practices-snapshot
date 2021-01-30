@@ -1,0 +1,318 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=149 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="splash,swing,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Splash screen</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Splash screen</div>
+
+<br><a href="http://docs.oracle.com/javase/tutorial/uiswing/misc/splashscreen.html">Splash screens</a> 
+are simple graphics which load quickly upon startup, and assure the user that 
+the application is loading promptly.
+The <code><a href="https://docs.oracle.com/javase/10/docs/api/java/awt/SplashScreen.html">SplashScreen</a></code> class
+was added to JSE 6, and should be used if available.
+
+<p>If JSE 6 is not available, then the following technique is provided as an alternative.
+
+</p><p>Various policies for controlling the appearance and disappearance of
+the splash screen are possible. Here, the splash screen disappears when
+a main window has finished loading.
+</p><p>This example is also of interest since it demonstrates clearly that
+the launch thread is unusual - it's distinct from the event dispatch thread,
+where most of the work of a Swing application takes place:
+</p><ul>
+<li>
+upon launch, the launch thread shows a splash screen, which activates the
+event dispatch thread</li>
+
+<li>
+once the splash screen is showing (or, more precisely, is "realized"),
+the launch thread acts as a "worker thread", and can only close the splash
+screen indirectly, using <code>EventQueue.invokeLater</code> to properly inject
+an event into the event dispatch thread</li>
+</ul>
+<br><pre>
+<span class="keyword">package</span> hirondelle.stocks.main;
+
+<span class="keyword">import</span> java.awt.*;
+<span class="keyword">import</span> java.net.URL;
+<span class="keyword">import</span> java.awt.image.ImageObserver;
+
+<span class="comment">/**
+* Present a simple graphic to the user upon launch of the application, to 
+* provide a faster initial response than is possible with the main window.
+* 
+* &lt;P&gt;Adapted from an 
+* &lt;a href=http://developer.java.sun.com/developer/qow/archive/24/index.html&gt;item&lt;/a&gt; 
+* on Sun's Java Developer Connection.
+*
+* &lt;P&gt;This splash screen appears within about 2.5 seconds on a development 
+* machine. The main screen takes about 6.0 seconds to load, so use of a splash 
+* screen cuts down the initial display delay by about 55 percent.
+* 
+* &lt;P&gt;When JDK 6+ is available, its java.awt.SplashScreen class should be used instead 
+* of this class.
+*/</span>
+<span class="keyword">final</span> <span class="keyword">class</span> SplashScreen <span class="keyword">extends</span> Frame {
+
+  <span class="comment">/**
+  * Construct using an image for the splash screen.
+  *  
+  * @param aImageId must have content, and is used by  
+  * {@link Class#getResource(java.lang.String)} to retrieve the splash screen image.
+  */</span>
+  SplashScreen(String aImageId) {
+    <span class="comment">/* 
+    * Implementation Note
+    * Args.checkForContent is not called here, in an attempt to minimize 
+    * class loading.
+    */</span>
+    <span class="keyword">if</span> (aImageId == <span class="keyword">null</span> || aImageId.trim().length() == <span class="literal">0</span>){
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="literal">"Image Id does not have content."</span>);
+    }
+    fImageId = aImageId;
+  }
+   
+  <span class="comment">/**
+  * Show the splash screen to the end user.
+  *
+  * &lt;P&gt;Once this method returns, the splash screen is realized, which means 
+  * that almost all work on the splash screen should proceed through the event 
+  * dispatch thread. In particular, any call to &lt;tt&gt;dispose&lt;/tt&gt; for the 
+  * splash screen must be performed in the event dispatch thread.
+  */</span>
+  <span class="keyword">void</span> splash(){
+    initImageAndTracker();
+    setSize(fImage.getWidth(NO_OBSERVER), fImage.getHeight(NO_OBSERVER));
+    center();
+    fMediaTracker.addImage(fImage, IMAGE_ID);
+    <span class="keyword">try</span> {
+      fMediaTracker.waitForID(IMAGE_ID);
+    }
+    <span class="keyword">catch</span>(InterruptedException ex){
+      System.out.println(<span class="literal">"Cannot track image load."</span>);
+    }
+    SplashWindow splashWindow = <span class="keyword">new</span> SplashWindow(<span class="keyword">this</span>,fImage);
+  }
+  
+  <span class="comment">// PRIVATE
+</span>  <span class="keyword">private</span> <span class="keyword">final</span> String fImageId;
+  <span class="keyword">private</span> MediaTracker fMediaTracker;
+  <span class="keyword">private</span> Image fImage;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> ImageObserver NO_OBSERVER = <span class="keyword">null</span>; 
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> IMAGE_ID = <span class="literal">0</span>;
+
+  <span class="keyword">private</span> <span class="keyword">void</span> initImageAndTracker(){
+    fMediaTracker = <span class="keyword">new</span> MediaTracker(<span class="keyword">this</span>);
+    URL imageURL = SplashScreen.<span class="keyword">class</span>.getResource(fImageId);
+    fImage = Toolkit.getDefaultToolkit().getImage(imageURL);
+  }
+
+  <span class="comment">/**
+  * Centers the frame on the screen.
+  *
+  *&lt;P&gt;This centering service is more or less in {@link hirondelle.stocks.util.ui.UiUtil}; 
+  * this duplication is justified only because the use of  
+  * {@link hirondelle.stocks.util.ui.UiUtil} would entail more class loading, which is 
+  * not desirable for a splash screen.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">void</span> center(){
+    Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+    Rectangle frame = getBounds();
+    setLocation((screen.width - frame.width)/<span class="literal">2</span>, (screen.height - frame.height)/<span class="literal">2</span>);
+  }
+ 
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">class</span> SplashWindow <span class="keyword">extends</span> Window {
+    SplashWindow(Frame aParent, Image aImage) {
+       <span class="keyword">super</span>(aParent);
+       fImage = aImage;
+       setSize(fImage.getWidth(NO_OBSERVER), fImage.getHeight(NO_OBSERVER));
+       Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+       Rectangle window = getBounds();
+       setLocation((screen.width - window.width) / <span class="literal">2</span>,(screen.height - window.height)/<span class="literal">2</span>);
+       setVisible(<span class="keyword">true</span>);
+    }
+    <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> paint(Graphics graphics) {
+      <span class="keyword">if</span> (fImage != <span class="keyword">null</span>) {
+        graphics.drawImage(fImage,<span class="literal">0</span>,<span class="literal">0</span>,<span class="keyword">this</span>);
+      }
+    }
+    <span class="keyword">private</span> Image fImage;
+  }
+  
+  <span class="comment">/**
+  * Developer test harness shows the splash screen for a fixed length of 
+  * time, without launching the full application.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... aArgs){
+    SplashScreen splashScreen = <span class="keyword">new</span> SplashScreen(<span class="literal">"StocksMonitor.gif"</span>);
+    splashScreen.splash();
+    <span class="keyword">try</span> {
+      Thread.sleep(<span class="literal">2000</span>);
+    }
+    <span class="keyword">catch</span>(InterruptedException ex) {
+      System.out.println(ex);
+    }
+    System.exit(<span class="literal">0</span>);
+  }
+}
+ 
+</pre>
+
+<br>Here's an example of a class which launches an application using the
+above <code>SplashScreen</code>:
+<br><pre>
+<span class="keyword">package</span> hirondelle.stocks.main;
+
+<span class="keyword">import</span> java.util.logging.*;
+<span class="keyword">import</span> java.awt.EventQueue;
+<span class="keyword">import</span> hirondelle.stocks.util.Util;
+<span class="keyword">import</span> hirondelle.stocks.util.Consts;
+
+<span class="comment">/**
+* Launch the application using an older version of a splash screen.
+*
+*&lt;P&gt;Perform tasks in this order :
+*&lt;ul&gt;
+* &lt;li&gt;log basic system information 
+* &lt;li&gt;promptly show a splash screen upon startup
+* &lt;li&gt;show the main screen
+* &lt;li&gt;remove the splash screen once the main screen is shown
+*&lt;/ul&gt;
+*
+* These tasks are performed in a thread-safe manner.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Launcher { 
+
+  <span class="comment">/**
+  * Launch the application and display the main window.
+  *
+  * @param aArgs are ignored by this application, and may take any value.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main (String... aArgs) {
+    
+    <span class="comment">/*
+    * Implementation Note:
+    *
+    * Note that the launch thread of any GUI application is in effect an initial 
+    * worker thread - it is not the event dispatch thread, where the bulk of processing
+    * takes place. Thus, once the launch thread realizes a window, then the launch 
+    * thread should almost always manipulate such a window through 
+    * EventQueue.invokeLater. (This is done for closing the splash 
+    * screen, for example.)
+    */</span>
+    
+    <span class="comment">//verifies that assertions are on:
+</span>    <span class="comment">//  assert(false) : "Test";
+</span>    
+    logBasicSystemInfo();
+    showSplashScreen();
+    showMainWindow();
+    EventQueue.invokeLater(<span class="keyword">new</span> SplashScreenCloser());
+    fLogger.info(<span class="literal">"Launch thread now exiting..."</span>);
+  }
+
+  <span class="comment">// PRIVATE 
+</span>  
+  <span class="keyword">private</span> <span class="keyword">static</span> SplashScreen fSplashScreen;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Logger fLogger = Util.getLogger(Launcher.<span class="keyword">class</span>);
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String SPLASH_IMAGE = <span class="literal">"StocksMonitor.gif"</span>;
+
+  <span class="comment">/**
+  * Show a simple graphical splash screen, as a quick preliminary to the main screen.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> showSplashScreen(){
+    fLogger.info(<span class="literal">"Showing the splash screen."</span>);
+    fSplashScreen = <span class="keyword">new</span> SplashScreen(SPLASH_IMAGE);
+    fSplashScreen.splash();
+  }
+  
+  <span class="comment">/**
+  * Display the main window of the application to the user.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> showMainWindow(){
+    fLogger.info(<span class="literal">"Showing the main window."</span>);
+    StocksMonitorMainWindow mainWindow = <span class="keyword">new</span> StocksMonitorMainWindow();
+  }
+
+  <span class="comment">/** 
+  * Removes the splash screen. 
+  *
+  * Invoke this &lt;tt&gt;Runnable&lt;/tt&gt; using 
+  * &lt;tt&gt;EventQueue.invokeLater&lt;/tt&gt;, in order to remove the splash screen
+  * in a thread-safe manner.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">class</span> SplashScreenCloser <span class="keyword">implements</span> Runnable {
+    <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> run(){
+      fLogger.fine(<span class="literal">"Closing the splash screen.'"</span>);
+      fSplashScreen.dispose();
+    }
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> logBasicSystemInfo() {
+    fLogger.info(<span class="literal">"Launching the application..."</span>);
+    fLogger.config(
+      <span class="literal">"Operating System: "</span> + System.getProperty(<span class="literal">"os.name"</span>) + <span class="literal">" "</span> + 
+      System.getProperty(<span class="literal">"os.version"</span>)
+    );
+    fLogger.config(<span class="literal">"JRE: "</span> + System.getProperty(<span class="literal">"java.version"</span>));
+    fLogger.info(<span class="literal">"Java Launched From: "</span> + System.getProperty(<span class="literal">"java.home"</span>));
+    fLogger.config(<span class="literal">"Class Path: "</span> + System.getProperty(<span class="literal">"java.class.path"</span>));
+    fLogger.config(<span class="literal">"Library Path: "</span> + System.getProperty(<span class="literal">"java.library.path"</span>));
+    fLogger.config(<span class="literal">"Application Name: "</span> + Consts.APP_NAME + <span class="literal">"/"</span> + Consts.APP_VERSION);
+    fLogger.config(<span class="literal">"User Home Directory: "</span> + System.getProperty(<span class="literal">"user.home"</span>));
+    fLogger.config(<span class="literal">"User Working Directory: "</span> + System.getProperty(<span class="literal">"user.dir"</span>));
+    fLogger.info(<span class="literal">"Test INFO logging."</span>);
+    fLogger.fine(<span class="literal">"Test FINE logging."</span>);
+    fLogger.finest(<span class="literal">"Test FINEST logging."</span>);
+  }
+} 
+</pre>
+
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction3abb.html?Id=153">Swing threads</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=149 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+</html>

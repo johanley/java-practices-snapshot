@@ -1,0 +1,239 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=242 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:49 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Launch other applications</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Launch other applications</div>
+
+<br>
+In Swing applications, the <code><a href="https://docs.oracle.com/javase/10/docs/api/java/awt/Desktop.html">Desktop</a></code> class gives 
+you a simple way to launch common tools found on the great majority of personal computers.
+With <code>Desktop</code>, you can:
+<ul>
+ <li>open the default web browser, pointed to a given URI.
+ </li><li>open the default email client, ready to compose an email. 
+  This is accomplished by passing a <a href="http://tools.ietf.org/html/rfc2368">mailTo URI</a> to the <code>Desktop</code> class.
+  The <code>mailTo</code> URI lets you specify the recipients of the email, its subject, and even its content.
+  The size of the content is limited, however (which is a bit annoying).
+  For example, Microsoft Outlook limits you to 512 characters.
+  A second limitation is that file attachments cannot be specified using a <code>mailto</code> URI.
+</li></ul> 
+
+<code>Desktop</code> also has operations that use the system's <i>file associations</i>, which map file extensions to corresponding default applications.
+Such mapping is used to:
+<ul>
+ <li>open a file for editing or viewing (text file, graphics file, or whatever)
+ </li><li>print a file with an application's print command
+</li></ul> 
+
+<p>The <code>Desktop</code> class has a pleasingly simple API.
+Here's an example of its use. 
+Note that when you create an email, you often need to pay attention to encoding issues (see below).
+<br></p><pre>
+<span class="keyword">import</span> java.awt.Desktop;
+<span class="keyword">import</span> java.io.IOException;
+<span class="keyword">import</span> java.io.UnsupportedEncodingException;
+<span class="keyword">import</span> java.net.URI;
+<span class="keyword">import</span> java.net.URISyntaxException;
+<span class="keyword">import</span> java.nio.file.Path;
+<span class="keyword">import</span> java.nio.file.Paths;
+<span class="keyword">import</span> java.text.CharacterIterator;
+<span class="keyword">import</span> java.text.StringCharacterIterator;
+<span class="keyword">import</span> java.util.regex.Matcher;
+<span class="keyword">import</span> java.util.regex.Pattern;
+
+<span class="comment">/** Exercise the Desktop class. */</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> ExerDesktop {
+
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... aArgs){
+    <span class="keyword">if</span>(Desktop.isDesktopSupported()){
+      ExerDesktop test = <span class="keyword">new</span> ExerDesktop();
+      test.openURLInDefaultBrowser(<span class="literal">"http://www.date4j.net"</span>);
+      <span class="comment">//hard-coded to a given file :
+</span>      test.openFile(<span class="literal">"C:\\Temp\\blah.txt"</span>);
+      test.composeEmail();
+    }
+    <span class="keyword">else</span> {
+      log(<span class="literal">"Desktop is not supported by this host."</span>);
+    }
+  }
+  
+  <span class="comment">/** Open a browser. */</span>
+  <span class="keyword">void</span> openURLInDefaultBrowser(String aUrl){
+    <span class="keyword">try</span> {
+      URI uri = <span class="keyword">new</span> URI(aUrl);
+      fDesktop.browse(uri);
+    }
+    <span class="keyword">catch</span> (URISyntaxException ex) {
+      log(<span class="literal">"URL is malformed. Cannot open browser."</span>);
+    }
+    <span class="keyword">catch</span> (IOException ex) {
+      log(<span class="literal">"Cannot open browser."</span>);
+    }
+  }
+  
+  <span class="comment">/**
+   Open a file using the system's mapping of file extension to default application. 
+  */</span>
+  <span class="keyword">void</span> openFile(String aFileName){
+    Path path = Paths.get(aFileName);
+    <span class="keyword">try</span> {
+      fDesktop.open(path.toFile());
+    }
+    <span class="keyword">catch</span> (IOException ex) {
+      log(<span class="literal">"File not found: "</span> + aFileName);
+    }
+  }
+  
+  <span class="comment">/** 
+   Opens the default email client with prepopulated content, but doesn't send the email.
+   You should test your own email clients and character sets.
+  */</span>
+  <span class="keyword">void</span> composeEmail(){
+    <span class="keyword">try</span> {
+      String url = 
+        <span class="literal">"mailTo:you@xyz.com,me@abc.com"</span> + 
+        <span class="literal">"?subject="</span> + getEmailSubject() + 
+        <span class="literal">"&amp;body="</span> + getEmailBody()
+      ;
+      URI mailTo = <span class="keyword">new</span> URI(url);
+      <span class="comment">//log(mailTo);
+</span>      fDesktop.mail(mailTo);
+    }
+    <span class="keyword">catch</span> (IOException ex) {
+      log(<span class="literal">"Cannot launch mail client"</span>);
+    }
+    <span class="keyword">catch</span> (URISyntaxException ex) {
+      log(<span class="literal">"Bad mailTo URI: "</span> + ex.getInput());
+    }
+  }
+  
+  <span class="comment">// PRIVATE
+</span>  <span class="keyword">private</span> Desktop fDesktop = Desktop.getDesktop(); 
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Pattern SIMPLE_CHARS = Pattern.compile(<span class="literal">"[a-zA-Z0-9]"</span>);
+ 
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(Object aMessage){
+    System.out.println(String.valueOf(aMessage));
+  }
+  
+  <span class="keyword">private</span> String getEmailSubject(){
+    <span class="keyword">return</span> encodeUnusualChars(<span class="literal">"This is test #1."</span>);
+  }
+  
+  <span class="keyword">private</span> String getEmailBody(){
+    StringBuilder result = <span class="keyword">new</span> StringBuilder();
+    String NL = System.getProperty(<span class="literal">"line.separator"</span>); 
+    result.append(<span class="literal">"Hello,"</span>);
+    result.append(NL);
+    result.append(NL);
+    <span class="comment">//exercises a range of common characters :
+</span>    result.append(<span class="literal">"Testing 1 2 3. This is a 'quote', _yes_? ($100.00!) 5*3"</span>);
+    <span class="keyword">return</span> encodeUnusualChars(result.toString());
+  }
+  
+  <span class="comment">/** 
+   This is needed to handle special characters.
+   This method hasn't been tested with non-Latin character sets.
+   
+   Encodes all text except characters matching [a-zA-Z0-9]. 
+   All other characters are hex-encoded. The encoding is '%' plus the hex 
+   representation of the character in UTF-8. 
+   
+   &lt;P&gt;See also :
+   http://tools.ietf.org/html/rfc2368 - mailto
+   http://tools.ietf.org/html/rfc1738 - URLs
+  */</span>
+  <span class="keyword">private</span> String encodeUnusualChars(String aText){
+    StringBuilder result = <span class="keyword">new</span> StringBuilder();
+    CharacterIterator iter = <span class="keyword">new</span> StringCharacterIterator(aText);
+    <span class="keyword">for</span>(<span class="keyword">char</span> c = iter.first(); c != CharacterIterator.DONE; c = iter.next()) {
+      <span class="keyword">char</span>[] chars = {c};
+      String character = <span class="keyword">new</span> String(chars);
+      <span class="keyword">if</span>(isSimpleCharacter(character)){
+        result.append(c);
+      }
+      <span class="keyword">else</span> {
+        hexEncode(character, <span class="literal">"UTF-8"</span>, result);
+      }
+    }
+    <span class="keyword">return</span> result.toString();
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">boolean</span> isSimpleCharacter(String aCharacter){
+    Matcher matcher = SIMPLE_CHARS.matcher(aCharacter);
+    <span class="keyword">return</span> matcher.matches();
+  }
+  
+  <span class="comment">/**
+   For the given character and encoding, appends one or more hex-encoded characters.
+   For double-byte characters, two hex-encoded items will be appended.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> hexEncode(String aCharacter, String aEncoding, StringBuilder aOut) {
+    <span class="keyword">try</span>  {
+      String HEX_DIGITS = <span class="literal">"0123456789ABCDEF"</span>; 
+      <span class="keyword">byte</span>[] bytes = aCharacter.getBytes(aEncoding);
+      <span class="keyword">for</span> (<span class="keyword">int</span> idx = <span class="literal">0</span>; idx &lt; bytes.length; idx++) {
+        aOut.append(<span class="literal">'%'</span>);
+        aOut.append(HEX_DIGITS.charAt((bytes[idx] &amp; <span class="literal">0xf0</span>) &gt;&gt; <span class="literal">4</span>));
+        aOut.append(HEX_DIGITS.charAt(bytes[idx] &amp; <span class="literal">0xf</span>));
+      }
+    }
+    <span class="keyword">catch</span> (UnsupportedEncodingException ex) {
+      log(ex.getStackTrace());
+    }
+  }
+} 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction895b.html?Id=144">Send an email</a> <br>
+  <a href="TopicActionc3f2.html?Id=179">Send trouble ticket emails</a> <br>
+  <a href="TopicActiond957.html?Id=180">Validate email addresses</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=242 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:49 GMT -->
+</html>

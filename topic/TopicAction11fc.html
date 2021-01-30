@@ -1,0 +1,347 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=167 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:47 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="dialog,swing,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Input dialogs</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Input dialogs</div>
+
+<br>Input dialogs allows users to input new items, or to change old ones.
+It's often helpful to implement a class which can handle both cases, since
+their data validation requirements are almost always identical.
+
+<p><b>Example</b>
+
+</p><p>Here, the <code>StockEditor</code> class can either add a new <code>Stock</code> object,
+or change a <code>Stock</code> which already exists. When a change is performed,
+all input fields are pre-populated with current values. When an add is
+performed, all fields are either blank or pre-populated with default values.
+</p><p>Internally, StockEditor uses a <a href="TopicAction7910.html?Id=150">standard dialog</a>.
+It also uses a <code><a href="TopicActioncded.html?Id=151">RegexInputVerifier</a></code>
+for all text validations, using regular expressions. Text validation proceeds
+as follows:
+</p><ul>
+<li>
+the user enters text into a <code>JTextField</code></li>
+
+<li>
+when focus leaves the <code>JTextField</code>, the input is verified versus
+a specified regular expression</li>
+
+<li>
+if invalid, the text of the <code>JTextField</code> is altered to explicitly
+show what is invalid, and the system beeps</li>
+
+<li>
+the validation mechanism does not force the focus to remain in the offending
+<code>JTextField</code></li>
+</ul>
+For example, here is the result of inputing an invalid <code>Quantity</code>,
+which must be an integer:
+<p><img SRC="../images/ChangeStockInvalid.gif" height="196" width="351" ALT="Response to invalid input" border="0">
+</p><p>When the OK button is selected, the input is processed only if
+</p><ul>
+<li>
+The "INVALID" text is absent from the start of all text fields</li>
+
+<li>
+<code>Stock.isValidInput</code> returns <code>true</code> (this is a second, independent
+check)</li>
+</ul>
+If there is an error, the user is informed by a <code>JOptionPane</code> message.
+<br><pre>
+<span class="keyword">package</span> hirondelle.stocks.portfolio;
+
+<span class="keyword">import</span> java.util.*;
+<span class="keyword">import</span> java.util.regex.Pattern;
+<span class="keyword">import</span> java.math.BigDecimal;
+<span class="keyword">import</span> javax.swing.*;
+<span class="keyword">import</span> java.awt.*;
+<span class="keyword">import</span> java.awt.event.*;
+
+<span class="keyword">import</span> hirondelle.stocks.quotes.Stock;
+<span class="keyword">import</span> hirondelle.stocks.quotes.Exchange;
+<span class="keyword">import</span> hirondelle.stocks.util.Args;
+<span class="keyword">import</span> hirondelle.stocks.util.Util;
+<span class="keyword">import</span> hirondelle.stocks.util.Consts;
+<span class="keyword">import</span> hirondelle.stocks.util.ui.StandardEditor;
+<span class="keyword">import</span> hirondelle.stocks.util.ui.UiUtil;
+
+<span class="comment">/**
+* Dialog allows user to either add new a {@link Stock} to the 
+* {@link CurrentPortfolio}, or to change the parameters of a &lt;tt&gt;Stock&lt;/tt&gt;
+* which is already in the &lt;tt&gt;CurrentPortfolio&lt;/tt&gt;.
+*/</span>
+<span class="keyword">final</span> <span class="keyword">class</span> StockEditor {
+  
+  <span class="comment">/**
+  * Constructor.
+  *  
+  * @param aFrame parent to which dialogs of this class are attached.
+  */</span>
+  StockEditor(JFrame aFrame) {
+    Args.checkForNull(aFrame);
+    fFrame = aFrame;
+  }
+  
+  <span class="comment">/**
+  * Return the {@link Stock} representing a new 
+  * item which the user has input, or &lt;tt&gt;null&lt;/tt&gt; if the user cancels the dialog.
+  */</span>
+  Stock addStock(){
+    showDialog(<span class="literal">"Add New Stock"</span>, <span class="keyword">null</span>);
+    <span class="keyword">return</span> fNewStock;
+  }
+
+  <span class="comment">/**
+  * Return the possibly-edited version of &lt;tt&gt;aOldStock&lt;/tt&gt;, representing 
+  * the desired changes, or &lt;tt&gt;null&lt;/tt&gt; if the user cancels the dialog.
+  * 
+  * @param aOldStock {@link Stock} which the end user wishes to change.
+  */</span>
+  Stock changeStock(Stock aOldStock){
+    Args.checkForNull(aOldStock);
+    showDialog(<span class="literal">"Change Stock"</span>, aOldStock);
+    <span class="keyword">return</span> fNewStock;
+  }
+  
+  <span class="comment">// PRIVATE 
+</span>
+  <span class="comment">/**
+  * Always returned to the caller, and is null if the user cancels the 
+  * dialog.
+  */</span>
+  <span class="keyword">private</span> Stock fNewStock;
+  
+  <span class="keyword">private</span> JTextField fNameField;
+  <span class="keyword">private</span> JTextField fTickerField;
+  <span class="keyword">private</span> JComboBox&lt;Exchange&gt; fExchangeField;
+  <span class="keyword">private</span> JTextField fQuantityField;
+  <span class="keyword">private</span> JTextField fAveragePriceField;
+  
+  <span class="keyword">private</span> JFrame fFrame;
+
+  <span class="keyword">private</span> <span class="keyword">void</span> showDialog(String aTitle, Stock aInitialValue){
+    Editor editor = <span class="keyword">new</span> Editor(aTitle, fFrame, aInitialValue);
+    editor.showDialog();
+  }
+
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">class</span> Editor <span class="keyword">extends</span> StandardEditor { 
+    <span class="comment">/**
+    * @param aInitialValue is possibly-null; if null, then the editor represents 
+    * and Add action, otherwise it represents a Change action, and all fields will
+    * be pre-populated with values taken from aInitialValue.
+    */</span>
+    Editor(String aTitle, JFrame aParent, Stock aInitialValue){
+      <span class="keyword">super</span>(aTitle, aParent, StandardEditor.CloseAction.HIDE);
+      fInitialValue = aInitialValue;
+    }
+    <span class="keyword">@Override</span> <span class="keyword">protected</span> JComponent getEditorUI () {
+      <span class="keyword">return</span> getEditor(fInitialValue);
+    }
+    <span class="keyword">@Override</span> <span class="keyword">protected</span> <span class="keyword">void</span> okAction() {
+      initNewStock(<span class="keyword">this</span>);
+    }
+    <span class="keyword">private</span> Stock fInitialValue;
+  }  
+  
+  <span class="keyword">private</span> JComponent getEditor(Stock aInitialValue){
+    JPanel content = <span class="keyword">new</span> JPanel();
+    content.setLayout(<span class="keyword">new</span> GridBagLayout());
+    addCompanyName(content, aInitialValue);
+    addTickerField(content, aInitialValue);
+    addExchange(content, aInitialValue);
+    addQuantity(content, aInitialValue);
+    addAveragePrice(content, aInitialValue);
+    <span class="keyword">return</span> content;
+  }
+
+  <span class="comment">/**
+  * Set fNewStock, if the input is valid.
+  *
+  * If there is at least one error message in the text input fields, then
+  * inform the user that the error must be corrected before proceeding.
+  *
+  * &lt;p&gt;If no error messages, but input still detected as faulty as 
+  * per {@link Stock#isValidInput(List, String, String, Exchange, Integer, BigDecimal)}, 
+  * then inform user of the problem.
+  *
+  * @param aEditor is the dialog which will be closed if no errors occur.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">void</span> initNewStock(StandardEditor aEditor){
+    <span class="keyword">if</span> (hasErrorMessage()) {
+      String message = <span class="literal">"Please correct the input error before proceeding."</span>;
+      JOptionPane.showMessageDialog(
+        fFrame, message, <span class="literal">"Invalid Input"</span>, JOptionPane.INFORMATION_MESSAGE
+      );
+      <span class="keyword">return</span>;
+    }
+    
+    String name = fNameField.getText();
+    String ticker = fTickerField.getText();
+    Exchange exchange = Exchange.valueFrom(fExchangeField.getSelectedItem().toString());
+    Integer numShares = <span class="keyword">null</span>;
+    <span class="keyword">if</span> (Util.textHasContent(fQuantityField.getText())) {
+      numShares = Integer.valueOf(fQuantityField.getText());
+    }
+    <span class="keyword">else</span> {
+      numShares = Consts.ZERO;
+    }
+    BigDecimal avgPrice = <span class="keyword">null</span>;
+    <span class="keyword">if</span> (Util.textHasContent(fAveragePriceField.getText())) {
+      avgPrice = <span class="keyword">new</span> BigDecimal(fAveragePriceField.getText());
+    }
+    <span class="keyword">else</span> {
+      avgPrice = <span class="keyword">new</span> BigDecimal( <span class="literal">"0.00"</span> );
+    }
+    
+    java.util.List&lt;String&gt; errorMessages = <span class="keyword">new</span> ArrayList&lt;&gt;();
+    <span class="keyword">if</span> (Stock.isValidInput( errorMessages, name, ticker, exchange, numShares, avgPrice)) {
+      fNewStock = <span class="keyword">new</span> Stock(name, ticker, exchange, numShares, avgPrice); 
+      aEditor.dispose();
+    }
+    <span class="keyword">else</span> {
+      Object[] message = errorMessages.toArray();
+      JOptionPane.showMessageDialog(
+        fFrame, message, <span class="literal">"Invalid Input"</span>, JOptionPane.INFORMATION_MESSAGE
+      );
+    }
+  }
+  
+  <span class="comment">/**
+  * Return true only if at least one of the text input fields contains 
+  * an error message.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">boolean</span> hasErrorMessage(){
+    <span class="keyword">return</span> 
+      fNameField.getText().startsWith(RegexInputVerifier.ERROR_MESSAGE_START) ||
+      fTickerField.getText().startsWith(RegexInputVerifier.ERROR_MESSAGE_START) ||
+      fQuantityField.getText().startsWith(RegexInputVerifier.ERROR_MESSAGE_START) ||
+      fAveragePriceField.getText().startsWith(RegexInputVerifier.ERROR_MESSAGE_START
+    );
+  }
+
+  <span class="keyword">private</span> <span class="keyword">void</span> addCompanyName(JPanel aContent, Stock aInitialValue) {
+    fNameField = UiUtil.addSimpleEntryField(
+      aContent, 
+      <span class="literal">"Company Name:"</span>, 
+      (aInitialValue == <span class="keyword">null</span> ? <span class="keyword">null</span> : aInitialValue.getName()), 
+      KeyEvent.VK_C, 
+      UiUtil.getConstraints(<span class="literal">0</span>,<span class="literal">0</span>),
+      <span class="literal">"No spaces on the ends, and at least one character"</span>
+    );
+    fNameField.setInputVerifier(RegexInputVerifier.TEXT);
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">void</span> addTickerField(JPanel aContent, Stock aInitialValue) {
+    fTickerField = UiUtil.addSimpleEntryField(
+      aContent, 
+      <span class="literal">"Ticker:"</span>, 
+      (aInitialValue == <span class="keyword">null</span> ? <span class="keyword">null</span> : aInitialValue.getTicker()), 
+      KeyEvent.VK_T, 
+      UiUtil.getConstraints(<span class="literal">1</span>,<span class="literal">0</span>),
+      <span class="literal">"No spaces on the ends, 1-20 characters: "</span> + 
+      <span class="literal">"letters, periods, underscore and ^"</span>
+    );
+    String regex = <span class="literal">"(\\^)?([A-Za-z._]){1,20}"</span>;
+    RegexInputVerifier tickerVerifier = 
+      <span class="keyword">new</span> RegexInputVerifier(Pattern.compile(regex), RegexInputVerifier.UseToolTip.FALSE
+    );
+    fTickerField.setInputVerifier( tickerVerifier );
+  }
+
+  <span class="keyword">private</span> <span class="keyword">void</span> addExchange(JPanel aContent, Stock aInitialValue) {
+    JLabel exchange = <span class="keyword">new</span> JLabel(<span class="literal">"Exchange:"</span>);
+    exchange.setDisplayedMnemonic(KeyEvent.VK_X);
+    aContent.add( exchange, UiUtil.getConstraints(<span class="literal">2</span>,<span class="literal">0</span>) );
+    DefaultComboBoxModel&lt;Exchange&gt; exchangesModel = 
+      <span class="keyword">new</span> DefaultComboBoxModel&lt;&gt;(Exchange.VALUES.toArray(<span class="keyword">new</span> Exchange[<span class="literal">0</span>]))
+    ;
+    fExchangeField = <span class="keyword">new</span> JComboBox&lt;Exchange&gt;(exchangesModel);
+    <span class="keyword">if</span> (aInitialValue != <span class="keyword">null</span>) {
+      fExchangeField.setSelectedItem( aInitialValue.getExchange() );
+    }
+    exchange.setLabelFor(fExchangeField);
+    GridBagConstraints constraints = UiUtil.getConstraints(<span class="literal">2</span>,<span class="literal">1</span>);
+    constraints.fill = GridBagConstraints.HORIZONTAL;
+    aContent.add(fExchangeField, constraints);
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">void</span> addQuantity(JPanel aContent, Stock aInitialValue) {
+    fQuantityField = UiUtil.addSimpleEntryField(
+      aContent, 
+      <span class="literal">"Quantity:"</span>, 
+      (aInitialValue == <span class="keyword">null</span> ? <span class="keyword">null</span> : 
+      aInitialValue.getNumShares().toString()), 
+      KeyEvent.VK_Q, 
+      UiUtil.getConstraints(<span class="literal">3</span>,<span class="literal">0</span>),
+      <span class="literal">"Zero or Integer (possible leading minus sign)"</span>
+    );
+    fQuantityField.setInputVerifier(RegexInputVerifier.INTEGER);
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">void</span> addAveragePrice(JPanel aContent, Stock aInitialValue) {
+    fAveragePriceField = UiUtil.addSimpleEntryField(
+      aContent, 
+       <span class="literal">"Average Price:"</span>, 
+      (aInitialValue == <span class="keyword">null</span> ? <span class="keyword">null</span> : 
+      aInitialValue.getAveragePrice().toString()), 
+      KeyEvent.VK_A, 
+      UiUtil.getConstraints(<span class="literal">4</span>,<span class="literal">0</span>),
+      <span class="literal">"Zero or Positive Number (two decimals optional)"</span>
+    );
+    fAveragePriceField.setInputVerifier(RegexInputVerifier.NON_NEGATIVE_MONEY);
+  }
+}
+ 
+</pre>
+
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction7910.html?Id=150">Standardized dialogs</a> <br>
+  <a href="TopicActioncded.html?Id=151">Verify input with regular expressions</a> <br>
+  <a href="TopicActiond281.html?Id=233">Verify input with Model Objects</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=167 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:47 GMT -->
+</html>

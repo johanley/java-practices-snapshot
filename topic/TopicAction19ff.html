@@ -1,0 +1,193 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=11 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="constructor,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Constructors in general</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Constructors in general</div>
+
+<br>Constructors: 
+<ul>
+<li>
+if <code>super</code> or <code>this</code> are called, they can only be called on the first
+line of the constructor</li>
+
+<li>
+an exception can be thrown if a parameter is invalid</li>
+
+<li>
+you should ensure that the constructed object is in a <a href="TopicAction0d31.html?Id=6">valid state</a></li>
+
+<li>
+constructors should <a href="TopicAction6581.html?Id=215">never call an overridable method</a> (an overridable method
+is one which is neither <code>private</code>, <code>static</code>, nor <code>final)</code></li>
+
+<li>
+constructors are never <code>synchronized</code></li>
+
+<li>constructors can create thread objects, but the 
+thread <a href="TopicAction3898.html?Id=254">should not be started</a> within a constructor
+
+</li><li>constructors <a href="TopicAction019a.html?Id=252">shouldn't pass a <code>this</code> reference to other objects</a>
+
+</li><li>
+<a href="TopicAction79e9.html?Id=40">constructors can be private</a>, in order to restrict
+construction</li>
+</ul>
+Note that a conventional distinction is made in Java between the 
+"<a href="http://docs.oracle.com/javase/specs/jls/se8/html/jls-8.html#jls-8.8.9">default constructor</a>" 
+and a "no-argument constructor":
+<ul>
+<li>
+the <em>default</em> constructor is the constructor provided by the system in the
+absence of any constructor provided by the programmer. Once a programmer
+supplies any constructor whatsoever, the default constructor is no longer
+supplied.</li>
+
+<li>
+a <em>no-argument</em> constructor, on the other hand, is a constructor provided
+by the programmer which takes no arguments.</li>
+</ul>
+
+This distinction is necessary because the behavior of the two kinds of constructor are 
+unrelated: a default constructor has a fixed behavior defined by Java, while the 
+behavior of a no-argument constructor is defined by the application programmer.
+
+<p><b>Example</b>
+</p><p><code>Resto</code> is an <a href="TopicActiond838.html?Id=29">immutable</a> class, since
+its state cannot change after construction. Note that:
+</p><ul>
+<li>
+all validation is performed in its constructor</li>
+
+<li>
+almost all of its javadoc is concerned with stating precisely what is to
+be passed to the constructor</li>
+</ul>
+<br><pre>
+<span class="keyword">import</span> java.math.BigDecimal;
+<span class="keyword">import</span> java.util.Objects;
+
+<span class="comment">/** Model Object for a Restaurant. */</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Resto {
+
+  <span class="comment">/**
+   Full constructor.
+    
+   @param id underlying database internal identifier (optional) 1..50 characters
+   @param name of the restaurant (required), 2..50 characters
+   @param location street address of the restaurant (optional), 2..50 characters
+   @param average price of a meal (optional) $0.00..$100.00
+   @param comment on the restaurant in general (optional) 2..50 characters
+  */</span>
+  <span class="keyword">public</span> Resto(
+    String id, String name, String location, BigDecimal price, String comment
+  ) <span class="keyword">throws</span> ModelCtorException {
+    <span class="keyword">this</span>.id = id;
+    <span class="keyword">this</span>.name = Objects.requireNonNull(name);
+    <span class="keyword">this</span>.location = location;
+    <span class="keyword">this</span>.price = price;
+    <span class="keyword">this</span>.comment = comment;
+    validateState();
+  }
+  
+  <span class="keyword">public</span> String getId() { <span class="keyword">return</span> id; }
+  <span class="keyword">public</span> String getName() {  <span class="keyword">return</span> name; }
+  <span class="keyword">public</span> String getLocation() {  <span class="keyword">return</span> location;  }
+  <span class="keyword">public</span> BigDecimal getPrice() { <span class="keyword">return</span> price; }
+  <span class="keyword">public</span> String getComment() {  <span class="keyword">return</span> comment; }
+
+  <span class="comment">/** For debugging only. */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> String toString(){
+    <span class="keyword">return</span> id + <span class="literal">":"</span> + name;
+  }
+  
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">boolean</span> equals(Object aThat) {
+    <span class="keyword">if</span> (<span class="keyword">this</span> == aThat) <span class="keyword">return</span> <span class="keyword">true</span>;
+    <span class="keyword">if</span> (!(aThat <span class="keyword">instanceof</span> Resto)) <span class="keyword">return</span> <span class="keyword">false</span>;
+    Resto that = (Resto)aThat;
+    <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="literal">0</span>; i &lt; <span class="keyword">this</span>.getSigFields().length; ++i){
+      <span class="keyword">if</span> (!Objects.equals(<span class="keyword">this</span>.getSigFields()[i], that.getSigFields()[i])){
+        <span class="keyword">return</span> <span class="keyword">false</span>;
+      }
+    }
+    <span class="keyword">return</span> <span class="keyword">true</span>;
+  }  
+  
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">int</span> hashCode(){
+    <span class="keyword">return</span> Objects.hash(getSigFields());
+  }
+  
+  <span class="comment">// PRIVATE 
+</span>  <span class="keyword">private</span> <span class="keyword">final</span> String id;
+  <span class="keyword">private</span> <span class="keyword">final</span> String name;
+  <span class="keyword">private</span> <span class="keyword">final</span> String location;
+  <span class="keyword">private</span> <span class="keyword">final</span> BigDecimal price;
+  <span class="keyword">private</span> <span class="keyword">final</span> String comment;
+  
+  <span class="comment">/** Does all of the checks specified in the constructor's javadoc.*/</span>
+  <span class="keyword">private</span> <span class="keyword">void</span> validateState() <span class="keyword">throws</span> ModelCtorException {
+    <span class="comment">//...elided
+</span>  }
+  
+  <span class="keyword">private</span> Object[] getSigFields(){
+    <span class="keyword">return</span> <span class="keyword">new</span> Object[] {name, location, price, comment};
+  }
+} 
+</pre>
+
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction5d11.html?Id=5">Validate method arguments</a> <br>
+  <a href="TopicAction0d31.html?Id=6">Validate state with class invariants</a> <br>
+  <a href="TopicAction9b86.html?Id=14">Initializing fields to 0 false null is redundant</a> <br>
+  <a href="TopicActiond838.html?Id=29">Immutable objects</a> <br>
+  <a href="TopicAction79e9.html?Id=40">Private constructor</a> <br>
+  <a href="TopicActionfbbc.html?Id=84">Avoid JavaBeans style of construction</a> <br>
+  <a href="TopicAction6581.html?Id=215">Constructors shouldn't call overridables</a> <br>
+  <a href="TopicAction019a.html?Id=252">Don't pass 'this' out of a constructor</a> <br>
+  <a href="TopicAction3898.html?Id=254">Constructors shouldn't start threads</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=11 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+</html>

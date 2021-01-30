@@ -1,0 +1,156 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=12 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="constructor,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Copy constructors</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Copy constructors</div>
+
+<br>Copy constructors:
+<ul>
+<li>
+provide an attractive alternative to the rather pathological <code><a href="TopicActioned8c.html?Id=71">clone</a></code>
+method</li>
+
+<li>
+are easily implemented</li>
+
+<li>
+simply extract the argument's data, and forward to a regular constructor</li>
+
+<li>
+are unnecessary for <a href="TopicActiond838.html?Id=29">immutable objects</a></li>
+</ul>
+<b>Example</b>
+<br><pre>
+<span class="comment">/** With corrections from Bernardo Sulzbach. */</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Galaxy {
+
+  <span class="comment">/**
+  * Regular constructor.
+  */</span>
+  <span class="keyword">public</span> Galaxy(Double mass, String name) {
+    <span class="keyword">this</span>.mass = mass;
+    <span class="keyword">this</span>.name = name;
+  }
+
+  <span class="comment">/**
+  * Copy constructor.
+  */</span>
+  <span class="keyword">public</span> Galaxy(Galaxy galaxy) {
+    <span class="keyword">this</span>(galaxy.getMass(), galaxy.getName());
+    <span class="comment">//no defensive copies are created here, since 
+</span>    <span class="comment">//there are no mutable object fields (String is immutable)
+</span>  }
+
+  <span class="comment">/**
+  * Alternative style for a copy constructor, using a static newInstance
+  * method.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> Galaxy newInstance(Galaxy galaxy) {
+    <span class="keyword">return</span> <span class="keyword">new</span> Galaxy(galaxy.getMass(), galaxy.getName());
+  }
+
+  <span class="keyword">public</span> Double getMass() {
+    <span class="keyword">return</span> mass;
+  }
+
+  <span class="comment">/**
+  * This is the only method which changes the state of a Galaxy
+  * object. If this method was removed, then a copy constructor
+  * would not be provided either, since immutable objects do not
+  * need a copy constructor.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">void</span> setMass(Double aMass){
+    mass = aMass;
+  }
+
+  <span class="keyword">public</span> String getName() {
+    <span class="keyword">return</span> name;
+  }
+
+  <span class="comment">// PRIVATE
+</span>  
+  <span class="comment">/** 
+   Using Double instead of BigDecimal here: the context is scientific!
+  */</span>
+  <span class="keyword">private</span> Double mass;
+  <span class="keyword">private</span> <span class="keyword">final</span> String name;
+
+  <span class="comment">/** Test harness. */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main (String... args){
+    Galaxy m101 = <span class="keyword">new</span> Galaxy(<span class="literal">15.0</span>, <span class="literal">"M101"</span>);
+
+    Galaxy m101CopyOne = <span class="keyword">new</span> Galaxy(m101);
+    m101CopyOne.setMass(<span class="literal">25.0</span>);
+
+    Galaxy m101CopyTwo = Galaxy.newInstance(m101);
+    m101CopyTwo.setMass(<span class="literal">35.0</span>);
+
+    log(<span class="literal">"M101 mass: "</span> + m101.getMass());
+    log(<span class="literal">"M101CopyOne mass: "</span> + m101CopyOne.getMass());
+    log(<span class="literal">"M101CopyTwo mass: "</span> + m101CopyTwo.getMass());
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(String msg) {
+    System.out.println(msg);
+  }
+} 
+</pre>
+
+<br>Example run of this class:
+<pre>
+&gt;java -cp . Galaxy
+M101 mass: 15.0
+M101CopyOne mass: 25.0
+M101CopyTwo mass: 35.0
+</pre>
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction79f1.html?Id=15">Defensive copying</a> <br>
+  <a href="TopicActiond838.html?Id=29">Immutable objects</a> <br>
+  <a href="TopicActioned8c.html?Id=71">Avoid clone</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=12 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+</html>

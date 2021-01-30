@@ -1,0 +1,345 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/table/QuoteFilterFactory.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:53:04 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+QuoteFilterFactory.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.stocks.table;<a name=line.1></a>
+<a name=line.2></a>
+<span class='keyword'>import</span> java.util.logging.*;<a name=line.3></a>
+<span class='keyword'>import</span> java.util.*;<a name=line.4></a>
+<a name=line.5></a>
+<span class='keyword'>import</span> javax.swing.*;<a name=line.6></a>
+<span class='keyword'>import</span> javax.swing.event.*;<a name=line.7></a>
+<span class='keyword'>import</span> javax.swing.tree.*;<a name=line.8></a>
+<span class='keyword'>import</span> java.awt.*;<a name=line.9></a>
+<a name=line.10></a>
+<span class='keyword'>import</span> hirondelle.stocks.quotes.Stock;<a name=line.11></a>
+<span class='keyword'>import</span> hirondelle.stocks.quotes.Quote;<a name=line.12></a>
+<span class='keyword'>import</span> hirondelle.stocks.quotes.Exchange;<a name=line.13></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Consts;<a name=line.14></a>
+<span class='keyword'>import</span> hirondelle.stocks.portfolio.CurrentPortfolio;<a name=line.15></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Util;<a name=line.16></a>
+<a name=line.17></a>
+<span class='comment'>/**<a name=line.18></a>
+* Graphical component which allows the end user to select a <a name=line.19></a>
+* {@link QuoteFilter}, and informs its listeners of changes <a name=line.20></a>
+* to this selection.<a name=line.21></a>
+* <a name=line.22></a>
+* &lt;P&gt;JDK less than 6.<a name=line.23></a>
+*<a name=line.24></a>
+* &lt;P&gt;When informed of selection changes, listeners call {@link #getSelectedFilter}<a name=line.25></a>
+* and use the returned &lt;tt&gt;QuoteFilter&lt;/tt&gt; to alter their display to reflect <a name=line.26></a>
+* only those items in the {@link CurrentPortfolio} which satisfy certain criteria.<a name=line.27></a>
+*<a name=line.28></a>
+* &lt;P&gt;The initial state of this class has no item selected, and <a name=line.29></a>
+* {@link #getSelectedFilter} returns a &lt;tt&gt;QuoteFilter&lt;/tt&gt;<a name=line.30></a>
+* which accepts all {@link Quote} objects. <a name=line.31></a>
+* When the &lt;tt&gt;CurrentPortfolio&lt;/tt&gt; is changed, this initial state is recreated. <a name=line.32></a>
+*<a name=line.33></a>
+* &lt;p&gt;Property Listeners are notified only when a selection is made actively by the<a name=line.34></a>
+* user, and only if the selection is different from the previous selection.<a name=line.35></a>
+*/</span><a name=line.36></a>
+<span class='keyword'>public</span> <span class='keyword'>final</span> <span class='keyword'>class</span> QuoteFilterFactory <span class='keyword'>extends</span> JScrollPane <span class='keyword'>implements</span> Observer {<a name=line.37></a>
+<a name=line.38></a>
+  <span class='comment'>/**<a name=line.39></a>
+  * Constructor.<a name=line.40></a>
+  *  <a name=line.41></a>
+  * @param aCurrentPortfolio is observed by this class, since the list of <a name=line.42></a>
+  * possible filters displayed by this class depends on its content.<a name=line.43></a>
+  */</span><a name=line.44></a>
+  <span class='keyword'>public</span> QuoteFilterFactory (CurrentPortfolio aCurrentPortfolio){<a name=line.45></a>
+    fCurrentPortfolio = aCurrentPortfolio;<a name=line.46></a>
+    <span class='comment'>//bad practice - 'this' is not fully defined until the constructor has returned:<a name=line.47></a>
+</span>    fCurrentPortfolio.addObserver(<span class='keyword'>this</span>);<a name=line.48></a>
+    fSelectedFilter = NO_SELECTION_FILTER;<a name=line.49></a>
+    initGui();<a name=line.50></a>
+  }<a name=line.51></a>
+  <a name=line.52></a>
+  <span class='comment'>/**<a name=line.53></a>
+  * Return the &lt;tt&gt;QuoteFilter&lt;/tt&gt; <a name=line.54></a>
+  * attached to the currently selected item. If no selection is present, <a name=line.55></a>
+  * then return a &lt;tt&gt;QuoteFilter&lt;/tt&gt; which accepts all {@link Quote} objects.<a name=line.56></a>
+  */</span><a name=line.57></a>
+  <span class='keyword'>public</span> QuoteFilter getSelectedFilter(){<a name=line.58></a>
+    assert fSelectedFilter != <span class='keyword'>null</span> : <span class='literal'>"Filter has null value."</span>;<a name=line.59></a>
+    <span class='keyword'>return</span> fSelectedFilter;<a name=line.60></a>
+  }<a name=line.61></a>
+<a name=line.62></a>
+  <span class='comment'>/**<a name=line.63></a>
+  * Update this component's GUI in response to changes in the <a name=line.64></a>
+  * {@link CurrentPortfolio} passed to the constructor.<a name=line.65></a>
+  */</span><a name=line.66></a>
+  <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> update(Observable aObservable, Object aData) {<a name=line.67></a>
+    fSelectedFilter = NO_SELECTION_FILTER;<a name=line.68></a>
+    synchFilterTreeWithCurrentPortfolio();<a name=line.69></a>
+  } <a name=line.70></a>
+  <a name=line.71></a>
+  <span class='comment'>/**<a name=line.72></a>
+  * Property name passed to listeners during &lt;tt&gt;PropertyChangeEvent&lt;/tt&gt;.<a name=line.73></a>
+  */</span><a name=line.74></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String SELECTED_FILTER = <span class='literal'>"SelectedFilter"</span>;<a name=line.75></a>
+  <a name=line.76></a>
+  <span class='comment'>// PRIVATE<a name=line.77></a>
+</span><a name=line.78></a>
+  <span class='keyword'>private</span> CurrentPortfolio fCurrentPortfolio;<a name=line.79></a>
+  <span class='keyword'>private</span> DefaultTreeModel fFilterTreeModel;<a name=line.80></a>
+  <a name=line.81></a>
+  <span class='comment'>/**<a name=line.82></a>
+  * The GUI element which allows the user to select a particular filter.<a name=line.83></a>
+  */</span><a name=line.84></a>
+  <span class='keyword'>private</span> JTree fFilterSelector;<a name=line.85></a>
+  <a name=line.86></a>
+  <span class='comment'>/**<a name=line.87></a>
+  * The {@link QuoteFilter} corresponding to the user's <a name=line.88></a>
+  * current non-null selection.<a name=line.89></a>
+  */</span><a name=line.90></a>
+  <span class='keyword'>private</span> QuoteFilter fSelectedFilter;<a name=line.91></a>
+  <a name=line.92></a>
+  <span class='comment'>/**<a name=line.93></a>
+  * The {@link QuoteFilter} corresponding to the absence of <a name=line.94></a>
+  * any user selection.<a name=line.95></a>
+  */</span><a name=line.96></a>
+  <span class='keyword'>private</span> QuoteFilter NO_SELECTION_FILTER = <span class='keyword'>new</span> QuoteFilterAcceptAll(Consts.EMPTY_STRING);<a name=line.97></a>
+<a name=line.98></a>
+  <span class='comment'>/*<a name=line.99></a>
+  * These Strings appear as node names in fFilterSelector.<a name=line.100></a>
+  */</span><a name=line.101></a>
+  <a name=line.102></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String FILTER_BY = <span class='literal'>"Filter By"</span>;<a name=line.103></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String EXCHANGE = <span class='literal'>"Exchange"</span>;<a name=line.104></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String TODAYS_CHANGE = <span class='literal'>"Today's Change"</span>;<a name=line.105></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String GAINERS = <span class='literal'>"Gainers"</span>;<a name=line.106></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String LOSERS = <span class='literal'>"Losers"</span>;<a name=line.107></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String TICKER_TYPE = <span class='literal'>"Ticker Type"</span>;<a name=line.108></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String INDEX = <span class='literal'>"Index"</span>;<a name=line.109></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String NON_INDEX = <span class='literal'>"Non-Index"</span>;<a name=line.110></a>
+  <a name=line.111></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> Logger fLogger = Util.getLogger(QuoteFilterFactory.<span class='keyword'>class</span>);  <a name=line.112></a>
+  <a name=line.113></a>
+  <span class='comment'>/**<a name=line.114></a>
+  * Build a tree corresponding to the contents of the {@link CurrentPortfolio}, <a name=line.115></a>
+  * and attach a corresponding {@link QuoteFilter} to <a name=line.116></a>
+  * every tree node.<a name=line.117></a>
+  */</span><a name=line.118></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> initGui(){<a name=line.119></a>
+    initFilterTreeModel();<a name=line.120></a>
+    initFilterTree();<a name=line.121></a>
+    synchFilterTreeWithCurrentPortfolio();<a name=line.122></a>
+    setViewportView( fFilterSelector );<a name=line.123></a>
+    setPreferredSize( <span class='keyword'>new</span> Dimension(<span class='literal'>160</span>,<span class='literal'>240</span>) );<a name=line.124></a>
+  }<a name=line.125></a>
+  <a name=line.126></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> initFilterTreeModel(){<a name=line.127></a>
+    DefaultMutableTreeNode exchange =  <span class='keyword'>new</span> DefaultMutableTreeNode( <a name=line.128></a>
+      <span class='keyword'>new</span> QuoteFilterAcceptAll(EXCHANGE) <a name=line.129></a>
+    );<a name=line.130></a>
+    <span class='comment'>//children of exchange depend on current portfolio, and are added a bit later<a name=line.131></a>
+</span>    <a name=line.132></a>
+    <span class='comment'>//note how user objects are critical here, and must be attached to ALL nodes.<a name=line.133></a>
+</span>    DefaultMutableTreeNode todaysChange =  <span class='keyword'>new</span> DefaultMutableTreeNode(<a name=line.134></a>
+      <span class='keyword'>new</span> QuoteFilterAcceptAll(TODAYS_CHANGE) <a name=line.135></a>
+    );<a name=line.136></a>
+    todaysChange.add( <span class='keyword'>new</span> DefaultMutableTreeNode(<span class='keyword'>new</span> QuoteFilterGainers()) );<a name=line.137></a>
+    todaysChange.add( <span class='keyword'>new</span> DefaultMutableTreeNode(<span class='keyword'>new</span> QuoteFilterLosers()) );<a name=line.138></a>
+<a name=line.139></a>
+    DefaultMutableTreeNode tickerType =  <span class='keyword'>new</span> DefaultMutableTreeNode(<a name=line.140></a>
+      <span class='keyword'>new</span> QuoteFilterAcceptAll(TICKER_TYPE) <a name=line.141></a>
+    );<a name=line.142></a>
+    tickerType.add( <span class='keyword'>new</span> DefaultMutableTreeNode(<span class='keyword'>new</span> QuoteFilterIndex()) );<a name=line.143></a>
+    tickerType.add( <span class='keyword'>new</span> DefaultMutableTreeNode(<span class='keyword'>new</span> QuoteFilterNonIndex()) );<a name=line.144></a>
+    <a name=line.145></a>
+    DefaultMutableTreeNode filterBy = <span class='keyword'>new</span> DefaultMutableTreeNode(<a name=line.146></a>
+      <span class='keyword'>new</span> QuoteFilterAcceptAll(FILTER_BY) <a name=line.147></a>
+    );<a name=line.148></a>
+    filterBy.add(exchange);<a name=line.149></a>
+    filterBy.add(todaysChange);<a name=line.150></a>
+    filterBy.add(tickerType);<a name=line.151></a>
+    <a name=line.152></a>
+    fFilterTreeModel = <span class='keyword'>new</span> DefaultTreeModel(filterBy);<a name=line.153></a>
+  }<a name=line.154></a>
+  <a name=line.155></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> initFilterTree(){<a name=line.156></a>
+    fFilterSelector = <span class='keyword'>new</span> JTree(fFilterTreeModel);<a name=line.157></a>
+    fFilterSelector.setRootVisible(<span class='keyword'>true</span>); <span class='comment'>//recommended "false" by L&F guidelines<a name=line.158></a>
+</span>    fFilterSelector.setShowsRootHandles(<span class='keyword'>true</span>); <span class='comment'>//recommended by L&F guidelines<a name=line.159></a>
+</span>    fFilterSelector.setEditable(<span class='keyword'>false</span>); <a name=line.160></a>
+    fFilterSelector.getSelectionModel().setSelectionMode(<a name=line.161></a>
+      TreeSelectionModel.SINGLE_TREE_SELECTION<a name=line.162></a>
+    );<a name=line.163></a>
+    <a name=line.164></a>
+    <span class='comment'>//Note that using a local class hides the fact that this class <a name=line.165></a>
+</span>    <span class='comment'>//listens to a JTree; the public valueChanged event is not exposed in the <a name=line.166></a>
+</span>    <span class='comment'>//public API of this class, since that method is of no interest to the caller; <a name=line.167></a>
+</span>    <span class='comment'>//it is an implementation detail.<a name=line.168></a>
+</span>    fFilterSelector.addTreeSelectionListener(<span class='keyword'>new</span> TreeSelectionListener() {<a name=line.169></a>
+      <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> valueChanged(TreeSelectionEvent e) {<a name=line.170></a>
+        updateFilterAndBroadcast();      <a name=line.171></a>
+      }<a name=line.172></a>
+    });<a name=line.173></a>
+  }<a name=line.174></a>
+  <a name=line.175></a>
+  <span class='comment'>/**<a name=line.176></a>
+  * For each Exchange present in the {@link CurrentPortfolio}, add a single<a name=line.177></a>
+  * node to the filter tree (under the Exchange branch), assign a <a name=line.178></a>
+  * {@link QuoteFilterExchange} as the user object, and ensure no item is selected.<a name=line.179></a>
+  */</span><a name=line.180></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> synchFilterTreeWithCurrentPortfolio() {<a name=line.181></a>
+    DefaultMutableTreeNode filterBy = <a name=line.182></a>
+      (DefaultMutableTreeNode)fFilterTreeModel.getRoot()<a name=line.183></a>
+    ;<a name=line.184></a>
+    <span class='comment'>//DEPENDENCY: the exchange node is the *first* item:<a name=line.185></a>
+</span>    DefaultMutableTreeNode exchangesNode = <a name=line.186></a>
+      (DefaultMutableTreeNode)filterBy.getFirstChild()<a name=line.187></a>
+    ;<a name=line.188></a>
+    exchangesNode.removeAllChildren();<a name=line.189></a>
+    <a name=line.190></a>
+    Set&lt;Exchange&gt; exchanges = <span class='keyword'>new</span> LinkedHashSet&lt;Exchange&gt;();<a name=line.191></a>
+    <span class='keyword'>for</span>(Stock stock: fCurrentPortfolio.getStocks()){<a name=line.192></a>
+      Exchange exchange = stock.getExchange();<a name=line.193></a>
+      <span class='keyword'>if</span> ( ! exchanges.contains(exchange) ) {<a name=line.194></a>
+        exchanges.add(exchange);<a name=line.195></a>
+        exchangesNode.add(<span class='keyword'>new</span> DefaultMutableTreeNode(<span class='keyword'>new</span> QuoteFilterExchange(exchange))); <a name=line.196></a>
+      }<a name=line.197></a>
+    }<a name=line.198></a>
+    fFilterTreeModel.reload(); <span class='comment'>//fires a selection event, but it is suppressed<a name=line.199></a>
+</span>  }<a name=line.200></a>
+<a name=line.201></a>
+  <span class='comment'>/**<a name=line.202></a>
+  * Update listeners in response to a new filter selection in the GUI. <a name=line.203></a>
+  *<a name=line.204></a>
+  * &lt;P&gt;If a new {@link CurrentPortfolio} is selected, then <a name=line.205></a>
+  * the tree will have no selection, and this method will do nothing.<a name=line.206></a>
+  */</span><a name=line.207></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> updateFilterAndBroadcast() {<a name=line.208></a>
+    <span class='keyword'>if</span> ( hasNoSelection() ) <span class='keyword'>return</span>;<a name=line.209></a>
+    QuoteFilter newSelectedFilter = parseSelectedFilter();<a name=line.210></a>
+    assert newSelectedFilter != <span class='keyword'>null</span> : <span class='literal'>"New filter is unexpectedly null."</span>;<a name=line.211></a>
+    assert newSelectedFilter != NO_SELECTION_FILTER : <span class='literal'>"New Filter is unexpected value."</span>;<a name=line.212></a>
+    <span class='keyword'>if</span> ( fSelectedFilter == newSelectedFilter ) {<a name=line.213></a>
+      fLogger.fine(<span class='literal'>"No broadcast: user selection does not have a new filter"</span>);<a name=line.214></a>
+    }<a name=line.215></a>
+    <span class='keyword'>else</span> {<a name=line.216></a>
+      fLogger.fine(<span class='literal'>"New filter being broadcast: "</span> + newSelectedFilter);<a name=line.217></a>
+      QuoteFilter oldSelectedFilter = fSelectedFilter;<a name=line.218></a>
+      fSelectedFilter = newSelectedFilter;<a name=line.219></a>
+      firePropertyChange(SELECTED_FILTER, oldSelectedFilter, fSelectedFilter);<a name=line.220></a>
+    }<a name=line.221></a>
+  }<a name=line.222></a>
+<a name=line.223></a>
+  <span class='comment'>/**<a name=line.224></a>
+  * Return true only if the user has made no filter selection.<a name=line.225></a>
+  */</span><a name=line.226></a>
+  <span class='keyword'>private</span> <span class='keyword'>boolean</span> hasNoSelection(){<a name=line.227></a>
+    <span class='keyword'>return</span> (getSelectedNode() == <span class='keyword'>null</span>);<a name=line.228></a>
+  }<a name=line.229></a>
+<a name=line.230></a>
+  <span class='comment'>/**<a name=line.231></a>
+  * Must call {@link #hasNoSelection} before invoking this method, to ensure that<a name=line.232></a>
+  * a selection exists and is not null.<a name=line.233></a>
+  */</span><a name=line.234></a>
+  <span class='keyword'>private</span> QuoteFilter parseSelectedFilter(){<a name=line.235></a>
+    assert getSelectedNode() != <span class='keyword'>null</span> : <span class='literal'>"Selected Filter unexpectedly null."</span>;<a name=line.236></a>
+    <span class='keyword'>return</span> (QuoteFilter)getSelectedNode().getUserObject();<a name=line.237></a>
+  }<a name=line.238></a>
+  <a name=line.239></a>
+  <span class='comment'>/**<a name=line.240></a>
+  * Return value is null if no selection is currently made.<a name=line.241></a>
+  */</span><a name=line.242></a>
+  <span class='keyword'>private</span> DefaultMutableTreeNode getSelectedNode(){<a name=line.243></a>
+    <span class='keyword'>return</span> (DefaultMutableTreeNode) fFilterSelector.getLastSelectedPathComponent();<a name=line.244></a>
+  }<a name=line.245></a>
+<a name=line.246></a>
+  <span class='comment'>// All QuoteFilter implementations:<a name=line.247></a>
+</span>  <a name=line.248></a>
+  <span class='comment'>/**<a name=line.249></a>
+  * No {@link Quote} objects are rejected by this filter.<a name=line.250></a>
+  *<a name=line.251></a>
+  *&lt;P&gt; Since more than one tree node uses this filter, text is <a name=line.252></a>
+  * passed to the constructor to allows for customized display.<a name=line.253></a>
+  */</span><a name=line.254></a>
+  <span class='keyword'>static</span> <span class='keyword'>private</span> <span class='keyword'>class</span> QuoteFilterAcceptAll <span class='keyword'>extends</span> QuoteFilter {<a name=line.255></a>
+    QuoteFilterAcceptAll(String aText) {<a name=line.256></a>
+      fText = aText;<a name=line.257></a>
+    }<a name=line.258></a>
+    <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>boolean</span> isAcceptable( Quote aQuote ){<a name=line.259></a>
+      <span class='keyword'>return</span> <span class='keyword'>true</span>;<a name=line.260></a>
+    }<a name=line.261></a>
+    <span class='keyword'>@Override</span> <span class='keyword'>public</span> String toString(){<a name=line.262></a>
+      <span class='keyword'>return</span> fText;<a name=line.263></a>
+    }<a name=line.264></a>
+    <span class='keyword'>private</span> <span class='keyword'>final</span> String fText;<a name=line.265></a>
+  }<a name=line.266></a>
+  <a name=line.267></a>
+  <span class='comment'>/**<a name=line.268></a>
+  * {@link Quote} objects are accepted only if they are from a specific <a name=line.269></a>
+  * {@link Exchange}.<a name=line.270></a>
+  */</span><a name=line.271></a>
+  <span class='keyword'>static</span> <span class='keyword'>private</span> <span class='keyword'>final</span> <span class='keyword'>class</span> QuoteFilterExchange <span class='keyword'>extends</span> QuoteFilter {<a name=line.272></a>
+    QuoteFilterExchange( Exchange aExchange ) {<a name=line.273></a>
+      fTargetExchange = aExchange;<a name=line.274></a>
+    }<a name=line.275></a>
+    <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>boolean</span> isAcceptable( Quote aQuote ){<a name=line.276></a>
+      <span class='keyword'>return</span> aQuote.getStock().getExchange() == fTargetExchange;<a name=line.277></a>
+    }<a name=line.278></a>
+    <span class='keyword'>@Override</span> <span class='keyword'>public</span> String toString(){<a name=line.279></a>
+      <span class='keyword'>return</span> fTargetExchange.toString();<a name=line.280></a>
+    }<a name=line.281></a>
+    <span class='keyword'>private</span> Exchange fTargetExchange;<a name=line.282></a>
+  }<a name=line.283></a>
+  <a name=line.284></a>
+  <span class='comment'>/**<a name=line.285></a>
+  * {@link Quote} objects are accepted only if todays price change is <a name=line.286></a>
+  * non-negative.<a name=line.287></a>
+  */</span><a name=line.288></a>
+  <span class='keyword'>static</span> <span class='keyword'>private</span> <span class='keyword'>final</span> <span class='keyword'>class</span> QuoteFilterGainers <span class='keyword'>extends</span> QuoteFilter {<a name=line.289></a>
+    <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>boolean</span> isAcceptable(Quote aQuote){<a name=line.290></a>
+      <span class='keyword'>return</span> aQuote.getChange().doubleValue() >= <span class='literal'>0.0</span>;<a name=line.291></a>
+    }<a name=line.292></a>
+    <span class='keyword'>@Override</span> <span class='keyword'>public</span> String toString(){<a name=line.293></a>
+      <span class='keyword'>return</span> GAINERS;<a name=line.294></a>
+    }<a name=line.295></a>
+  }<a name=line.296></a>
+<a name=line.297></a>
+  <span class='comment'>/** <a name=line.298></a>
+  * {@link Quote} objects are accepted only if todays price change is negative.<a name=line.299></a>
+  */</span><a name=line.300></a>
+  <span class='keyword'>static</span> <span class='keyword'>private</span> <span class='keyword'>final</span> <span class='keyword'>class</span> QuoteFilterLosers <span class='keyword'>extends</span> QuoteFilter {<a name=line.301></a>
+    <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>boolean</span> isAcceptable(Quote aQuote){<a name=line.302></a>
+      <span class='keyword'>return</span> aQuote.getChange().doubleValue() &lt; <span class='literal'>0.0</span>;<a name=line.303></a>
+    }<a name=line.304></a>
+    <span class='keyword'>@Override</span> <span class='keyword'>public</span> String toString(){<a name=line.305></a>
+      <span class='keyword'>return</span> LOSERS;<a name=line.306></a>
+    }<a name=line.307></a>
+  }<a name=line.308></a>
+  <a name=line.309></a>
+  <span class='comment'>/** {@link Quote} objects are accepted only if it is an index.  */</span><a name=line.310></a>
+  <span class='keyword'>static</span> <span class='keyword'>private</span> <span class='keyword'>final</span> <span class='keyword'>class</span> QuoteFilterIndex <span class='keyword'>extends</span> QuoteFilter {<a name=line.311></a>
+    <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>boolean</span> isAcceptable(Quote aQuote){<a name=line.312></a>
+      <span class='keyword'>return</span> aQuote.getStock().isIndex();<a name=line.313></a>
+    }<a name=line.314></a>
+    <span class='keyword'>@Override</span> <span class='keyword'>public</span> String toString(){<a name=line.315></a>
+      <span class='keyword'>return</span> INDEX;<a name=line.316></a>
+    }<a name=line.317></a>
+  }<a name=line.318></a>
+<a name=line.319></a>
+  <span class='comment'>/** {@link Quote} objects are accepted only if it is not an index.  */</span><a name=line.320></a>
+  <span class='keyword'>static</span> <span class='keyword'>private</span> <span class='keyword'>final</span> <span class='keyword'>class</span> QuoteFilterNonIndex <span class='keyword'>extends</span> QuoteFilter {<a name=line.321></a>
+    <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>boolean</span> isAcceptable(Quote aQuote){<a name=line.322></a>
+      <span class='keyword'>return</span> !aQuote.getStock().isIndex();<a name=line.323></a>
+    }<a name=line.324></a>
+    <span class='keyword'>@Override</span> <span class='keyword'>public</span> String toString(){<a name=line.325></a>
+      <span class='keyword'>return</span> NON_INDEX;<a name=line.326></a>
+    }<a name=line.327></a>
+  }<a name=line.328></a>
+}<a name=line.329></a>
+ <a name=line.330></a>
+</PRE><a name=line.331></a>
+ </BODY><a name=line.332></a>
+<HTML><a name=line.333></a>

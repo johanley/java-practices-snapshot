@@ -1,0 +1,178 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=243 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Command line operations</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Command line operations</div>
+
+<br>
+Most Java programmers use an Integrated Development Environment (IDE) such as IntelliJ, NetBeans, or Eclipse.
+Modern IDEs are usually pleasant to use, and go a long way in simplifying things for a typical programmer. 
+
+<p>However, being familiar with Java's basic <a href="http://docs.oracle.com/javase/8/docs/technotes/tools/index.html">command line tools</a> is still very useful.
+It not only gives you a better understanding of what's happening, it's essential in situations where you need to use the command line tools directly (scripts, tools, and so on).
+
+</p><p>The most commonly used tools are:
+</p><ul>
+ <li><a href="http://docs.oracle.com/javase/8/docs/technotes/tools/windows/javac.html">javac</a> - the java compiler
+ </li><li><a href="http://docs.oracle.com/javase/8/docs/technotes/tools/windows/java.html">java</a> - launching programs on the Java Runtime Environment
+ </li><li><a href="http://docs.oracle.com/javase/8/docs/technotes/tools/windows/javadoc.html">javadoc</a> - generating documentation for your project
+</li></ul>
+
+
+<p>Here are some examples of running command line tools. It assumes a project 
+with the following directory structure:
+</p><pre>
+PROJECT_HOME
+  -&gt; lib (jar files)
+  -&gt; src (java code)
+    -&gt; hirondelle (top-level package; no .java files)
+      -&gt; ante (.java files)
+        -&gt; deluvian (.java files)
+</pre>
+
+<h3>Compiling With javac</h3>
+<pre style="font-size:75%">
+PROJECT_HOME&gt;javac -cp lib\\* src\\hirondelle\\ante\\*.java src\\hirondelle\\ante\\deluvian\\*.java
+</pre>
+
+This compiles in place, and creates .class files beside .java files. 
+If you want to place generated class files elsewhere, use the -d option to put them into an existing directory:
+<pre style="font-size:75%">
+PROJECT_HOME&gt;javac -cp lib\\* -d build src\\hirondelle\\ante\\*.java src\\hirondelle\\ante\\deluvian\\*.java
+</pre>
+
+Also, notice that all jars in a directory can be succinctly referenced using 'lib\\*'.
+However, referencing the source files that you need to compile is a different story: <em>all of your packages need to be listed one by one</em>.
+That is, you can't simply specify a single root directory for your source files.
+This is a rather serious defect of javac.
+
+<p>If your jars are in various directories, then the classpath is a list delimited by semi-colons:
+</p><pre style="font-size:75%">
+-cp lib\\*;C:\\abc\\one.jar;C:\\xyz\\two.jar
+</pre>
+
+<h3>Running With java</h3>
+Any class having a main method may be run as a Java program. The main method must have the form:
+<pre>public static void main(String... aArgs){...}</pre>
+
+An application is run by referencing a fully-qualified class name, but <em>without</em> the .class suffix.
+Assuming that the classes have been compiled in place, our example application can be run using:
+<pre style="font-size:75%">
+PROJECT_HOME&gt;java -cp lib\\*;src hirondelle.ante.Launcher
+</pre>
+
+Passing 3 arguments to the program: 
+<pre style="font-size:75%">
+PROJECT_HOME&gt;java -cp lib\\*;src hirondelle.ante.Launcher arg1 arg2 "Arg Three"
+</pre>
+
+Setting a System property value with -D: 
+<pre style="font-size:75%">
+PROJECT_HOME&gt;java -Dblah=whatever -cp lib\\*;src hirondelle.ante.Launcher
+</pre>
+
+Set the initial and maximum size of the object allocation pool to 5 Meg and 100 Meg, respectively: 
+<pre style="font-size:75%">
+PROJECT_HOME&gt;java -cp lib\\*;src -Xms5m -Xmx100m hirondelle.ante.Launcher
+</pre>
+
+Run a jar file whose manifest specifies a Main-Class attribute:
+<pre style="font-size:75%">
+C:\\@build\\dist&gt;java -jar example-app-1.1.jar
+</pre>
+
+The <code>javaw</code> command is the same as the <code>java</code> command, with the only difference being that 
+<code>javaw</code> has no associated console window. 
+
+
+<h3>Using javadoc</h3>
+
+
+<p>For files under the src directory, the following command will javadoc all packages starting with 'hirondelle.ante', and  
+output the result to C:\\@build\\javadoc:
+</p><pre style="font-size:75%">
+javadoc -sourcepath src -subpackages hirondelle.ante -classpath lib\\* -d C:\\@build\\javadoc
+</pre>
+
+The javadoc tool has many options. You may find these especially useful:
+<ul>
+<li><i>-linksource</i>: links your javadoc to a static snapshot of the underlying source code (very nice).
+</li><li><i>-windowtitle</i>, <i>-header</i> and <i>-footer</i>: often useful for showing the name and version of your application.
+</li><li><i>-link</i>: link to the JDK's javadoc as well
+</li><li><i>-noqualifier</i>: remove tedious package prefixes from JDK classes
+</li><li>define the minimum class scope to be processed, using one of: <i>-private</i>, <i>-package</i>, <i>-protected</i>, <i>-public</i>.
+</li></ul>
+
+Here's a second example, with more options:
+<pre style="font-size:75%">
+javadoc 
+ -sourcepath src 
+ -subpackages hirondelle.ante 
+ -package
+ -classpath lib\\* 
+ -d C:\\@build\\javadoc
+ -linksource
+ -link http://docs.oracle.com/javase/7/docs/api/
+ -noqualifier java.*:javax.*
+ -windowtitle "My App 1.0"
+ -header "&lt;b&gt;My App 1.0&lt;/b&gt;"
+ -footer "&lt;a href='http://www.blah.com'&gt;My App&lt;/a&gt;"
+</pre>
+
+
+Javadoc can also be controlled using the following items, placed beside your source code:
+<ul>
+<li><i>package-info.java</i> - 
+Each package can include a package-info.java file. It contains package-level documentation.
+Despite its extension, a package-info.java file is <em>not a Java class file</em>. 
+</li><li><i>doc-files</i> subdirectories - each package can include a 'doc-files' subdirectory, containing items that can be 
+linked from javadoc (images, html files, and so on) using ordinary hypertext links. 
+</li><li><i>overview.html</i> - a single file describing general aspects of your project. (This file doesn't necessarily reside 
+in your source tree, but it makes sense to place it there, in analogy with the package-info.java files.)
+</li></ul>
+<p></p>
+
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=243 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

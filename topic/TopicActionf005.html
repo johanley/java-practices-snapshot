@@ -1,0 +1,131 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=44 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="exception,javadoc,RuntimeException,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Javadoc all exceptions</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Javadoc all exceptions</div>
+
+<br>All exceptions thrown by a method can be documented with the <code>@throws</code>
+javadoc comment (same as <code>@exception</code>). Some argue that an&nbsp;<code>@throws</code>
+should be included for every thrown exception, since it's the only way
+to clearly state all requirements made upon the caller (the pre-conditions).
+However, <a href="TopicActioncd9b.html?Id=171">others disagree</a>.
+<p>If all <code>null</code> object parameters passed to class methods cause
+a <code>NullPointerException</code>, then it's acceptable to state this once
+in the class javadoc comment, instead of repeating it for every method.
+Another alternative is to state in <code>overview.html</code> (javadoc's summary
+description of an application) that all parameters are to be considered
+as non-null unless explicitly stated otherwise.
+
+</p><p><b>Example</b>
+</p><p>This example has an unusually large number of pre-conditions. Remarks
+regarding <code>NullPointerException</code> are placed in the class level javadoc
+comment.
+</p><p>Note that the unchecked <code>SecurityException</code> is thrown indirectly,
+through the calls to the methods of the <code>File</code> class.
+<br></p><pre>
+<span class="keyword">import</span> java.io.*;
+
+<span class="comment">/**
+* If a null object parameter is passed to any method, then a
+* &lt;tt&gt;NullPointerException&lt;/tt&gt; will be thrown.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> WriteTextFile {
+
+  <span class="comment">//..other methods elided
+</span>
+  <span class="comment">/**
+  * Change the contents of a text file in its entirety, overwriting any
+  * existing text.
+  *
+  * @param file is an existing file (not a directory) which can be written.
+  * @param contents is the text to be placed into aFile.
+  *
+  * @exception FileNotFoundException if file does not exist.
+  * @exception IOException if stream to file cannot be written to or closed.
+  *
+  * @exception IllegalArgumentException if file is a directory.
+  * @exception IllegalArgumentException if file cannot be written.
+  * @exception SecurityException if a SecurityManager exists and
+  * disallows read or write access to aFile.
+  */</span>
+  <span class="keyword">static</span> <span class="keyword">public</span> <span class="keyword">void</span> setContents(File file, String contents)
+                                 <span class="keyword">throws</span> FileNotFoundException, IOException {
+    <span class="keyword">if</span> (file == <span class="keyword">null</span>) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException(<span class="literal">"File must not be null."</span>);
+    }
+    <span class="keyword">if</span> (contents == <span class="keyword">null</span>) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException(<span class="literal">"Contents must not be null."</span>);
+    }
+    <span class="keyword">if</span> (!file.exists()) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> FileNotFoundException (<span class="literal">"File does not exist: "</span> + file);
+    }
+    <span class="keyword">if</span> (!file.isFile()) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="literal">"Must not be a directory: "</span> + file);
+    }
+    <span class="keyword">if</span> (!file.canWrite()) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="literal">"File cannot be written: "</span> + file);
+    }
+
+    <span class="keyword">try</span> (Writer output = <span class="keyword">new</span> BufferedWriter(<span class="keyword">new</span> FileWriter(file))) {
+      output.write(contents);
+    }
+  }
+
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main (String... args) <span class="keyword">throws</span> IOException {
+    File testFile = <span class="keyword">new</span> File(<span class="literal">"C:\\Temp\\blah.txt"</span>);
+    setContents(testFile, <span class="literal">"blah blah blah"</span>);
+  }
+} 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction5d11.html?Id=5">Validate method arguments</a> <br>
+  <a href="TopicActioncd9b.html?Id=171">Avoid @throws in javadoc</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=44 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+</html>

@@ -1,0 +1,208 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=91 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Clarifying method</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Clarifying method</div>
+
+<br>The structure of a method can often be made clearer by splitting it
+up into smaller methods. Martin Fowler, author of <i>Refactoring</i>, is
+an enthusiastic advocate of this style.
+<p>Refactoring an original method into smaller pieces has several advantages:
+</p><ul>
+<li>
+it allows the original method to stay at a higher level of abstraction,
+which always increases legibility</li>
+
+<li>
+it makes the original method simpler</li>
+
+<li>
+it reduces the number of local variables in the original method</li>
+
+<li>
+it allows method names to automatically document the intent of the code</li>
+</ul>
+Sometimes a comment is placed at the start of a chunk of code, explaining
+its intent. If a clarifying method is used instead, then the chunk of code
+gets refactored into its own method, while the comment itself is replaced
+by a call to a well-named method. "<i>When a comment grows up, it becomes
+a method call</i>".
+<p><b>Example</b>
+</p><p>Here, the method <code>parseSearchText</code>, which was originally monolithic,
+has been refactored to call several <code>private</code> methods which perform
+very well-defined, simple tasks.
+</p><p>Boolean conditions can often benefit from being placed in their own
+method. Here, <code>isDoubleQuote</code>, <code>isCommonWord</code>, and <code>textHasContent</code>
+are all examples of this.
+<br></p><pre>
+<span class="keyword">import</span> java.util.*;
+
+<span class="comment">/**
+ The user enters text into a search box. This class is used
+ to parse that text into specific search terms (or tokens).
+ It eliminates common words, and allows for the quoting of text, using
+ double quotes.
+ JDK 7+.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> SearchBoxParser {
+
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... arguments) {
+    SearchBoxParser parser = <span class="keyword">new</span> SearchBoxParser(<span class="literal">"mars venus \"milky way\" sun"</span>);
+    Set&lt;String&gt; tokens = parser.parseSearchText();
+    <span class="comment">//display the tokens
+</span>    System.out.println(tokens);
+  }
+
+  <span class="comment">/**
+   @param searchText is non-null, but may have no content,
+   and represents what the user has input in a search box.
+  */</span>
+  <span class="keyword">public</span> SearchBoxParser(String searchText) {
+    <span class="keyword">if</span> (searchText == <span class="keyword">null</span>) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="literal">"Search Text cannot be null."</span>);
+    }
+    <span class="keyword">this</span>.searchText = searchText;
+  }
+
+  <span class="comment">/**
+   Parse the user's search box input into a Set of String tokens.
+  
+   @return Set of Strings, one for each word in fSearchText; here "word"
+   is defined as either a lone word surrounded by whitespace, or as a series
+   of words surrounded by double quotes, "like this"; also, very common
+   words (and, the, etc.) do not qualify as possible search targets.
+  */</span>
+  <span class="keyword">public</span> Set&lt;String&gt; parseSearchText() {
+    Set&lt;String&gt; result = <span class="keyword">new</span> LinkedHashSet&lt;&gt;();
+
+    <span class="keyword">boolean</span> returnTokens = <span class="keyword">true</span>;
+    String currentDelims = WHITESPACE_AND_QUOTES;
+    StringTokenizer parser = <span class="keyword">new</span> StringTokenizer(
+      searchText, currentDelims, returnTokens
+    );
+
+    String token = <span class="keyword">null</span>;
+    <span class="keyword">while</span> (parser.hasMoreTokens()) {
+      token = parser.nextToken(currentDelims);
+      <span class="keyword">if</span> (!isDoubleQuote(token)){
+        addNonTrivialWordToResult(token, result);
+      }
+      <span class="keyword">else</span> {
+        currentDelims = flipDelimiters(currentDelims);
+      }
+    }
+    <span class="keyword">return</span> result;
+  }
+
+  <span class="comment">// PRIVATE 
+</span>  <span class="keyword">private</span> String searchText;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Set&lt;String&gt; COMMON_WORDS = <span class="keyword">new</span> LinkedHashSet&lt;&gt;();
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String DOUBLE_QUOTE = <span class="literal">"\""</span>;
+
+  <span class="comment">//the parser flips between these two sets of delimiters
+</span>  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String WHITESPACE_AND_QUOTES = <span class="literal">" \t\r\n\""</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String QUOTES_ONLY =<span class="literal">"\""</span>;
+
+  <span class="comment">/**Very common words to be excluded from searches.*/</span>
+  <span class="keyword">static</span> {
+    COMMON_WORDS.add(<span class="literal">"a"</span>);
+    COMMON_WORDS.add(<span class="literal">"and"</span>);
+    COMMON_WORDS.add(<span class="literal">"be"</span>);
+    COMMON_WORDS.add(<span class="literal">"for"</span>);
+    COMMON_WORDS.add(<span class="literal">"from"</span>);
+    COMMON_WORDS.add(<span class="literal">"has"</span>);
+    COMMON_WORDS.add(<span class="literal">"i"</span>);
+    COMMON_WORDS.add(<span class="literal">"in"</span>);
+    COMMON_WORDS.add(<span class="literal">"is"</span>);
+    COMMON_WORDS.add(<span class="literal">"it"</span>);
+    COMMON_WORDS.add(<span class="literal">"of"</span>);
+    COMMON_WORDS.add(<span class="literal">"on"</span>);
+    COMMON_WORDS.add(<span class="literal">"to"</span>);
+    COMMON_WORDS.add(<span class="literal">"the"</span>);
+  }
+
+  <span class="comment">/**
+  * Use to determine if a particular word entered in the
+  * search box should be discarded from the search.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">boolean</span> isCommonWord(String searchTokenCandidate){
+    <span class="keyword">return</span> COMMON_WORDS.contains(searchTokenCandidate);
+  }
+
+  <span class="keyword">private</span> <span class="keyword">boolean</span> textHasContent(String text){
+    <span class="keyword">return</span> (text != <span class="keyword">null</span>) &amp;&amp; (!text.trim().equals(<span class="literal">""</span>));
+  }
+
+  <span class="keyword">private</span> <span class="keyword">void</span> addNonTrivialWordToResult(String token, Set&lt;String&gt; result){
+    <span class="keyword">if</span> (textHasContent(token) &amp;&amp; !isCommonWord(token.trim())) {
+      result.add(token.trim());
+    }
+  }
+
+  <span class="keyword">private</span> <span class="keyword">boolean</span> isDoubleQuote(String token){
+    <span class="keyword">return</span> token.equals(DOUBLE_QUOTE);
+  }
+
+  <span class="keyword">private</span> String flipDelimiters(String currentDelims){
+    String result = <span class="keyword">null</span>;
+    <span class="keyword">if</span> (currentDelims.equals(WHITESPACE_AND_QUOTES)){
+      result = QUOTES_ONLY;
+    }
+    <span class="keyword">else</span> {
+      result = WHITESPACE_AND_QUOTES;
+    }
+    <span class="keyword">return</span> result;
+  }
+} 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction56bf.html?Id=227">Avoid basic style errors</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=91 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

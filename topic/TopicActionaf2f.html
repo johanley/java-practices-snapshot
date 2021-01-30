@@ -1,0 +1,228 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=247 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Perform N tasks in parallel</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Perform N tasks in parallel</div>
+
+<br>There are some cases in which performing tasks in parallel can be useful.
+This option is especially attractive when:
+<ul>
+ <li>the tasks are independent of each other, but do essentially the same thing
+ </li><li>the tasks are limited by slow operations - typically, network access or disk access
+</li></ul>
+
+<p>
+A good example of this comes from web site administration.
+Administrators need to monitor a set of N web sites, so they might send a 'ping' of some sort to each site, to see if 
+a healthy response is returned in each case.
+Note that these pings fit the above criteria - each ping is independent of the others, and yet is essentially the same task. 
+
+</p><p>Below is an example implementation of this idea. 
+For purposes of comparison, this example actually has 3 different implementations:
+</p><ul>
+ <li>execute tasks in parallel, and report the result of each task as soon as it completes.
+ </li><li>execute tasks in parallel, but report the results of all tasks only at the end, after they have all completed.
+ </li><li>execute tasks serially, one after the other, and all within a single thread; report each task as it completes.
+</li></ul>
+
+You can compare the performance of these 3 implementations, to see which works best for you. 
+<br><pre>
+<span class="keyword">import</span> java.io.IOException;
+<span class="keyword">import</span> java.net.MalformedURLException;
+<span class="keyword">import</span> java.net.URL;
+<span class="keyword">import</span> java.net.URLConnection;
+<span class="keyword">import</span> java.util.ArrayList;
+<span class="keyword">import</span> java.util.Arrays;
+<span class="keyword">import</span> java.util.Collection;
+<span class="keyword">import</span> java.util.List;
+<span class="keyword">import</span> java.util.Objects;
+<span class="keyword">import</span> java.util.concurrent.Callable;
+<span class="keyword">import</span> java.util.concurrent.CompletionService;
+<span class="keyword">import</span> java.util.concurrent.ExecutionException;
+<span class="keyword">import</span> java.util.concurrent.ExecutorCompletionService;
+<span class="keyword">import</span> java.util.concurrent.ExecutorService;
+<span class="keyword">import</span> java.util.concurrent.Executors;
+<span class="keyword">import</span> java.util.concurrent.Future;
+
+<span class="comment">/** 
+ Ping N web sites in parallel.
+ The ping simply does a GET, and looks at the first header line.
+ This example could be applied to many sorts of similar tasks.
+ &lt;P&gt;No time-out is used here. As usual, be wary of warm-up 
+ of the just-in-time compiler. You might want to use -Xint.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> CheckSites {
+  
+  <span class="comment">/** Run this tool. */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">void</span> main(String... args) {
+    CheckSites checker = <span class="keyword">new</span> CheckSites();
+    <span class="keyword">try</span> {
+      log(<span class="literal">"Parallel, report each as it completes:"</span>);
+      checker.pingAndReportEachWhenKnown();
+      
+      log(<span class="literal">"Parallel, report all at end:"</span>);
+      checker.pingAndReportAllAtEnd();
+      
+      log(<span class="literal">"Sequential, report each as it completes:"</span>);
+      checker.pingAndReportSequentially();
+    }
+    <span class="keyword">catch</span>(InterruptedException ex){
+      Thread.currentThread().interrupt();
+    }
+    <span class="keyword">catch</span>(ExecutionException ex){
+      log(<span class="literal">"Problem executing worker: "</span> + ex.getCause());
+    }
+    <span class="keyword">catch</span>(MalformedURLException ex){
+      log(<span class="literal">"Bad URL: "</span> + ex.getCause());
+    }
+    log(<span class="literal">"Done."</span>);
+  }
+
+  <span class="comment">/** 
+   Check N sites, in parallel, using up to 4 threads. 
+   Report the result of each 'ping' as it comes in. 
+   (This is likely the style most would prefer.)
+  */</span> 
+  <span class="keyword">void</span> pingAndReportEachWhenKnown()  <span class="keyword">throws</span> InterruptedException, ExecutionException  {
+    <span class="keyword">int</span> numThreads = URLs.size() &gt; <span class="literal">4</span> ? <span class="literal">4</span> : URLs.size(); <span class="comment">//max 4 threads
+</span>    ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+    CompletionService&lt;PingResult&gt; compService = <span class="keyword">new</span> ExecutorCompletionService&lt;&gt;(executor);
+    <span class="keyword">for</span>(String url : URLs){
+      Task task = <span class="keyword">new</span> Task(url);
+      compService.submit(task);
+    }
+    <span class="keyword">for</span>(String url : URLs){
+      Future&lt;PingResult&gt; future = compService.take();
+      log(future.get());
+    }
+    executor.shutdown(); <span class="comment">//always reclaim resources
+</span>  }
+  
+  <span class="comment">/** 
+   Check N sites, in parallel, using up to 4 threads. 
+   Report the results only when all have completed. 
+  */</span> 
+  <span class="keyword">void</span> pingAndReportAllAtEnd() <span class="keyword">throws</span> InterruptedException, ExecutionException {
+    Collection&lt;Callable&lt;PingResult&gt;&gt; tasks = <span class="keyword">new</span> ArrayList&lt;&gt;();
+    <span class="keyword">for</span>(String url : URLs){
+      tasks.add(<span class="keyword">new</span> Task(url));
+    }
+    <span class="keyword">int</span> numThreads = URLs.size() &gt; <span class="literal">4</span> ? <span class="literal">4</span> : URLs.size(); <span class="comment">//max 4 threads
+</span>    ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+    List&lt;Future&lt;PingResult&gt;&gt; results = executor.invokeAll(tasks);
+    <span class="keyword">for</span>(Future&lt;PingResult&gt; result : results){
+      PingResult pingResult = result.get();
+      log(pingResult);
+    }
+    executor.shutdown(); <span class="comment">//always reclaim resources
+</span>  }
+
+  <span class="comment">/**
+   Check N sites, but sequentially, not in parallel. 
+   Does not use multiple threads at all. 
+  */</span>
+  <span class="keyword">void</span> pingAndReportSequentially() <span class="keyword">throws</span> MalformedURLException {
+    <span class="keyword">for</span>(String url : URLs){
+      PingResult pingResult = pingAndReportStatus(url);
+      log(pingResult);
+    }
+  }
+  
+  <span class="comment">// PRIVATE 
+</span>  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> List&lt;String&gt; URLs = Arrays.asList(
+    <span class="literal">"http://www.youtube.com/"</span>, <span class="literal">"http://www.google.ca/"</span>, 
+    <span class="literal">"http://www.date4j.net"</span>, <span class="literal">"http://www.web4j.com"</span>
+  );
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(Object msg){
+    System.out.println(Objects.toString(msg));
+  }
+  
+  <span class="comment">/** Try to ping a URL. Return true only if successful. */</span>
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">class</span> Task <span class="keyword">implements</span> Callable&lt;PingResult&gt; {
+    Task(String url){
+      <span class="keyword">this</span>.url = url;
+    }
+    <span class="comment">/** Access a URL, and see if you get a healthy response. */</span>
+    <span class="keyword">@Override</span> <span class="keyword">public</span> PingResult call() <span class="keyword">throws</span> Exception {
+      <span class="keyword">return</span> pingAndReportStatus(url);
+    }
+    <span class="keyword">private</span> <span class="keyword">final</span> String url;
+  }
+  
+  <span class="keyword">private</span> PingResult pingAndReportStatus(String URL) <span class="keyword">throws</span> MalformedURLException {
+    PingResult result = <span class="keyword">new</span> PingResult();
+    result.URL = URL;
+    <span class="keyword">long</span> start = System.currentTimeMillis();
+    URL url = <span class="keyword">new</span> URL(URL);
+    <span class="keyword">try</span> {
+      URLConnection connection = url.openConnection();
+      result.SUCCESS = <span class="keyword">true</span>;
+      <span class="keyword">long</span> end = System.currentTimeMillis();
+      result.TIMING = end - start;
+    }
+    <span class="keyword">catch</span>(IOException ex){
+      <span class="comment">//ignore - fails
+</span>    }
+    <span class="keyword">return</span> result;
+  }
+
+  <span class="comment">/** Simple struct to hold all the data related to a ping. */</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">class</span> PingResult {
+    String URL;
+    Boolean SUCCESS;
+    Long TIMING;
+    <span class="keyword">@Override</span> <span class="keyword">public</span> String toString(){
+      <span class="keyword">return</span> <span class="literal">"Result:"</span> + SUCCESS + <span class="literal">" "</span> + TIMING + <span class="literal">" msecs "</span> + URL;
+    }
+  }
+} 
+</pre>
+
+<p></p>
+
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=247 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

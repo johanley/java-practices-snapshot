@@ -1,0 +1,247 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=162 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:42 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="sort,swing,table,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Sort table rows</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Sort table rows</div>
+
+<br>Sorting table rows is a common task in Swing applications. 
+The simplest way involves a call to a single method, 
+<code>JTable.<a href="https://docs.oracle.com/javase/10/docs/api/javax/swing/JTable.html#setAutoCreateRowSorter(boolean)">setAutoCreateRowSorter(true)</a></code>.
+This will attach a generic sorter to your table. 
+The sorting is controlled by clicking on the column headers.
+
+<p><b>Example</b>
+<br></p><pre>
+<span class="keyword">import</span> java.awt.event.ActionEvent;
+<span class="keyword">import</span> java.awt.event.ActionListener;
+<span class="keyword">import</span> java.util.Collections;
+<span class="keyword">import</span> java.util.List;
+
+<span class="keyword">import</span> javax.swing.JButton;
+<span class="keyword">import</span> javax.swing.JFrame;
+<span class="keyword">import</span> javax.swing.JPanel;
+<span class="keyword">import</span> javax.swing.JScrollPane;
+<span class="keyword">import</span> javax.swing.JTable;
+<span class="keyword">import</span> javax.swing.RowSorter;
+
+<span class="keyword">public</span> <span class="keyword">class</span> GenericTableSort {
+
+  <span class="comment">/** Simplest way to add sorting to a table. */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... aArgs){
+    GenericTableSort app = <span class="keyword">new</span> GenericTableSort();
+    app.buildAndDisplayGui();
+  }
+ 
+  <span class="comment">// PRIVATE 
+</span>
+  <span class="keyword">private</span> <span class="keyword">void</span> buildAndDisplayGui(){
+    JFrame frame = <span class="keyword">new</span> JFrame(<span class="literal">"Test Generic Table Sort"</span>); 
+    addSortableTableTo(frame);
+    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    frame.pack();
+    frame.setVisible(<span class="keyword">true</span>);
+  }
+ 
+  <span class="keyword">private</span> <span class="keyword">void</span> addSortableTableTo(JFrame aFrame){
+    JPanel panel = <span class="keyword">new</span> JPanel();
+    
+    Object[][] data = { {<span class="literal">1</span>,<span class="literal">"T"</span>},   {<span class="literal">2</span>,<span class="literal">"B"</span>},  {<span class="literal">3</span>,<span class="literal">"A"</span>},  {<span class="literal">4</span>, <span class="literal">"F"</span>}};
+    String[] cols = {<span class="literal">"One"</span>, <span class="literal">"Two"</span>};
+    <span class="keyword">final</span> JTable table = <span class="keyword">new</span> JTable(data, cols);
+    
+    table.setAutoCreateRowSorter(<span class="keyword">true</span>); <span class="comment">//a generic sorter
+</span>    <span class="comment">//without the scroll pane, you won't see the headers
+</span>    panel.add(<span class="keyword">new</span> JScrollPane(table));
+   
+    JButton revert = <span class="keyword">new</span> JButton(<span class="literal">"Revert Sort"</span>);
+    revert.addActionListener( <span class="keyword">new</span> ActionListener(){
+      <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> actionPerformed(ActionEvent aEvent) {
+         List&lt;RowSorter.SortKey&gt; NO_SORT = Collections.emptyList();
+         table.getRowSorter().setSortKeys(NO_SORT);
+       }
+    });
+    panel.add(revert);
+   
+    aFrame.getContentPane().add(panel);      
+  }
+}
+ 
+</pre>
+
+
+<p></p><p>The above example unsorts the table when a button is clicked.
+To unsort a table, and revert it back to its original state, you simply pass a null or empty <code>List</code> 
+to this method:
+</p><p>
+<code>table.getRowSorter().<a href="https://docs.oracle.com/javase/10/docs/api/javax/swing/RowSorter.html#setSortKeys(java.util.List)">setSortKeys(List)</a></code> 
+
+</p><p><b>Custom sorting with <code>SortKeys</code></b>
+</p><p>
+In some cases, you may want more control over sorting. 
+For example, you may need to implement a sort that depends on more than one column (a common requirement).
+One option is to use a list of 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/javax/swing/RowSorter.SortKey.html">SortKey</a></code>
+objects to control the sorting. 
+</p><p>Example:
+<br></p><pre>
+<span class="keyword">import</span> java.awt.event.MouseAdapter;
+<span class="keyword">import</span> java.awt.event.MouseEvent;
+<span class="keyword">import</span> java.util.ArrayList;
+<span class="keyword">import</span> java.util.List;
+
+<span class="keyword">import</span> javax.swing.JFrame;
+<span class="keyword">import</span> javax.swing.JPanel;
+<span class="keyword">import</span> javax.swing.JScrollPane;
+<span class="keyword">import</span> javax.swing.JTable;
+<span class="keyword">import</span> javax.swing.RowSorter;
+<span class="keyword">import</span> javax.swing.SortOrder;
+<span class="keyword">import</span> javax.swing.table.TableModel;
+<span class="keyword">import</span> javax.swing.table.TableRowSorter;
+
+<span class="keyword">public</span> <span class="keyword">class</span> TableSortWithSortKey {
+
+  <span class="comment">/** Custom table sorting, using SortKey. */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... aArgs){
+    TableSortWithSortKey app = <span class="keyword">new</span> TableSortWithSortKey();
+    app.buildAndDisplayGui();
+  }
+ 
+  <span class="comment">// PRIVATE 
+</span>
+  <span class="keyword">private</span> JTable fTable;
+  <span class="keyword">private</span> RowSorter&lt;TableModel&gt; fSorter;
+  
+  <span class="keyword">private</span> <span class="keyword">void</span> buildAndDisplayGui(){
+    JFrame frame = <span class="keyword">new</span> JFrame(<span class="literal">"Test Table Sort With Sort Key"</span>); 
+    addSortableTableTo(frame);
+    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    frame.pack();
+    frame.setVisible(<span class="keyword">true</span>);
+  }
+ 
+  <span class="keyword">private</span> <span class="keyword">void</span> addSortableTableTo(JFrame aFrame){
+    JPanel panel = <span class="keyword">new</span> JPanel();
+    
+    Object[][] data = { {<span class="literal">1</span>,<span class="literal">"T"</span>},   {<span class="literal">2</span>,<span class="literal">"B"</span>},  {<span class="literal">3</span>,<span class="literal">"A"</span>},  {<span class="literal">4</span>, <span class="literal">"F"</span>}};
+    String[] cols = {<span class="literal">"One"</span>, <span class="literal">"Two"</span>};
+    fTable = <span class="keyword">new</span> JTable(data, cols);
+    
+    fSorter = <span class="keyword">new</span> TableRowSorter&lt;&gt;(fTable.getModel());
+    fTable.setRowSorter(fSorter);
+    fTable.getTableHeader().addMouseListener(<span class="keyword">new</span> CustomSorter());
+
+    panel.add(<span class="keyword">new</span> JScrollPane(fTable));
+    aFrame.getContentPane().add(panel);      
+  }
+  
+  <span class="comment">/** Default sort behaviour, plus every third click removes the sort. */</span>
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">class</span> CustomSorter <span class="keyword">extends</span> MouseAdapter {
+    <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> mouseClicked(MouseEvent aEvent) {
+      <span class="keyword">int</span> columnIdx = fTable.getColumnModel().getColumnIndexAtX(aEvent.getX());
+      <span class="comment">//build a list of sort keys for this column, and pass it to the sorter
+</span>      <span class="comment">//you can build the list to fit your needs here 
+</span>      <span class="comment">//for example, you can sort on multiple columns, not just one
+</span>      List&lt;RowSorter.SortKey&gt; sortKeys = <span class="keyword">new</span> ArrayList&lt;&gt;();
+      <span class="comment">//cycle through all orders; sort is removed every 3rd click
+</span>      SortOrder order =  SortOrder.values()[fCountClicks % <span class="literal">3</span>];
+      sortKeys.add(<span class="keyword">new</span> RowSorter.SortKey(columnIdx, order));
+      fSorter.setSortKeys(sortKeys);
+      ++fCountClicks;
+    }
+    <span class="keyword">private</span> <span class="keyword">int</span> fCountClicks;
+  }
+} 
+</pre>
+
+
+<p></p><p><b>Custom sorting with <code>Comparator</code>s</b>
+</p><p>
+Here's another option for implementing a custom sort. 
+The advantage of this technique is that it's controlled by the arbitrary <code>Comparator</code>s that you define.
+A disadvantage is that there's no visual indicator for the selected sort on the column header.
+
+</p><p>First, define the different 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Comparator.html">Comparator</a></code>s 
+you need, perhaps directly in your Model Object. (These <code>Comparator</code>s know nothing about the user interface, 
+but they are ultimately responsible for the actual sorting.)
+Then it becomes a case of wiring together clicks on the column header to the proper <code>Comparator</code>, 
+sorting the data underlying your <code>TableModel</code>, and then refreshing the screen. 
+
+</p><p>More precisely:
+</p><ul>
+ <li>attach a <code>MouseAdapter</code> to the <code>JTableHeader</code>, to listen for clicks on the table's header.
+ </li><li>translate the clicks into a column index.
+ </li><li>instruct your <code>TableModel</code> to sort itself on the given column index; these sorts are implemented by 
+ the N different <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Comparator.html">Comparator</a></code>s 
+ that you've defined for this purpose.
+ </li><li>refresh the display by calling <code>fireTableDateChanged()</code> in the <code>TableModel</code>.
+ </li></ul>
+
+Here's a snippet for the first steps: 
+<pre>myTable.getTableHeader().addMouseListener(new MySorter());
+
+private final class MySorter extends MouseAdapter {
+  @Override public void mouseClicked(MouseEvent aEvent) {
+    int colIdx = myTable.getColumnModel().getColumnIndexAtX(aEvent.getX());
+    myTableModel.sortByColumn(colIdx);
+  }
+}</pre>
+
+The above technique is implemented by the <a href="../source/SourceAction.html">Movies</a> app, 
+using the following classes:
+<ul>
+ <li><code><a href="../apps/movies/javadoc/src-html/hirondelle/movies/edit/Movie.html">Movie</a></code> - the Model Object, that defines the needed <code>Comparator</code>s
+ </li><li><code><a href="../apps/movies/javadoc/src-html/hirondelle/movies/main/MainWindow.html">MainWindow</a></code> - wires the clicks on the table header to a method call on the table model (here called <code>sortByColumn</code>)
+ </li><li><code><a href="../apps/movies/javadoc/src-html/hirondelle/movies/edit/MovieTableModel.html">MovieTableModel</a></code> - uses the <code>Comparator</code>s to sort its list of Model Objects
+</li></ul>
+
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction2161.html?Id=1">Type Safe Enumerations</a> <br>
+  <a href="TopicAction167e.html?Id=163">Filter table rows</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=162 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:44 GMT -->
+</html>

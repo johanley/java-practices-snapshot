@@ -1,0 +1,348 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=179 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="JSP,servlet,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Send trouble ticket emails</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Send trouble ticket emails</div>
+
+<br>In web applications, sending email is a common task.
+
+<h4>Example</h4>
+
+<p>Here's an example of a utility class which sends simple emails. It
+can also validate an email address. It uses an entry in <code>web.xml</code>
+for an SMTP host name.
+<br></p><pre>
+<span class="keyword">import</span> javax.servlet.ServletConfig;
+<span class="keyword">import</span> java.util.Properties;
+
+<span class="keyword">import</span> javax.mail.Session;
+<span class="keyword">import</span> javax.mail.Transport;
+<span class="keyword">import</span> javax.mail.Message;
+<span class="keyword">import</span> javax.mail.MessagingException;
+<span class="keyword">import</span> javax.mail.internet.InternetAddress;
+<span class="keyword">import</span> javax.mail.internet.AddressException;
+<span class="keyword">import</span> javax.mail.internet.MimeMessage;
+
+<span class="comment">/**
+* Send simple email from the webmaster to a receiver.
+*
+* &lt;P&gt;The emails sent by this class include sender, receiver, subject, and 
+* body. No features such as attachments are supported by this class. If more 
+* flexibity is needed, please use {@link javax.mail} directly.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Mailer {
+
+  <span class="comment">/**
+  * Called upon startup, to allow this class to extract mail server 
+  * config information from &lt;code&gt;web.xml&lt;/code&gt;.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> init(ServletConfig aConfig){
+    fConfig = aConfig;
+  }
+  
+  <span class="comment">/**
+  * Validate the form of an email address.
+  *
+  * &lt;P&gt;Return &lt;code&gt;true&lt;/code&gt; only if 
+  *&lt;ul&gt; 
+  * &lt;li&gt; &lt;code&gt;aEmailAddress&lt;/code&gt; can successfully construct an 
+  * {@link javax.mail.internet.InternetAddress} 
+  * &lt;li&gt; when parsed with a "@" delimiter, &lt;code&gt;aEmailAddress&lt;/code&gt; contains 
+  * two tokens which have content.
+  *&lt;/ul&gt;
+  *
+  *&lt;P&gt; The second condition arises since local email addresses, simply of the form
+  * "&lt;tt&gt;albert&lt;/tt&gt;", for example, are valid but almost always undesired.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">boolean</span> isValidEmailAddress(String aEmailAddress){
+    <span class="keyword">if</span> (aEmailAddress == <span class="keyword">null</span>) <span class="keyword">return</span> <span class="keyword">false</span>;
+    
+    <span class="keyword">boolean</span> result = <span class="keyword">true</span>;
+    <span class="keyword">try</span> {
+      InternetAddress emailAddr = <span class="keyword">new</span> InternetAddress(aEmailAddress);
+      <span class="keyword">if</span> (! hasNameAndDomain(aEmailAddress)) {
+        result = <span class="keyword">false</span>;
+      }
+    }
+    <span class="keyword">catch</span> (AddressException ex){
+      result = <span class="keyword">false</span>;
+    }
+    <span class="keyword">return</span> result;
+  }
+  
+  <span class="comment">/**
+  * Send an email to a single recipient, using a hard-coded Webmaster email address.
+  *
+  * @param aToAddress satisfies {@link #isValidEmailAddress}.
+  * @param aSubject has content.
+  * @param aBody has content.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">void</span> send(String aToAddress, String aSubject, String aBody){
+    <span class="keyword">if</span> (!textHasContent(aSubject) || !textHasContent(aBody)) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="literal">"Must have content."</span>);
+    }
+
+    <span class="keyword">if</span> (isMailDisabled()){
+      log(<span class="literal">"Mailing is disabled."</span>);
+      <span class="keyword">return</span>;
+    }
+    
+    Session session = Session.getDefaultInstance( getMailServerConfig(), <span class="keyword">null</span> );
+    MimeMessage message = <span class="keyword">new</span> MimeMessage( session );
+    <span class="keyword">try</span> {
+      message.setFrom(<span class="keyword">new</span> InternetAddress(<span class="literal">"admin@blah.com"</span>));
+      message.addRecipient(Message.RecipientType.TO, <span class="keyword">new</span> InternetAddress(aToAddress));
+      message.setSubject(aSubject);
+      message.setText(aBody);
+      Transport.send(message); <span class="comment">//thread-safe?
+</span>    }
+    <span class="keyword">catch</span> (MessagingException ex){
+      log(<span class="literal">"CANNOT SEND EMAIL."</span> + ex);
+    }
+    log(<span class="literal">"Mail is sent."</span>);
+  }
+  
+  <span class="comment">// PRIVATE
+</span>  
+  <span class="keyword">private</span> <span class="keyword">static</span> ServletConfig fConfig;
+  
+  <span class="comment">/**
+  * Identifies the item in web.xml which contains the configured 
+  * mail server.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String fMAIL_SERVER = <span class="literal">"MailServer"</span>;
+  
+  <span class="comment">/**
+  * Identifies the lack of any configured mail server in web.xml.
+  * If fMAIL_SERVER takes this value, then mailing is disabled, and 
+  * this class will abort all attempts to send email.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String fNONE = <span class="literal">"NONE"</span>;
+  
+  <span class="keyword">private</span> String getMailServer(){
+    <span class="keyword">return</span> fConfig.getServletContext().getInitParameter(fMAIL_SERVER);
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">boolean</span> isMailDisabled(){
+    <span class="keyword">return</span> getMailServer().equalsIgnoreCase(fNONE);
+  }
+
+  <span class="comment">/**
+  * Return the configured mail server in the form of a Properties object.
+  */</span>
+  <span class="keyword">private</span> Properties getMailServerConfig(){
+    Properties result = <span class="keyword">new</span> Properties();
+    result.put(<span class="literal">"mail.host"</span>, getMailServer());
+    <span class="keyword">return</span> result;
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">boolean</span> hasNameAndDomain(String aEmailAddress){
+    String[] tokens = aEmailAddress.split(<span class="literal">"@"</span>);
+    <span class="keyword">return</span> 
+      tokens.length == <span class="literal">2</span> &amp;&amp;
+      textHasContent(tokens[<span class="literal">0</span>]) &amp;&amp; 
+      textHasContent(tokens[<span class="literal">1</span>])
+    ;
+  }
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(Object aObject){
+    System.out.println(String.valueOf(aObject));
+  }
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">boolean</span> textHasContent(String aText){
+    <span class="keyword">return</span> aText != <span class="keyword">null</span> &amp;&amp; aText.trim().length()&gt;<span class="literal">0</span>;
+  }
+}
+  
+</pre>
+
+<br>A common type of email is a "trouble ticket", sent to the webmaster
+when a problem occurs in a deployed application. Such an email provides
+a detailed listing of information which may help to resolve the problem.
+A <code><a href="http://www.web4j.com/web4j/javadoc/hirondelle/web4j/webmaster/TroubleTicket.html">TroubleTicket</a></code> 
+class would gather together such information, and 
+a class similar to the above <code>Mailer</code> would be used to send it to 
+the webmaster.
+
+<p></p><h4>Example</h4>
+
+<p>Here, a <code>Controller</code> creates and sends a <code>TroubleTicket</code> if 
+</p><ul>
+<li>an unexpected <code>Exception</code> is thrown (a bug occurs)
+</li><li>the response time exceeds some configured level
+</li></ul>
+
+This implementation uses a setting in <code>web.xml</code> for throttling
+down on excessive numbers of similar trouble tickets.
+<br><pre>
+<span class="comment">/**
+* Servlet Controller.
+* Sends email to webmaster when problem occurs, or when response time 
+* exceeds a configured value.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">class</span> Controller <span class="keyword">extends</span> HttpServlet {
+  
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">void</span> init(ServletConfig aConfig) <span class="keyword">throws</span> ServletException {
+    <span class="comment">//..elided
+</span>    TroubleTicket.init(aConfig, appInfo);
+  }
+
+  <span class="comment">/** Call {@link #processRequest}.  */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">void</span> doGet(
+    HttpServletRequest aRequest, HttpServletResponse aResponse
+  ) <span class="keyword">throws</span> ServletException, IOException {
+    processRequest(aRequest, aResponse);
+  }
+
+  <span class="comment">/** Call {@link #processRequest}.  */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">void</span> doPost(
+    HttpServletRequest aRequest, HttpServletResponse aResponse
+  ) <span class="keyword">throws</span> ServletException, IOException {
+    processRequest(aRequest, aResponse);
+  }
+
+  <span class="comment">/**
+  * Handle all HTTP &lt;tt&gt;GET&lt;/tt&gt; and &lt;tt&gt;POST&lt;/tt&gt; requests.
+  * 
+  * &lt;P&gt;Operations include :
+  * &lt;ul&gt;
+  * &lt;li&gt;if an unexpected problem occurs, create a {@link TroubleTicket}, log it, and
+  * email it to the webmaster email address configured in &lt;tt&gt;web.xml&lt;/tt&gt;
+  * &lt;li&gt;if the response time exceeds a configured threshold, build a 
+  * {@link TroubleTicket}, log it, and email it to the webmaster address configured 
+  * in &lt;tt&gt;web.xml&lt;/tt&gt;
+  * &lt;/ul&gt;
+  */</span>
+  <span class="keyword">protected</span> <span class="keyword">void</span> processRequest(
+    HttpServletRequest aRequest, HttpServletResponse aResponse
+  ) <span class="keyword">throws</span> ServletException, IOException {
+    Stopwatch stopwatch = <span class="keyword">new</span> Stopwatch();
+    stopwatch.start();
+   
+    RequestParser requestParser = RequestParser.getInstance(aRequest, aResponse);
+    <span class="keyword">try</span> {
+      Action action = requestParser.getWebAction();
+      ResponsePage responsePage = action.execute();
+      <span class="comment">//..elided
+</span>    }
+    <span class="keyword">catch</span> (BadRequestException ex){
+      <span class="comment">//..elided 
+</span>    }
+    <span class="keyword">catch</span> (Throwable ex) {
+      <span class="comment">//Bugs OR rare conditions, for example datastore failure
+</span>      logAndEmailSeriousProblem(ex, aRequest);
+      aResponse.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+    }
+   
+    stopwatch.stop();
+    <span class="keyword">if</span> (stopwatch.toValue() &gt;= fPOOR_PERFORMANCE_THRESHOLD) {
+      logAndEmailPerformanceProblem(stopwatch.toValue(), aRequest);
+    }
+  }
+  
+  <span class="comment">/**
+  * Inform the webmaster of an unexpected problem with the deployed application.
+  * 
+  * &lt;P&gt;Typically called when an unexpected &lt;tt&gt;Exception&lt;/tt&gt; occurs in 
+  * {@link #processRequest}. Uses {@link TroubleTicket#mailToWebmaster}.
+  * 
+  *  &lt;P&gt;Also, stores the trouble ticket in application scope, for possible 
+  *  later examination. 
+  */</span>
+  <span class="keyword">protected</span> <span class="keyword">final</span> <span class="keyword">void</span> logAndEmailSeriousProblem (
+    Throwable ex, HttpServletRequest aRequest
+  ) <span class="keyword">throws</span> AppException {
+    TroubleTicket troubleTicket = <span class="keyword">new</span> TroubleTicket(ex, aRequest);
+    fLogger.severe(<span class="literal">"TOP LEVEL CATCHING Throwable"</span>);
+    fLogger.severe( troubleTicket.toString() ); 
+    log(<span class="literal">"SERIOUS PROBLEM OCCURRED."</span>);
+    log( troubleTicket.toString() );
+    aRequest.getSession().getServletContext().setAttribute(
+      MOST_RECENT_TROUBLE_TICKET, troubleTicket
+    );
+    troubleTicket.mailToWebmaster();
+  }
+
+  <span class="comment">/**
+  * Inform the webmaster of a performance problem.
+  * 
+  * &lt;P&gt;Called only when the response time of a request is above the threshold 
+  * value configured in &lt;tt&gt;web.xml&lt;/tt&gt;.
+  * 
+  * &lt;P&gt;Builds a &lt;tt&gt;Throwable&lt;/tt&gt; with a description of the problem, then creates and 
+  * emails a {@link TroubleTicket} to the webmaster.
+  * 
+  * @param aMilliseconds response time of a request in milliseconds
+  */</span>
+  <span class="keyword">protected</span> <span class="keyword">final</span> <span class="keyword">void</span> logAndEmailPerformanceProblem(
+    <span class="keyword">long</span> aMilliseconds, HttpServletRequest aRequest
+  ) <span class="keyword">throws</span> AppException {
+    String message = 
+      <span class="literal">"Response time of web application exceeds configured performance threshold."</span> 
+      + NEW_LINE + 
+      <span class="literal">"Time : "</span> + aMilliseconds + <span class="literal">" milliseconds."</span>
+    ;
+    Throwable ex = <span class="keyword">new</span> Throwable(message);
+    TroubleTicket troubleTicket = <span class="keyword">new</span> TroubleTicket(ex, aRequest);
+    fLogger.severe(<span class="literal">"Poor response time : "</span> + aMilliseconds + <span class="literal">" milliseconds"</span>);
+    fLogger.severe( troubleTicket.toString() ); 
+    log(<span class="literal">"Poor response time : "</span> + aMilliseconds + <span class="literal">" milliseconds"</span>);
+    log( troubleTicket.toString() );
+    troubleTicket.mailToWebmaster();
+  }
+  
+}
+ 
+</pre>
+
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction0df2.html?Id=107">Refactor large Controllers </a> <br>
+  <a href="TopicAction5f31.html?Id=188">A Web App Framework   WEB4J</a> <br>
+  <a href="TopicAction9163.html?Id=242">Launch other applications</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=179 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

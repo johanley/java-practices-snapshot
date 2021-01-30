@@ -1,0 +1,115 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=114 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="return,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Multiple return statements</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Multiple return statements</div>
+
+<br>Some programmers find that, occasionally, some methods become clearer
+if multiple
+<code>return</code> statements are used, instead of the usual single
+point of exit.
+<p><span class="highlight">This technique can be easily abused, and should be used with care.</span> 
+It's mainly used to replace nested <code>if</code> structures.
+</p><p>Multiple&nbsp;<code>return</code> statements seem to work well for "guard
+code" at the beginning of a method, in which the main body of the method
+is executed only if certain conditions are satisfied.
+</p><p><b>Example</b>
+</p><p>Here, <code>equals</code> has multiple <code>return</code> statements, since
+a successful test implies that further comparison is redundant. The alternative
+is to use multiple <code>if</code> statements, which some would find less legible.
+<br></p><pre>
+<span class="keyword">import</span> java.math.BigDecimal;
+<span class="keyword">import</span> java.time.LocalDate;
+<span class="keyword">import</span> java.util.List;
+<span class="keyword">import</span> java.util.Objects;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Automobile {
+
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">boolean</span> equals(Object aThat) {
+    <span class="keyword">if</span> (<span class="keyword">this</span> == aThat) <span class="keyword">return</span> <span class="keyword">true</span>;
+    <span class="keyword">if</span> (!(aThat <span class="keyword">instanceof</span> Automobile)) <span class="keyword">return</span> <span class="keyword">false</span>;
+    Automobile that = (Automobile)aThat;
+    <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="literal">0</span>; i &lt; <span class="keyword">this</span>.getSigFields().length; ++i){
+      <span class="keyword">if</span> (!Objects.equals(<span class="keyword">this</span>.getSigFields()[i], that.getSigFields()[i])){
+        <span class="keyword">return</span> <span class="keyword">false</span>;
+      }
+    }
+    <span class="keyword">return</span> <span class="keyword">true</span>;
+  }
+  
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">int</span> hashCode() {
+    <span class="keyword">return</span> Objects.hash(getSigFields());
+  }
+
+  <span class="comment">//..elided
+</span>
+  <span class="comment">// PRIVATE
+</span>
+  <span class="keyword">private</span> String name;
+  <span class="keyword">private</span> Integer numDoors;
+  <span class="keyword">private</span> List&lt;String&gt; options;
+  <span class="keyword">private</span> BigDecimal gasMileage;
+  <span class="keyword">private</span> String color;
+  <span class="keyword">private</span> List&lt;LocalDate&gt; maintenanceChecks;
+  
+  <span class="keyword">private</span> Object[] getSigFields(){
+    Object[] result = {
+      name, numDoors, options, gasMileage, color, maintenanceChecks 
+    };
+    <span class="keyword">return</span> result;
+  }  
+} 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction1deb.html?Id=17">Implementing equals</a> <br>
+  <a href="TopicAction4d0e.html?Id=63">Conventional name for return value</a> <br>
+  <a href="TopicAction56bf.html?Id=227">Avoid basic style errors</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=114 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

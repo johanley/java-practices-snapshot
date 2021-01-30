@@ -1,0 +1,223 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=197 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Use boxing with care</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Use boxing with care</div>
+
+<br>
+<a href="http://docs.oracle.com/javase/1.5.0/docs/guide/language/autoboxing.html">Boxing</a>
+was introduced in JDK 1.5 to eliminate trivial conversions between primitives
+(<code>int</code>, <code>boolean</code>, and so on) and corresponding wrapper objects
+(<code>Integer</code>, <code>Boolean</code>, and so on). 
+Boxing allows some code to be a bit more concise and legible.
+It's also useful when using collections (which only take objects, not primitives). 
+
+<p>There are two complimentary aspects of boxing:
+</p><ul>
+<li>auto-boxing, which refers to automatic conversion of an <code>int</code> to
+an <code>Integer</code>, for example</li>
+<li>auto-unboxing, which refers to automatic conversion of a <code>Boolean</code>
+to a <code>boolean</code>, for example</li>
+</ul>
+
+<p>Boxing <em>partially hides</em> the distinction between primitives and corresponding wrapper objects, but it doesn't remove it. 
+There are two distinctions which are not changed by boxing:
+</p><ul>
+ <li>objects can be <code>null</code>, while primitives cannot
+ </li><li>objects have both state and identity, while primitives have only state (the value)
+</li></ul>
+
+Occasionally, these differences can cause problems when using boxing.
+
+<p>Some points to remember:
+</p><ul>
+<li>be careful with <code>null</code>s. Auto-unboxing a <code>null</code> object will cause a <code>NullPointerException</code>.</li>
+<li>comparing items with <code>==</code> and <code>equals</code> must be done with care.
+</li></ul>
+
+The rules for comparison of primitives and wrapper objects are as follows.
+
+<p>If <code>x</code> and <code>y</code> are either both primitives, or both objects, then no boxing occurs:
+<br>&nbsp;
+</p><table border cellspacing="0" cellpadding="3" cols="3" width="75%">
+ <tbody><tr valign="TOP">
+  <td><b>Operation</b></td>
+  <td><b><code>Two primitives</code></b></td>
+  <td><b><code>Two objects</code></b></td>
+ </tr>
+ <tr>
+  <td><code>x == y</code></td>
+  <td>compare value</td>
+  <td>compare identity</td>
+ </tr>
+ <tr>
+  <td><code>x.equals(y)</code></td>
+  <td>does not compile</td>
+  <td>compare value</td>
+ </tr>
+</tbody></table>
+
+<p>If one item is a primitive, and the other item is a <em>corresponding</em> wrapper object, then boxing can occur:
+<br>&nbsp;
+</p><table border cellspacing="0" cellpadding="2" width="75%">
+ <tbody><tr valign="TOP">
+  <td><b>Operation</b></td>
+  <td><b>Behavior</b></td>
+ </tr>
+ <tr>
+  <td width="40%"><code>x == y</code></td>
+  <td>treat as two primitives, and compare value</td>
+ </tr>
+ <tr>
+  <td valign="TOP" nowrap><code>x.equals(y)</code></td>
+  <td>does not compile if <code>x</code> is a primitive; otherwise treat as two objects, and compare value</td>
+ </tr>
+</tbody></table>
+
+<p><b>Example</b>
+<br></p><pre>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> BoxingExamples {
+
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">void</span> main(String... args){
+    <span class="comment">//pass Integer where int expected
+</span>    explode(Integer.valueOf(<span class="literal">3</span>));
+
+    <span class="comment">//pass literal where Boolean expected
+</span>    tellTruth(<span class="keyword">true</span>);
+
+    <span class="comment">//calculate "int-erchangably" with int and Integer
+</span>    Integer integerYear = Integer.valueOf(<span class="literal">1989</span>);
+    Integer otherIntegerYear = integerYear + <span class="literal">10</span>;
+    <span class="keyword">int</span> intYear = integerYear + Integer.valueOf(<span class="literal">15</span>);
+    log(integerYear.toString());
+    log(otherIntegerYear.toString());
+    System.out.println(intYear);
+
+    <span class="comment">/*
+    * Comparison of primitives and wrapper objects using == and equals.
+    *
+    * When both items are of the same type :
+    *             2 primitives          2 objects
+    * ----------------------------------------------------------
+    * ==       :  value                 identity
+    * equals() :  not applicable        value
+    *
+    *
+    * When one item is a primitive, and the other is an object :
+    * ==          :  treat as two primitives
+    * x.equals(y) :  treat as two objects; do not compile if x is primitive
+    */</span>
+    intYear = <span class="literal">1880</span>;
+    integerYear = Integer.valueOf(<span class="literal">1880</span>);
+    <span class="keyword">if</span> (intYear == integerYear){
+      log(<span class="literal">"intYear == integerYear: TRUE"</span>); <span class="comment">// yes
+</span>    }
+    <span class="keyword">else</span> {
+      log(<span class="literal">"intYear == integerYear : FALSE"</span>);
+    }
+    <span class="keyword">if</span> (integerYear.equals(intYear)){
+      log(<span class="literal">"integerYear.equals(intYear): TRUE"</span>); <span class="comment">//yes
+</span>    }
+    <span class="keyword">else</span> {
+      log(<span class="literal">"integerYear.equals(intYear): FALSE"</span>);
+    }
+    <span class="comment">//does not compile "int cannot be dereferenced" :
+</span>    <span class="comment">//intYear.equals(integerYear);
+</span>
+    intYear = <span class="literal">1881</span>; <span class="comment">//new value
+</span>    <span class="keyword">if</span> (intYear == integerYear){
+      log(<span class="literal">"intYear == integerYear: TRUE"</span>);
+    }
+    <span class="keyword">else</span> {
+      log(<span class="literal">"intYear == integerYear : FALSE"</span>); <span class="comment">// yes
+</span>    }
+    <span class="keyword">if</span> (integerYear.equals(intYear)){
+      log(<span class="literal">"integerYear.equals(intYear): TRUE"</span>);
+    }
+    <span class="keyword">else</span> {
+      log(<span class="literal">"integerYear.equals(intYear): FALSE"</span>); <span class="comment">//yes
+</span>    }
+  }
+
+  <span class="comment">// PRIVATE
+</span>  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> explode(<span class="keyword">int</span> numTimes){
+    log(<span class="literal">"Exploding "</span> + numTimes + <span class="literal">" times."</span>);
+  }
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> tellTruth(Boolean choice){
+    <span class="comment">//instead of if ( aChoice.booleanValue() ) {
+</span>    <span class="keyword">if</span> (choice) {
+      log(<span class="literal">"Telling truth."</span>);
+    }
+    <span class="keyword">else</span> {
+      log(<span class="literal">"Lying like a rug."</span>);
+    }
+  }
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(String text){
+    System.out.println(text);
+  }
+} 
+</pre>
+
+<br>An example run of this class:
+<p></p><p><code>&gt;java -classpath . BoxingExamples</code>
+<br><code>Exploding 3 times.</code>
+<br><code>Telling truth.</code>
+<br><code>1989</code>
+<br><code>1999</code>
+<br><code>2004</code>
+<br><code>intYear == integerYear: TRUE</code>
+<br><code>integerYear.equals(intYear): TRUE</code>
+<br><code>intYear == integerYear : FALSE</code>
+<br><code>integerYear.equals(intYear): FALSE</code>
+<br>
+</p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction1deb.html?Id=17">Implementing equals</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=197 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

@@ -1,0 +1,165 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=71 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="clone,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Avoid clone</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Avoid clone</div>
+
+<br>Avoid implementing 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Object.html#clone()">clone</a></code>.
+<ul>
+<li><code>clone</code> is very tricky to implement correctly in all circumstances,
+nearly to the point of being pathological</li>
+<li>the importance of copying objects will always remain, since object fields
+often need to be <a href="TopicAction79f1.html?Id=15">defensively copied</a></li>
+<li><a href="TopicAction6f4f.html?Id=12">copy constructors</a> and <a href="TopicAction8d16.html?Id=21">static
+factory methods</a> provide an alternative to
+<code>clone</code>, and are <i>much</i>
+easier to implement</li>
+</ul>
+
+<em>If you need to extend a superclass that implements <code>clone</code></em>, then 
+your subclass must implement <code>clone</code> as well. The quickest solution is 
+for your subclass to simply throw an exception.
+
+<p><b>Example</b>
+</p><p>This example shows a superclass with a typical implementation of <code>clone</code>,
+and a subclass which has disabled its <code>clone</code> method.
+<br></p><pre>
+<span class="keyword">import</span> java.util.Date;
+
+<span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">class</span> Fruit <span class="keyword">implements</span> Cloneable {
+
+  <span class="keyword">public</span> Fruit(String colour, Date bestBeforeDate) {
+    <span class="keyword">super</span>();
+    <span class="keyword">this</span>.colour = colour;
+    <span class="comment">//defensive copy needed for this mutable object
+</span>    <span class="keyword">this</span>.bestBeforeDate = <span class="keyword">new</span> Date(bestBeforeDate.getTime());
+  }
+
+  <span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">void</span> ripen();
+
+  <span class="keyword">public</span> String getColour() {
+    <span class="keyword">return</span> colour;
+  }
+
+  <span class="keyword">public</span> Date getBestBeforeDate() {
+    <span class="comment">//return defensive copy of this mutable object
+</span>    <span class="keyword">return</span> <span class="keyword">new</span> Date(bestBeforeDate.getTime());
+  }
+
+  <span class="comment">/**
+  * Implement clone as follows
+  * &lt;ul&gt;
+  * &lt;li&gt;the class declaration "implements Cloneable" (not needed if already
+  * declared in superclass)
+  * &lt;li&gt;declare clone method as public
+  * &lt;li&gt;if the class is final, clone does not need to throw CloneNotSupportedException
+  * &lt;li&gt;call super.clone and cast to this class
+  * &lt;li&gt;as in defensive copying, ensure each mutable field has an independent copy
+  * constructed, to avoid sharing internal state between objects
+  * &lt;/ul&gt;
+  */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> Object clone() <span class="keyword">throws</span> CloneNotSupportedException {
+    <span class="comment">//get initial bit-by-bit copy, which handles all immutable fields
+</span>    Fruit result = (Fruit)<span class="keyword">super</span>.clone();
+
+    <span class="comment">//mutable fields need to be made independent of this object, for reasons
+</span>    <span class="comment">//similar to those for defensive copies - to prevent unwanted access to
+</span>    <span class="comment">//this object's internal state
+</span>    result.bestBeforeDate = <span class="keyword">new</span> Date(<span class="keyword">this</span>.bestBeforeDate.getTime());
+
+    <span class="keyword">return</span> result;
+  }
+
+  <span class="comment">// PRIVATE
+</span>
+  <span class="comment">/** Strings are always immutable. */</span>
+  <span class="keyword">private</span> String colour;
+
+  <span class="comment">/**
+  * In new code, you should use LocalDate, not java.util.Date!
+  * Here, java.util.Date is used only to make a point regarding mutable fields.
+  * 
+  * Date is a mutable object. In this class, this object field is to be treated
+  * as belonging entirely to this class, and no user of this class is
+  * to be able to directly access and change this field's state.
+  */</span>
+  <span class="keyword">private</span> Date bestBeforeDate;
+} 
+</pre>
+
+Here is the subclass, with its <code>clone</code> method disabled.
+<br><pre>
+<span class="keyword">import</span> java.util.Date;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Apple <span class="keyword">extends</span> Fruit {
+
+  <span class="keyword">public</span> Apple(String colour, Date bestBeforeDate) {
+    <span class="keyword">super</span>(colour, bestBeforeDate);
+  }
+
+  <span class="keyword">public</span> <span class="keyword">void</span> ripen() {
+    <span class="comment">//empty implementation of abstract method
+</span>  }
+
+  <span class="comment">/**
+  * The Apple subclass does not support clone.
+  */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">final</span> Object clone() <span class="keyword">throws</span> CloneNotSupportedException {
+    <span class="keyword">throw</span> <span class="keyword">new</span> CloneNotSupportedException();
+  }
+} 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction6f4f.html?Id=12">Copy constructors</a> <br>
+  <a href="TopicAction79f1.html?Id=15">Defensive copying</a> <br>
+  <a href="TopicAction8d16.html?Id=21">Factory methods</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=71 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+</html>

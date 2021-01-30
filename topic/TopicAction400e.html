@@ -1,0 +1,130 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=118 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="database,lock,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Read write locks</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Read write locks</div>
+
+<br>In the great majority of database applications, the frequency of read
+operations greatly exceeds the frequency of write operations. This is why
+databases implement read-write locks for their records, which allow for
+concurrent reading, but still demand exclusive writing. This can markedly
+increase performance.
+
+<p><em>Occasionally</em>, a class may benefit as well from a read-write lock, for
+exactly the same reasons - reads are much more frequent than writes. 
+As usual, you should measure performance to determine if a read-write lock 
+is really improving performance.
+
+</p><p>Here's a sketch of how to use such locks. It uses the 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/locks/ReentrantReadWriteLock.html">ReentrantReadWriteLock</a></code> 
+of the <code>java.util.concurrent</code> package.
+<br></p><pre>
+<span class="keyword">import</span> java.util.LinkedHashMap;
+<span class="keyword">import</span> java.util.Map;
+<span class="keyword">import</span> java.util.concurrent.locks.Lock;
+<span class="keyword">import</span> java.util.concurrent.locks.ReentrantReadWriteLock;
+
+<span class="comment">/**
+  User preferences, using a read-write lock. 
+  
+ &lt;P&gt;The context: preference information is read in upon startup.
+ The config data is 'read-mostly': usually, a caller simply reads the 
+ information. It gets updated only occasionally. 
+ 
+ &lt;P&gt;Using a read-write lock means that multiple readers can access the 
+ same data simultaneously. If a single writer gets the lock, however, then 
+ all other callers (either reader or writer) will block until the lock is 
+ released by the writer.
+ 
+  &lt;P&gt;(In practice, Brian Goetz reports that the implementation of ConcurrentHashMap 
+  is so good that it would likely suffice in many cases, instead of a read-write lock.)
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Preferences {
+  
+  <span class="comment">/** Fetch a setting - this is the more common operation.  */</span>
+  <span class="keyword">public</span> String fetch(String name){
+    String result = <span class="literal">""</span>;
+    readLock.lock();
+    <span class="keyword">try</span> {
+      result = preferences.get(name);
+    }
+    <span class="keyword">finally</span> {
+      readLock.unlock();
+    }
+    <span class="keyword">return</span> result;
+  }
+ 
+  <span class="comment">/** Change a setting - this is the less common operation. */</span>
+  <span class="keyword">public</span> <span class="keyword">void</span> update(String name, String value){
+    writeLock.lock();
+    <span class="keyword">try</span> {
+      preferences.put(name, value);
+    }
+    <span class="keyword">finally</span> {
+      writeLock.unlock();
+    }
+  }
+ 
+  <span class="comment">//...elided
+</span>  
+  <span class="comment">// PRIVATE
+</span>  
+  <span class="comment">/** Holds the preferences as simple name-value pairs of Strings. */</span>
+  <span class="keyword">private</span> <span class="keyword">final</span> Map&lt;String, String&gt; preferences = <span class="keyword">new</span> LinkedHashMap&lt;&gt;();
+  <span class="keyword">private</span> <span class="keyword">final</span> ReentrantReadWriteLock lock = <span class="keyword">new</span> ReentrantReadWriteLock();
+  <span class="keyword">private</span> <span class="keyword">final</span> Lock readLock = lock.readLock();
+  <span class="keyword">private</span> <span class="keyword">final</span> Lock writeLock = lock.writeLock();
+}
+ 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction9616.html?Id=253">Use finally to unlock</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=118 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

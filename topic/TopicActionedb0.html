@@ -1,0 +1,181 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=272 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="copy,directory,tree,recursive,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Copy a directory tree</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Copy a directory tree</div>
+
+<br>
+
+Copying a directory to a new location can be done with a 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/nio/file/FileVisitor.html">FileVisitor</a></code> and
+<code>Files.<a href="https://docs.oracle.com/javase/10/docs/api/java/nio/file/Files.html#walkFileTree(java.nio.file.Path,java.nio.file.FileVisitor)">walkFileTree</a></code>.
+
+<p>In addition, 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/nio/file/CopyOption.html">CopyOption</a></code> let's you control 
+various aspects of the operation, including:
+</p><ul>
+ <li>whether or not to overwrite existing items.
+ </li><li>how symbolic links are treated.
+ </li><li>preserving file attributes.
+</li></ul>
+
+If the copy operation <em>follows</em> symbolic links, then the file that the link points to is 
+also copied, in addition to the link itself. 
+Most of the time, you likely want to avoid that.  
+
+<p><b>Example</b>
+<br></p><pre>
+<span class="keyword">import</span> java.io.IOException;
+<span class="keyword">import</span> java.nio.file.CopyOption;
+<span class="keyword">import</span> java.nio.file.FileVisitResult;
+<span class="keyword">import</span> java.nio.file.Files;
+<span class="keyword">import</span> java.nio.file.LinkOption;
+<span class="keyword">import</span> java.nio.file.Path;
+<span class="keyword">import</span> java.nio.file.Paths;
+<span class="keyword">import</span> java.nio.file.SimpleFileVisitor;
+<span class="keyword">import</span> java.nio.file.StandardCopyOption;
+<span class="keyword">import</span> java.nio.file.attribute.BasicFileAttributes;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> CopyDirTree {
+
+  <span class="comment">/** Simple test harness. */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args) <span class="keyword">throws</span> IOException {
+    
+    <span class="comment">/*
+     Some examples of different options to pass.
+    */</span>
+    CopyOption[] CAN_OVERWRITE = {
+      StandardCopyOption.REPLACE_EXISTING, 
+      StandardCopyOption.COPY_ATTRIBUTES,
+      LinkOption.NOFOLLOW_LINKS <span class="comment">//you likely want this
+</span>    };
+    CopyOption[] THROW_EX_IF_ALREADY_EXISTS_ETC = {};
+
+    String from = <span class="literal">"C:\\temp\\alpha\\"</span>; 
+    String to = <span class="literal">"C:\\temp\\beta\\"</span>;
+    
+    CopyDirTree test = <span class="keyword">new</span> CopyDirTree();
+    test.copyDirTree(Paths.get(from), Paths.get(to), CAN_OVERWRITE);
+    log(<span class="literal">"Done"</span>);
+  }
+  
+  <span class="comment">/** 
+   Copy the contents of one directory into another directory.
+   @since Java 7
+  */</span>
+  <span class="keyword">void</span> copyDirTree(Path fromDir, Path toDir, CopyOption... opts) <span class="keyword">throws</span> IOException {
+    <span class="keyword">if</span> (shouldCopy(fromDir, toDir)){
+      Files.walkFileTree(fromDir, <span class="keyword">new</span> CopyVisitor(fromDir, toDir, opts));
+    }
+  }
+
+  <span class="comment">// PRIVATE 
+</span>
+  <span class="comment">/**
+   Copy only if the from-directory exists, and the 
+   to-dir is not below the from-directory.  
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">boolean</span> shouldCopy(Path fromDir, Path toDir){
+    <span class="keyword">boolean</span> fromDirExistsAndIsDir = fromDir.toFile().isDirectory(); 
+    <span class="keyword">boolean</span> toIsBelowFrom = toDir.toAbsolutePath().startsWith(fromDir.toAbsolutePath());
+    <span class="keyword">boolean</span> result = fromDirExistsAndIsDir &amp;&amp; !toIsBelowFrom;
+    <span class="keyword">if</span> (!result){
+      log(<span class="literal">"Won't copy from "</span> + fromDir + <span class="literal">" to "</span> + toDir);
+      log(fromDirExistsAndIsDir, toIsBelowFrom);
+    }
+    <span class="keyword">return</span> result;
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">class</span> CopyVisitor <span class="keyword">extends</span> SimpleFileVisitor&lt;Path&gt; {
+    CopyVisitor(Path fromDir, Path toDir, CopyOption... opts){
+      <span class="keyword">this</span>.fromDir = fromDir;
+      <span class="keyword">this</span>.toDir = toDir;
+      <span class="keyword">this</span>.opts = opts;
+    }
+    <span class="comment">/** 
+     First create the dir.
+     Create any non-existent parent dir's, if needed.
+     If {@code dir} already exists, then do nothing; no exception is thrown if 
+     the dir already exists.
+    */</span>
+    <span class="keyword">@Override</span> <span class="keyword">public</span> FileVisitResult preVisitDirectory(
+      Path dir, BasicFileAttributes attrs
+    ) <span class="keyword">throws</span> IOException {
+      log(<span class="literal">"Creating dir: "</span> + dir);
+      Files.createDirectories(toDir.resolve(fromDir.relativize(dir)));  
+      <span class="keyword">return</span> FileVisitResult.CONTINUE;      
+    }
+    <span class="comment">/** 
+     Then copy the files into the dir. 
+     Note that the {@code opts} only apply to this method. 
+    */</span>
+    <span class="keyword">@Override</span> <span class="keyword">public</span> FileVisitResult visitFile(
+      Path file, BasicFileAttributes attrs
+    ) <span class="keyword">throws</span> IOException {
+      log(<span class="literal">"Copying file: "</span> + file);
+      Files.copy(file, toDir.resolve(fromDir.relativize(file)), opts);
+      <span class="keyword">return</span> FileVisitResult.CONTINUE;      
+    }
+    <span class="keyword">private</span> Path fromDir;
+    <span class="keyword">private</span> Path toDir;
+    <span class="keyword">private</span> CopyOption[] opts;
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(Object... things) {
+    <span class="keyword">for</span> (Object thing : things){
+      System.out.println(thing);
+    }
+  }
+} 
+</pre>
+
+
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction8a77.html?Id=271">Delete a directory tree</a> <br>
+  <a href="TopicActiondf79.html?Id=246">Copy a file</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=272 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

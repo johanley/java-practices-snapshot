@@ -1,0 +1,137 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=103 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="pattern,text,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Pattern match lines of a file</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Pattern match lines of a file</div>
+
+<br>Here's an example of <code><a href="http://en.wikipedia.org/wiki/Grep">grep</a></code>-like 
+treatment of the contents of a text file.
+
+<p>In this example, the format of each line is verified against 
+a <a href="http://en.wikipedia.org/wiki/Regular_expression">regular expression</a>, 
+using a <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/regex/Pattern.html">Pattern</a></code> 
+and <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/regex/Matcher.html">Matcher</a></code>.
+
+</p><p>Note that a <code>String</code> literal representing a regular expression
+needs to escape all backslashes. In effect, all of the backslashes are
+simply doubled.
+
+</p><p><b>Example</b>
+<br></p><pre>
+<span class="keyword">import</span> java.io.BufferedReader;
+<span class="keyword">import</span> java.io.IOException;
+<span class="keyword">import</span> java.io.LineNumberReader;
+<span class="keyword">import</span> java.nio.charset.Charset;
+<span class="keyword">import</span> java.nio.charset.StandardCharsets;
+<span class="keyword">import</span> java.nio.file.Files;
+<span class="keyword">import</span> java.nio.file.Path;
+<span class="keyword">import</span> java.nio.file.Paths;
+<span class="keyword">import</span> java.util.regex.Matcher;
+<span class="keyword">import</span> java.util.regex.Pattern;
+
+<span class="comment">/** JDK 7+. */</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> LineMatcher {
+
+  <span class="comment">/**
+  * Verifies that each line of a text file starts with:
+  *   \N + tab + integer + tab + text
+  * where "text" contains word characters (\w).
+  *
+  * The corresponding regular expression is:
+  *   "^\\N\t(\d)+\t(\w)+"
+  *
+  * The String passed to Pattern needs to double every backslash:
+  *   "^\\\\N\\t(\\d)+\\t(\\w)+"
+  *
+  * If a line is not of the expected pattern, then an
+  * IllegalStateException is thrown.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">void</span> findBadLines(String fileName) {
+    <span class="comment">//Pattern and Matcher are used here, not String.matches(regexp),
+</span>    <span class="comment">//since String.matches(regexp) would repeatedly compile the same
+</span>    <span class="comment">//regular expression
+</span>    Pattern regexp = Pattern.compile(<span class="literal">"^\\\\N\\t(\\d)+\\t(\\w)+"</span>);
+    Matcher matcher = regexp.matcher(<span class="literal">""</span>);
+
+    Path path = Paths.get(fileName);
+    <span class="comment">//another way of getting all the lines:
+</span>    <span class="comment">//Files.readAllLines(path, ENCODING); 
+</span>    <span class="keyword">try</span> (
+      BufferedReader reader = Files.newBufferedReader(path, ENCODING);
+      LineNumberReader lineReader = <span class="keyword">new</span> LineNumberReader(reader);
+    ){
+      String line = <span class="keyword">null</span>;
+      <span class="keyword">while</span> ((line = lineReader.readLine()) != <span class="keyword">null</span>) {
+        matcher.reset(line); <span class="comment">//reset the input
+</span>        <span class="keyword">if</span> (!matcher.find()) {
+          String msg = <span class="literal">"Line "</span> + lineReader.getLineNumber() + <span class="literal">" is bad: "</span> + line;
+          <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(msg);
+        }
+      }      
+    }    
+    <span class="keyword">catch</span> (IOException ex){
+      ex.printStackTrace();
+    }
+  }
+
+  <span class="keyword">final</span> <span class="keyword">static</span> Charset ENCODING = StandardCharsets.UTF_8;
+  
+  <span class="comment">/** Test harness. */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... arguments) {
+    LineMatcher lineMatcher = <span class="keyword">new</span> LineMatcher();
+    lineMatcher.findBadLines(<span class="literal">"C:\\Temp\\RegexpTest.txt"</span>);
+    System.out.println(<span class="literal">"Done."</span>);
+  }
+} 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction12d8.html?Id=42">Reading and writing text files</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=103 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

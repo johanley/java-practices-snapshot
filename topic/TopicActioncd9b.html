@@ -1,0 +1,138 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=171 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Avoid @throws in javadoc</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Avoid @throws in javadoc</div>
+
+<br>Some argue that <code>@throws</code> should not be used at all.
+Instead, one may simply rely on the javadoc tool to automatically document all exceptions placed in the <code>throws</code> clause.
+However, <a href="TopicActionf005.html?Id=44">others disagree</a>.
+
+<p>Checked Exceptions :
+</p><ul>
+ <li>declaring <em>only</em> checked exceptions in the method's <code>throws</code> clause is a widely followed convention
+ </li><li>javadoc automatically generates basic documentation for all exceptions in the <code>throws</code> clause
+ </li><li>the documentation is generated with no extra effort on your part
+</li></ul>
+
+Unchecked Exceptions :
+<ul>
+ <li>aren't typically placed in the method's <code>throws</code> clause.
+ </li><li>are very rarely caught by the caller.</li>
+ <li>do not form part of the <a href="TopicAction63b6.html?Id=194">contract</a> of the method,
+ but rather represent what happens when the <a href="TopicAction5ff3.html?Id=129">contract is broken</a>. The caller cannot recover from such errors.</li>
+ <li>almost always occur when a precondition on a parameter is not met. However, such conditions are 
+ <em>almost always already documented</em> in a <code>@param</code> tag.
+</li></ul>
+
+Therefore, if you :
+<ul>
+ <li>only place checked exceptions in the throws clause
+ </li><li>don't use <code>@throws</code> at all
+</li></ul>
+
+then only <em>checked</em> exceptions will appear in javadoc. 
+It can be argued that this is beneficial: since checked exceptions are more important than unchecked ones, 
+it's best that they stand out in javadoc, without being mixed in with other exceptions of minor interest.
+ 
+
+<p>In almost all cases, a <code>@throws</code> tag simply <em>repeats verbatim</em> conditions already stated
+in a <code>@param</code> tag, and doesn't add in any way to the specification
+of the method's behavior. Such repetition should be regarded with grave suspicion. 
+When a change occurs, it's far too easy to forget to update the javadoc in two separate places. 
+
+</p><p>A general comment regarding broken contracts can be stated once in the
+javadoc <code>overview.html</code> document :
+<br><em>"If the requirements or promises of any method's contract are not fulfilled
+(that is, if there is a bug in either the method or its caller), then an
+unchecked exception will be thrown. The precise type of such an unchecked
+exception does not form part of any method's contract."</em>
+
+
+</p><p><b>Example</b>
+</p><p><code>BasketBall</code> has two constructors.
+</p><p>The first constructor includes several <code>@throws</code> tags in its
+javadoc. However, aside from the type of the unchecked exception, all of
+these <code>@throws</code> tags are logically equivalent to some previous statement
+in a <code>@param</code> tag. They add nothing to the contract.
+</p><p>The second constructor follows a different style. It has a single parameter,
+and the conditions on this parameter are stated once (and once only) in
+its <code>@param</code> tag.
+<br></p><pre>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> BasketBall {
+
+  <span class="comment">/**
+  * @param manufacturer non-null and has visible content.
+  * @param diameter in centimeters, in the range 1..50.
+  * @throws IllegalArgumentException if diameter not in given range.
+  * @throws IllegalArgumentException if manufacturer has no visible content.
+  * @throws NullPointerException if manufacturer is null.
+  */</span>
+  BasketBall(String manufacturer, <span class="keyword">int</span> diameter){
+    <span class="comment">//..elided
+</span>  }
+
+  <span class="comment">/**
+  * @param diameter in centimeters, in the range 1..50.
+  */</span>
+  BasketBall(<span class="keyword">int</span> diameter){
+    <span class="comment">//..elided
+</span>  }
+
+  <span class="comment">// PRIVATE
+</span>  <span class="keyword">private</span> String manufacturer;
+  <span class="keyword">private</span> <span class="keyword">int</span> diameter;
+} 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActionf005.html?Id=44">Javadoc all exceptions</a> <br>
+  <a href="TopicAction63b6.html?Id=194">Design by Contract</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=171 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+</html>

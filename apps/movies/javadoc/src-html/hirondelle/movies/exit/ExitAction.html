@@ -1,0 +1,59 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/movies/javadoc/src-html/hirondelle/movies/exit/ExitAction.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:31 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+ExitAction.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.movies.exit;<a name=line.1></a>
+<a name=line.2></a>
+<span class='keyword'>import</span> hirondelle.movies.edit.MovieDAO;<a name=line.3></a>
+<span class='keyword'>import</span> hirondelle.movies.util.Util;<a name=line.4></a>
+<a name=line.5></a>
+<span class='keyword'>import</span> java.awt.event.ActionEvent;<a name=line.6></a>
+<span class='keyword'>import</span> java.awt.event.KeyEvent;<a name=line.7></a>
+<span class='keyword'>import</span> java.util.logging.Logger;<a name=line.8></a>
+<a name=line.9></a>
+<span class='keyword'>import</span> javax.swing.AbstractAction;<a name=line.10></a>
+<span class='keyword'>import</span> javax.swing.KeyStroke;<a name=line.11></a>
+<a name=line.12></a>
+<span class='comment'>/** <a name=line.13></a>
+  Save changes and close the application.<a name=line.14></a>
+  <a name=line.15></a>
+  &lt;ul&gt;<a name=line.16></a>
+   &lt;li&gt;persist the changes the user has made during this session<a name=line.17></a>
+   &lt;li&gt;close the main window<a name=line.18></a>
+   &lt;li&gt;shut down the JVM<a name=line.19></a>
+   &lt;/ul&gt;<a name=line.20></a>
+*/</span><a name=line.21></a>
+<span class='keyword'>public</span> <span class='keyword'>final</span> <span class='keyword'>class</span> ExitAction <span class='keyword'>extends</span> AbstractAction {<a name=line.22></a>
+  <a name=line.23></a>
+  <span class='comment'>/** Constructor. */</span><a name=line.24></a>
+  <span class='keyword'>public</span> ExitAction(){<a name=line.25></a>
+    <span class='keyword'>super</span>(<span class='literal'>"Exit"</span>, <span class='keyword'>null</span>);<a name=line.26></a>
+    putValue(SHORT_DESCRIPTION, <span class='literal'>"Exit the application"</span>); <a name=line.27></a>
+    putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_F4, ActionEvent.ALT_MASK));<a name=line.28></a>
+    <span class='comment'>//mnemonic activates only when alt is pressed and held down<a name=line.29></a>
+</span>    putValue(MNEMONIC_KEY, <span class='keyword'>new</span> Integer(KeyEvent.VK_X) );    <a name=line.30></a>
+  }<a name=line.31></a>
+  <a name=line.32></a>
+  <span class='comment'>/** Save all edits and exit the app. */</span><a name=line.33></a>
+  <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> actionPerformed(ActionEvent aActionEvent) {<a name=line.34></a>
+    fLogger.config(<span class='literal'>"Persisting data."</span>);<a name=line.35></a>
+    MovieDAO dao = <span class='keyword'>new</span> MovieDAO();<a name=line.36></a>
+    dao.shutdown();<a name=line.37></a>
+    fLogger.config(<span class='literal'>"Exiting the application."</span>);<a name=line.38></a>
+    System.exit(<span class='literal'>0</span>);<a name=line.39></a>
+  }<a name=line.40></a>
+  <a name=line.41></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> Logger fLogger = Util.getLogger(ExitAction.<span class='keyword'>class</span>);<a name=line.42></a>
+}<a name=line.43></a>
+ <a name=line.44></a>
+</PRE><a name=line.45></a>
+ </BODY><a name=line.46></a>
+<HTML><a name=line.47></a>

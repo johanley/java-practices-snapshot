@@ -1,0 +1,281 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=80 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="substring,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Replace a substring</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Replace a substring</div>
+
+<br><b>Static Replacement</b>
+<p>Replacing one static <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/String.html">String</a></code> 
+with another can be done in various ways:
+<br></p><pre>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> ReplaceSubstring {
+  
+  <span class="comment">/**
+  *  Simplest in Java 1.5, using the replace method, which 
+  *  takes CharSequence objects.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> String replace15(
+    String input, String oldPattern, String newPattern
+  ){
+    <span class="keyword">return</span> input.replace(oldPattern, newPattern);
+  }
+
+  <span class="comment">/**
+  * Not quite as simple in Java 1.4. The replaceAll method works, 
+  * but requires more care, since it uses regular expressions, which 
+  * may contain special characters.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> String replace14(
+    String input, String oldPattern, String newPattern
+  ){
+
+    <span class="comment">/*
+    * The replaceAll method is a bit dangerous to use.
+    * The oldPattern is converted into a regular expression.
+    * Thus, if oldPattern may contain characters which have
+    * special meaning to regular expressions, then they must
+    * be 'escaped' before being passed to replaceAll. It is
+    * easy to forget to do this.
+    *
+    * In addition, aNewPattern treats '$' as special characters 
+    * as well: they refer to 'back references'.
+    */</span>
+    <span class="keyword">return</span> input.replaceAll(oldPattern, newPattern);
+    <span class="comment">/*
+    Here is an alternative implementation using Pattern and Matcher,
+    which is preferred when the same pattern is used repeatedly
+    final Pattern pattern = Pattern.compile(oldPattern);
+    final Matcher matcher = pattern.matcher(iInput);
+    return matcher.replaceAll(newPattern);
+    */</span>
+  }
+
+  <span class="comment">/**
+  * In really old versions of Java (before 1.4)the following technique may be used.
+  *
+  * @param input is the original String which may contain substring oldPattern
+  * @param oldPattern is the non-empty substring which is to be replaced
+  * @param newPattern is the replacement for oldPattern
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> String replaceOld(
+    <span class="keyword">final</span> String input,
+    <span class="keyword">final</span> String oldPattern,
+    <span class="keyword">final</span> String newPattern
+  ){
+     <span class="keyword">if</span> ( oldPattern.equals(<span class="literal">""</span>) ) {
+        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="literal">"Old pattern must have content."</span>);
+     }
+
+     <span class="keyword">final</span> StringBuffer result = <span class="keyword">new</span> StringBuffer();
+     <span class="comment">//startIdx and idxOld delimit various chunks of aInput; these
+</span>     <span class="comment">//chunks always end where aOldPattern begins
+</span>     <span class="keyword">int</span> startIdx = <span class="literal">0</span>;
+     <span class="keyword">int</span> idxOld = <span class="literal">0</span>;
+     <span class="keyword">while</span> ((idxOld = input.indexOf(oldPattern, startIdx)) &gt;= <span class="literal">0</span>) {
+       <span class="comment">//grab a part of aInput which does not include aOldPattern
+</span>       result.append( input.substring(startIdx, idxOld) );
+       <span class="comment">//add aNewPattern to take place of aOldPattern
+</span>       result.append( newPattern );
+
+       <span class="comment">//reset the startIdx to just after the current match, to see
+</span>       <span class="comment">//if there are any further matches
+</span>       startIdx = idxOld + oldPattern.length();
+     }
+     <span class="comment">//the final chunk will go to the end of aInput
+</span>     result.append( input.substring(startIdx) );
+     <span class="keyword">return</span> result.toString();
+  }
+
+  <span class="comment">/** Example: update an ip address appearing in a link.  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main (String... arguments) {
+    String OLD_IP = <span class="literal">"45.23.102.12"</span>;
+    <span class="comment">//escape the  '.', a special character in regular expressions
+</span>    String OLD_IP_REGEX = <span class="literal">"45\\.23\\.102\\.12"</span>;
+    String NEW_IP = <span class="literal">"99.104.106.95"</span>;
+    String LINK = <span class="literal">"http://45.23.102.12:8080/index.html"</span>;
+    
+    log(<span class="literal">"Old link : "</span> + LINK);
+    
+    String newLink = replace15(LINK, OLD_IP, NEW_IP);
+    log(<span class="literal">"New link with Java 1.5 replace: "</span> + newLink);
+    
+    newLink = replace14(LINK, OLD_IP_REGEX, NEW_IP);
+    log(<span class="literal">"New link with Java 1.4 replaceAll: "</span> + newLink);
+
+    newLink = replaceOld(LINK, OLD_IP, NEW_IP);
+    log(<span class="literal">"New link with oldest style: "</span> + newLink);
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(String message){
+    System.out.println(message);
+  }
+} 
+</pre>
+
+<br>Example run of this class:
+<p></p><pre>
+Old link : http://45.23.102.12:8080/index.html
+New link with Java 1.5 replace: http://99.104.106.95:8080/index.html
+New link with Java 1.4 replaceAll: http://99.104.106.95:8080/index.html
+New link with oldest style: http://99.104.106.95:8080/index.html
+</pre>
+
+<p><b>Dynamic Replacement</b>
+</p><p>If the replacement string is not fixed, and needs to be created dynamically,
+then another approach is required. In the following example, strings of
+the form "<code>href='TopicAction.do?Id=182'</code>" are replaced with a corresponding
+string "<code>href=#182</code>".
+</p><p>The number <code>182</code> is taken only as an example. It is in fact extracted
+dynamically, and referenced in the replacement string using the back reference
+"<code>$1</code>", where <code>1</code> is the index of the matching group for
+these digits.
+<br></p><pre>
+<span class="keyword">import</span> java.util.regex.*;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> ReplaceSubstringDynamically {
+
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main (String... arguments) {
+    String htmlText = <span class="literal">"&lt;a href=\"Topic27.cjp\"&gt;xyz&lt;/a&gt; blah &lt;a href=Topic8.cjp&gt;abc&lt;/a&gt;"</span>;
+    ReplaceSubstringDynamically replace = <span class="keyword">new</span> ReplaceSubstringDynamically();
+    log(<span class="literal">"Old HTML text : "</span> + htmlText);
+    log(<span class="literal">"New HTML text : "</span> + replace.replaceLinks(htmlText));
+  }
+
+  <span class="comment">/**
+  * Replace the document links in a snippet of HTML with corresponding
+  * fragment links, which start with the # sign, and refer to labeled
+  * locations within a single document.
+  */</span>
+  String replaceLinks(String htmlTextWithLinks){
+    Pattern pattern = Pattern.compile(LINK);
+    Matcher matcher = pattern.matcher(htmlTextWithLinks);
+    <span class="keyword">return</span> matcher.replaceAll(FRAGMENT);
+  }
+
+  <span class="comment">/**
+  * The single matching group of this regex are the digits ((?:\\d){1,3}),
+  * which correspond to group 1.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> String LINK = <span class="literal">"href=(?:\"|\')?Topic((?:\\d){1,3})\\.cjp(?:\"|\')?"</span>;
+
+  <span class="comment">/**
+  * The "$1" refers to matching group 1 of fLINK (the digits).
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> String FRAGMENT = <span class="literal">"href=#$1"</span>;
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(String msg) {
+    System.out.println(msg);
+  }
+} 
+</pre>
+
+<br>Example run of this class:
+<p></p><p><code>Old HTML text : &lt;a href='TopicAction.do?Id=27'&gt;xyz&lt;/a&gt; blah &lt;a href='TopicAction.do?Id=8'&gt;abc&lt;/a&gt;</code>
+<br><code>New HTML text : &lt;a href=#27&gt;xyz&lt;/a&gt; blah &lt;a href=#8&gt;abc&lt;/a&gt;</code>
+</p><p>Here's a second example, where the replacement string is computed without
+using back references.
+<br></p><pre>
+<span class="keyword">import</span> java.util.regex.*;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> ReplaceSubstringAppendReplacement {
+
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main (String... args) {
+    String text = <span class="literal">"Apples and oranges are better for all."</span>;
+    ReplaceSubstringAppendReplacement repl = <span class="keyword">new</span> ReplaceSubstringAppendReplacement();
+    System.out.println(<span class="literal">"Old text : "</span> + text);
+    System.out.println(<span class="literal">"New text : "</span> + repl.getEditedText(text));
+  }
+
+  <span class="comment">/**
+  * Replace all words starting with the letter 'a' or 'A' with
+  * their uppercase forms.
+  */</span>
+  String getEditedText(String text){
+    StringBuffer result = <span class="keyword">new</span> StringBuffer();
+    Matcher matcher = INITIAL_A.matcher(text);
+    <span class="keyword">while</span> (matcher.find()) {
+      matcher.appendReplacement(result, getReplacement(matcher));
+    }
+    matcher.appendTail(result);
+    <span class="keyword">return</span> result.toString();
+  }
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Pattern INITIAL_A = Pattern.compile(
+    <span class="literal">"(?:\\s|^)a(?:\\w)*"</span>,
+    Pattern.CASE_INSENSITIVE
+  );
+
+  <span class="keyword">private</span> String getReplacement(Matcher matcher){
+    <span class="keyword">return</span> matcher.group(<span class="literal">0</span>).toUpperCase();
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(String msg) {
+    System.out.println(msg);
+  }
+
+} 
+</pre>
+
+<br>Example run of this class:
+<p></p><p><code>Old text : Apples and oranges are better for all.
+<br>New text : APPLES AND oranges ARE better for ALL.</code>
+
+</p><p><b>Warning</b>
+<br>The methods:
+</p><ul>
+<li><code>String.<a href="https://docs.oracle.com/javase/10/docs/api/java/lang/String.html#replaceAll(java.lang.String,java.lang.String)">replaceAll(String, String)</a></code>
+</li><li><code>String.<a href="https://docs.oracle.com/javase/10/docs/api/java/lang/String.html#replaceFirst(java.lang.String,java.lang.String)">replaceFirst(String, String)</a></code>
+</li><li><code>Matcher.<a href="https://docs.oracle.com/javase/10/docs/api/java/util/regex/Matcher.html#appendReplacement(java.lang.StringBuffer,java.lang.String)">appendReplacement(StringBuffer, String)</a></code>
+</li></ul>
+treat <code>'$'</code> and <code>'\\'</code> in the replacement text as special characters. 
+If the replacement text can contain arbitrary text, then these characters will usually be escaped using 
+<code>Matcher.<a href="https://docs.oracle.com/javase/10/docs/api/java/util/regex/Matcher.html#quoteReplacement(java.lang.String)">quoteReplacement(String)</a></code>.
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActionba81.html?Id=96">Escape special characters</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=80 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

@@ -1,0 +1,42 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/table/SortOrder.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:38 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+SortOrder.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.stocks.table;<a name=line.1></a>
+<a name=line.2></a>
+<span class='comment'>/** <a name=line.3></a>
+* Enumeration class for the two directions which a sort may take.<a name=line.4></a>
+*/</span><a name=line.5></a>
+<span class='keyword'>public</span> <span class='keyword'>enum</span> SortOrder  {  <a name=line.6></a>
+<a name=line.7></a>
+  DESCENDING(<span class='literal'>"Descending"</span>),<a name=line.8></a>
+  ASCENDING(<span class='literal'>"Ascending"</span>);<a name=line.9></a>
+<a name=line.10></a>
+  <span class='keyword'>@Override</span> <span class='keyword'>public</span> String toString() { <a name=line.11></a>
+    <span class='keyword'>return</span> fName;  <a name=line.12></a>
+  } <a name=line.13></a>
+<a name=line.14></a>
+  <span class='comment'>/**<a name=line.15></a>
+  * Return the opposite &lt;tt&gt;SortOrder&lt;/tt&gt; from &lt;tt&gt;this&lt;/tt&gt; one.<a name=line.16></a>
+  */</span><a name=line.17></a>
+  <span class='keyword'>public</span> SortOrder toggle(){<a name=line.18></a>
+    <span class='keyword'>return</span> (<span class='keyword'>this</span> == ASCENDING ? DESCENDING : ASCENDING);<a name=line.19></a>
+  }<a name=line.20></a>
+  <a name=line.21></a>
+  <span class='comment'>// PRIVATE<a name=line.22></a>
+</span>  <span class='keyword'>private</span> <span class='keyword'>final</span> String fName;<a name=line.23></a>
+  <span class='keyword'>private</span> SortOrder(String aName){<a name=line.24></a>
+    fName = aName;<a name=line.25></a>
+  }<a name=line.26></a>
+} <a name=line.27></a>
+</PRE><a name=line.28></a>
+ </BODY><a name=line.29></a>
+<HTML><a name=line.30></a>

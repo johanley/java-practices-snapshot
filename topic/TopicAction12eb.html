@@ -1,0 +1,103 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=75 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="connection,database,pool,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Connection pools</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Connection pools</div>
+
+<br>Database connections:
+<ul>
+<li>sometimes take a relatively long time to create.</li>
+<li>are always limited in number (most medium- and low-end servers have a maximum
+of ~100 connections).</li>
+<li>are resources which must be systematically released when no longer in
+use. </li>
+</ul>
+
+The last point is critical: <span class="highlight">connections must always be properly released when no 
+longer needed.</span> Failure to do so will eventually cause the application to "hang", and fail to respond
+to user actions. All code in your application regarding connections should be treated with 
+special care.
+
+<p>To ensure that database connections are used as efficiently as possible,
+many applications make use of a connection pool, which can sometimes 
+improve performance in a distributed application. An application will use
+a connection pool as follows:
+</p><ul>
+<li>
+upon startup, the application creates a pool of database connections (or,
+the application's environment may already include a connection pool).</li>
+
+<li>
+during normal operation, the application simply fetches a connection from
+the pool every time a database operation is&nbsp; performed. This is often
+done in a "just-in-time" manner. That is, the application does not keep
+a long-lived reference to its connection objects, but will rather fetch,
+use, and then close each connection in a single method.</li>
+
+<li>
+when the calling code is finished with the connection, it calls a <code>close</code>
+method, but the underlying connection is not actually closed - rather,
+it's simply returned to the connection pool.</li>
+
+<li>
+when the application shuts down, the connection pool it created upon startup
+(if any) is shut down as well.</li>
+</ul>
+A database driver may contain a connection pool as part of its services,
+through its implementation of the 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/javax/sql/DataSource.html">javax.sql.DataSource</a></code>
+interface. <code>DataSource</code> objects are used with JNDI.
+<p>The popular <a href="http://jakarta.apache.org/tomcat/">Tomcat</a> tool
+implements JNDI, and connection pooling is described in its documentation.
+It's not difficult to use.
+<br>
+</p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction799b.html?Id=127">Get database connection</a> <br>
+  <a href="TopicActionf9c8.html?Id=183">Encapsulate connections</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=75 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+</html>

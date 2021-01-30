@@ -1,0 +1,185 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=147 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="header,web,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Fetch text from the web</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Fetch text from the web</div>
+
+<br>Most URLs return text of some sort - HTML, JSON, XML, plain text, and so on.
+Here's an example of programmatically fetching the content of a URL as a single String.
+
+<p>If you need data from a site, but the site has no formal web API, then you usually have no choice but to fetch 
+HTML from the site, parse it, and extract the required data.
+
+<br></p><pre>
+<span class="keyword">import</span> java.io.*;
+<span class="keyword">import</span> java.net.*;
+<span class="keyword">import</span> java.util.Objects;
+<span class="keyword">import</span> java.util.Scanner;
+
+<span class="comment">/** 
+ Fetch the text of a web page (or HTTP header) as a String.
+ The same sort of code can be used to fetch any kind of text: 
+ HTML, JSON, XML, plain text, and so on. 
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> WebPageFetcher {
+
+  <span class="comment">/**
+   Demo harness.
+   &lt;ul&gt;
+    &lt;li&gt;args[0] : an HTTP URL
+    &lt;li&gt;args[1] : (header | content)
+   &lt;/ul&gt;
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args) <span class="keyword">throws</span> MalformedURLException {
+    String url = args[<span class="literal">0</span>];
+    String option = args[<span class="literal">1</span>];
+    WebPageFetcher fetcher = <span class="keyword">new</span>  WebPageFetcher(url);
+    <span class="keyword">if</span> (HEADER.equalsIgnoreCase(option)) {
+      log(fetcher.getPageHeader());
+    }
+    <span class="keyword">else</span> <span class="keyword">if</span> (CONTENT.equalsIgnoreCase(option)) {
+      log(fetcher.getPageContent());
+    }
+    <span class="keyword">else</span> {
+      log(<span class="literal">"Unknown option."</span>);
+    }
+  }
+
+  <span class="keyword">public</span> WebPageFetcher(URL url){
+    <span class="keyword">if</span> (! HTTP.equals(url.getProtocol())) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="literal">"URL is not for HTTP Protocol: "</span> + url);
+    }
+    <span class="keyword">this</span>.url = url;
+  }
+
+  <span class="keyword">public</span> WebPageFetcher(String urlName) <span class="keyword">throws</span> MalformedURLException {
+    <span class="keyword">this</span>(<span class="keyword">new</span> URL(urlName));
+  }
+
+  <span class="comment">/** Fetch the content of the URL as simple text.*/</span>
+  <span class="keyword">public</span> String getPageContent() {
+    String result = <span class="keyword">null</span>;
+    URLConnection connection = <span class="keyword">null</span>;
+    <span class="keyword">try</span> {
+      connection =  url.openConnection();
+      <span class="keyword">try</span>(Scanner scanner = <span class="keyword">new</span> Scanner(connection.getInputStream())){
+        scanner.useDelimiter(END_OF_INPUT);
+        result = scanner.next();
+      }
+    }
+    <span class="keyword">catch</span> (IOException ex) {
+      log(<span class="literal">"Cannot open connection to "</span> + url.toString());
+    }
+    <span class="keyword">return</span> result;
+  }
+
+  <span class="comment">/** 
+   Fetch all HTTP headers as simple text.
+   One header per line, as a 'key : value' pair.  
+  */</span>
+  <span class="keyword">public</span> String getPageHeader(){
+    StringBuilder result = <span class="keyword">new</span> StringBuilder();
+
+    URLConnection connection = <span class="keyword">null</span>;
+    <span class="keyword">try</span> {
+      connection = url.openConnection();
+    }
+    <span class="keyword">catch</span> (IOException ex) {
+      log(<span class="literal">"Cannot open connection to URL: "</span> + url);
+    }
+
+    <span class="comment">//not all headers come in key-value pairs - sometimes the key is
+</span>    <span class="comment">//null or an empty String
+</span>    <span class="keyword">int</span> headerIdx = <span class="literal">0</span>;
+    String headerKey = <span class="keyword">null</span>;
+    String headerValue = <span class="keyword">null</span>;
+    <span class="keyword">while</span> ( (headerValue = connection.getHeaderField(headerIdx)) != <span class="keyword">null</span> ) {
+      headerKey = connection.getHeaderFieldKey(headerIdx);
+      <span class="keyword">if</span> (headerKey != <span class="keyword">null</span> &amp;&amp; headerKey.length()&gt;<span class="literal">0</span>) {
+        result.append(headerKey);
+        result.append(<span class="literal">" : "</span>);
+      }
+      result.append(headerValue);
+      result.append(NEWLINE);
+      headerIdx++;
+    }
+    <span class="keyword">return</span> result.toString();
+  }
+
+  <span class="comment">// PRIVATE
+</span>  <span class="keyword">private</span> URL url;
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String HTTP = <span class="literal">"http"</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String HEADER = <span class="literal">"header"</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String CONTENT = <span class="literal">"content"</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String END_OF_INPUT = <span class="literal">"\\Z"</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String NEWLINE = System.getProperty(<span class="literal">"line.separator"</span>);
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(Object thing){
+    System.out.println(Objects.toString(thing));
+  }
+} 
+</pre>
+
+<br>An example run, fetching the HTTP headers from date4j.net:
+<p></p><pre>
+&gt;java -cp . WebPageFetcher http://www.date4j.net/ header
+HTTP/1.1 200 OK
+Date : Tue, 14 Nov 2017 00:24:05 GMT
+Accept-Ranges : bytes
+ETag : W/"21757-1441143396000"
+Last-Modified : Tue, 01 Sep 2015 21:36:36 GMT
+Content-Type : text/html; charset=UTF-8
+Content-Length : 21757
+Vary : Accept-Encoding
+Keep-Alive : timeout=3, max=100
+Connection : Keep-Alive
+</pre>
+<p>
+</p>
+<p></p>
+
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=147 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

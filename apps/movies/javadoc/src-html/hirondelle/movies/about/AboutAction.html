@@ -1,0 +1,66 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/movies/javadoc/src-html/hirondelle/movies/about/AboutAction.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:29 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+AboutAction.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.movies.about;<a name=line.1></a>
+<a name=line.2></a>
+<span class='keyword'>import</span> hirondelle.movies.LaunchApplication;<a name=line.3></a>
+<span class='keyword'>import</span> hirondelle.movies.util.Util;<a name=line.4></a>
+<span class='keyword'>import</span> <span class='keyword'>static</span> hirondelle.movies.util.Consts.NEW_LINE;<a name=line.5></a>
+<a name=line.6></a>
+<span class='keyword'>import</span> java.awt.event.ActionEvent;<a name=line.7></a>
+<span class='keyword'>import</span> java.awt.event.KeyEvent;<a name=line.8></a>
+<span class='keyword'>import</span> java.util.logging.Logger;<a name=line.9></a>
+<a name=line.10></a>
+<span class='keyword'>import</span> javax.swing.AbstractAction;<a name=line.11></a>
+<span class='keyword'>import</span> javax.swing.JFrame;<a name=line.12></a>
+<span class='keyword'>import</span> javax.swing.JOptionPane;<a name=line.13></a>
+<a name=line.14></a>
+<span class='comment'>/**<a name=line.15></a>
+  Show a simple 'About' box, displaying the application name and version.<a name=line.16></a>
+<a name=line.17></a>
+  &lt;P&gt;This implementation is very simple and plain, and uses a {@link javax.swing.JOptionPane}.<a name=line.18></a>
+*/</span><a name=line.19></a>
+<span class='keyword'>public</span> <span class='keyword'>final</span> <span class='keyword'>class</span> AboutAction <span class='keyword'>extends</span> AbstractAction {<a name=line.20></a>
+<a name=line.21></a>
+  <span class='comment'>/** Constructor. */</span><a name=line.22></a>
+  <span class='keyword'>public</span> AboutAction(JFrame aFrame) {<a name=line.23></a>
+    <span class='keyword'>super</span>(<span class='literal'>"About"</span>, <span class='keyword'>null</span>);<a name=line.24></a>
+    fFrame = aFrame;<a name=line.25></a>
+    putValue(SHORT_DESCRIPTION, <span class='literal'>"About the application"</span>);<a name=line.26></a>
+    putValue(MNEMONIC_KEY, <span class='keyword'>new</span> Integer(KeyEvent.VK_A));<a name=line.27></a>
+  }<a name=line.28></a>
+<a name=line.29></a>
+  <span class='comment'>/** Show an 'about' box. */</span><a name=line.30></a>
+  <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> actionPerformed(ActionEvent aActionEvent) {<a name=line.31></a>
+    fLogger.config(<span class='literal'>"Showing About box."</span>);<a name=line.32></a>
+    JOptionPane.showMessageDialog(fFrame, getMessageText(), <span class='literal'>"About"</span>,<a name=line.33></a>
+    JOptionPane.INFORMATION_MESSAGE);<a name=line.34></a>
+  }<a name=line.35></a>
+<a name=line.36></a>
+  <span class='comment'>// PRIVATE <a name=line.37></a>
+</span>  <span class='keyword'>private</span> <span class='keyword'>final</span> JFrame fFrame;<a name=line.38></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> Logger fLogger = Util.getLogger(AboutAction.<span class='keyword'>class</span>);<a name=line.39></a>
+<a name=line.40></a>
+  <span class='keyword'>private</span> String getMessageText() {<a name=line.41></a>
+    StringBuilder result = <span class='keyword'>new</span> StringBuilder(LaunchApplication.APP_NAME + <span class='literal'>" "</span>);<a name=line.42></a>
+    result.append(LaunchApplication.APP_VERSION);<a name=line.43></a>
+    result.append(<span class='literal'>" - a simple example Java GUI application."</span>);<a name=line.44></a>
+    result.append(NEW_LINE);<a name=line.45></a>
+    result.append(NEW_LINE);<a name=line.46></a>
+    result.append(<span class='literal'>"Please see javapractices.com for more information."</span>);<a name=line.47></a>
+    <span class='keyword'>return</span> result.toString();<a name=line.48></a>
+  }<a name=line.49></a>
+}<a name=line.50></a>
+ <a name=line.51></a>
+</PRE><a name=line.52></a>
+ </BODY><a name=line.53></a>
+<HTML><a name=line.54></a>

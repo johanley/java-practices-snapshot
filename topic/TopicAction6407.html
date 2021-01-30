@@ -1,0 +1,310 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=160 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:42 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="swing,timer,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Timers</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Timers</div>
+
+<br><a href="http://docs.oracle.com/javase/tutorial/uiswing/misc/timer.html">Timers</a>
+are used to perform actions periodically, after an initial delay, or both.
+Also, actions can be performed only once, if desired.
+<p>Here are some reminders regarding the two flavors of timers, as used
+in Swing applications:
+</p><p><code><a href="https://docs.oracle.com/javase/10/docs/api/javax/swing/Timer.html">javax.swing.Timer</a></code>
+</p><ul>
+<li>suitable for simpler cases, using low numbers of timers (say less than a dozen)</li>
+<li>runs <code><a href="https://docs.oracle.com/javase/10/docs/api/java/awt/event/ActionListener.html">ActionListener</a></code>
+objects on the event dispatch thread</li>
+<li>if the task completes quickly (say under 300 milliseconds), then it may be run directly on the 
+event dispatch thread, without locking the GUI.</li>
+<li>if the task takes a long time to complete, then it should do its work on a 
+<a href="TopicAction3abb.html?Id=153">background thread</a>, 
+usually with a 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/javax/swing/SwingWorker.html">SwingWorker</a></code>
+</li></ul>
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Timer.html">java.util.Timer</a></code>
+<ul>
+<li>more scalable than <code>javax.swing.Timer</code>, and with additional scheduling
+features</li>
+
+<li>
+runs <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/TimerTask.html">TimerTask</a></code>
+objects on a separate thread (not on the event dispatch thread)</li>
+
+<li>needs to use <code>EventQueue.invokeLater</code> to update the GUI</li>
+</ul>
+
+
+<p><b>Example 1</b>
+</p><p>The <code><a href="../apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/help/AboutAction.html">AboutAction</a></code> 
+class uses a <code>javax.swing.Timer</code>. 
+It's an About dialog which includes a <code>JLabel</code> for displaying the current
+object heap size. This <code>JLabel</code> is updated every few seconds, to
+reflect any activity of the garbage collector. (Note that the timer itself
+does not itself request garbage collection.)
+</p><p>Since this task is not an intensive one (see <code>getHeapSize</code> below),
+it can be executed directly on the event dispatch thread without causing
+the GUI to become unresponsive. That is, a Swing timer may be used directly, without a worker thread.
+</p><p>Here are the pertinent parts of the code:
+<br></p><pre>
+<span class="comment">/**
+* Display a modal dialog, centered on the main window, which
+* contains general information about both this application and 
+* the system on which it's running.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> AboutAction <span class="keyword">extends</span> AbstractAction {
+
+  <span class="comment">//elided...
+</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> actionPerformed(ActionEvent e) {
+    fLogger.info(<span class="literal">"Showing the about box."</span>);    
+    showAboutBox();
+  }
+  
+  <span class="comment">// PRIVATE
+</span>
+  <span class="comment">//elided...
+</span>  
+  <span class="comment">/** Displays the size of the object heap. */</span>
+  <span class="keyword">private</span> JLabel fObjectHeapSize;
+  
+  <span class="comment">/** Periodically updates the display of &lt;tt&gt;fObjectHeapSize&lt;/tt&gt;.  */</span>
+  <span class="keyword">private</span> javax.swing.Timer fTimer;
+  <span class="keyword">private</span> ActionListener fHeapSizeUpdater;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> UPDATE_FREQ = <span class="literal">2</span> * Consts.MILLISECONDS_PER_SECOND;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">long</span> SLEEP_INTERVAL = <span class="literal">100</span>;
+  
+  <span class="keyword">private</span> <span class="keyword">void</span> showAboutBox(){
+    JTabbedPane aboutPane = <span class="keyword">new</span> JTabbedPane();
+    aboutPane.addTab( <span class="literal">"About"</span> , getAboutPanel() );
+    aboutPane.setMnemonicAt(<span class="literal">0</span>, KeyEvent.VK_A);
+    aboutPane.addTab( <span class="literal">"System Info"</span> , getSystemInfoPanel() );
+    aboutPane.setMnemonicAt(<span class="literal">1</span>, KeyEvent.VK_S);
+    
+    startHeapSizeTimer();
+    Icon image =  UiUtil.getImageIcon(<span class="literal">"xray-small.jpg"</span>, <span class="keyword">this</span>.getClass()) ;
+    String title = UiUtil.getDialogTitle(<span class="literal">"About"</span>);
+    JOptionPane.showMessageDialog(
+      fFrame, aboutPane, title, JOptionPane.OK_OPTION, image
+    );
+    stopHeapSizeTimer();
+  }
+
+  <span class="comment">/** Periodically update the display of object heap size. */</span>
+  <span class="keyword">private</span> <span class="keyword">void</span> startHeapSizeTimer(){
+    <span class="comment">//SwingWorker isn't used here, since the action happens more than once,
+</span>    <span class="comment">//and the task doesn't take very long
+</span>    fHeapSizeUpdater = <span class="keyword">new</span> ActionListener() {
+      <span class="keyword">public</span> <span class="keyword">void</span> actionPerformed(ActionEvent evt) {
+        <span class="comment">//this returns quickly; it won't lock up the GUI
+</span>        updateHeapSizeDisplay();
+      }
+    };    
+    fTimer = <span class="keyword">new</span> javax.swing.Timer(UPDATE_FREQ, fHeapSizeUpdater);
+    fTimer.start();    
+    fLogger.fine(<span class="literal">"Starting timer..."</span>);
+  }
+  
+  <span class="comment">/**
+  * Must be called when the About Box is closed - otherwise the timer will continue 
+  * to operate.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">void</span> stopHeapSizeTimer(){
+    fLogger.fine(<span class="literal">"Stopping timer..."</span>);
+    fTimer.stop(); <span class="comment">//stops notifying registered listeners
+</span>    fTimer.removeActionListener(fHeapSizeUpdater); <span class="comment">//removes the one registered listener
+</span>    fHeapSizeUpdater = <span class="keyword">null</span>;
+    fTimer = <span class="keyword">null</span>;
+  }
+
+  <span class="keyword">private</span> <span class="keyword">void</span> updateHeapSizeDisplay(){
+    fLogger.fine(<span class="literal">"Updating heap size..."</span>);
+    fObjectHeapSize.setText(getHeapSize());
+  }
+
+  <span class="comment">/** Return a measure of the current heap size in kilobytes.*/</span>
+  <span class="keyword">private</span> String getHeapSize(){
+    <span class="keyword">long</span> totalMemory = Runtime.getRuntime().totalMemory();
+    <span class="keyword">long</span> freeMemory = Runtime.getRuntime().freeMemory();
+    Long memoryUseKB = <span class="keyword">new</span> Long( (totalMemory - freeMemory)/Consts.ONE_KILOBYTE );
+    StringBuilder result = <span class="keyword">new</span> StringBuilder();
+    result.append(UiUtil.getLocalizedInteger(memoryUseKB));
+    result.append(<span class="literal">" KB"</span>);
+    <span class="keyword">return</span> result.toString();
+  }
+} 
+</pre>
+
+<b>Example 2</b>
+<p></p><p>The <code><a href="../apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/quotes/FetchQuotesAction.html">FetchQuotesAction</a></code> class 
+uses a <code>javax.swing.Timer</code>
+to perform a task which is <i>not</i> short lived. This is acceptable,
+however, since in this case the <code>Timer</code> is combined with a <em>worker thread</em>, and
+most of the task is <em>not</em> performed on the event dispatching thread. 
+</p><p>This is an example of a common requirement - that of performing an intensive,
+periodic task, using both a timer and worker thread. Another example would
+be a graphical network management application, which polls the state of
+many devices every few minutes, and then updates the user interface with
+the results.
+
+</p><p>Here are the pertinent parts of the code:
+<br></p><pre>
+<span class="comment">/**
+* Fetch current quote data for the {@link CurrentPortfolio} from a data 
+* source on the web.
+*
+* &lt;P&gt;This class performs most of its work in a background thread, 
+* using a javax.swing.Timer. The user interface remains responsive, 
+* regardless of the time taken for its work to complete.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> FetchQuotesAction <span class="keyword">extends</span> AbstractAction <span class="keyword">implements</span> Observer {
+
+  <span class="comment">//elided...
+</span>
+  <span class="comment">/**
+  * Start an internal Timer, which in turn calls {@link #actionPerformed(ActionEvent)}.
+  * 
+  * &lt;P&gt;This method must be called immediately after calling the constructor. 
+  * (Since this operation uses a 'this' reference, it shouldn't be included in the 
+  * constructor itself.)  
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">void</span> startTimer(){
+    fQuoteTablePrefEditor.addObserver(<span class="keyword">this</span>);
+    fCurrentPortfolio.addObserver(<span class="keyword">this</span>);
+    fTimer = <span class="keyword">new</span> javax.swing.Timer(fUpdateFreq * CONVERSION_FACTOR, <span class="keyword">this</span>);
+    fTimer.start();
+  }
+
+  <span class="comment">/** 
+   Fetch quotes from the web for the &lt;tt&gt;CurrentPortfolio&lt;/tt&gt;.
+   This is called either explicitly, or periodically, by a Timer.
+  */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> actionPerformed(ActionEvent e) {
+    fLogger.info(<span class="literal">"Fetching quotes from web."</span>);
+    fSummaryView.showStatusMessage(<span class="literal">"Fetching quotes..."</span>);
+    SwingWorker&lt;List&lt;Quote&gt;, Void&gt; hardWorker = <span class="keyword">new</span> HardWorker();
+    hardWorker.execute();
+  }
+  
+  <span class="comment">// PRIVATE 
+</span>
+  <span class="comment">/**
+  * The set of {@link Stock} objects in which the user 
+  * is currently interested.
+  */</span>
+  <span class="keyword">private</span> CurrentPortfolio fCurrentPortfolio;
+  
+  <span class="comment">/**
+  * Periodically fetches quote data.
+  *
+  * &lt;P&gt;Use of a Swing Timer is acceptable here, in spite of the fact that the task
+  * takes a long time to complete, since the task does &lt;em&gt;not&lt;/em&gt; in fact get 
+  * executed on the event-dispatch thread, but on a separate worker thread.
+  */</span>
+  <span class="keyword">private</span> javax.swing.Timer fTimer;
+  
+  <span class="comment">/** The number of minutes to wait between fetches of quote information. */</span>
+  <span class="keyword">private</span> <span class="keyword">int</span> fUpdateFreq;
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> CONVERSION_FACTOR = 
+    Consts.MILLISECONDS_PER_SECOND * Consts.SECONDS_PER_MINUTE
+  ;
+
+  <span class="comment">//elided...
+</span>
+  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">class</span> HardWorker <span class="keyword">extends</span> SwingWorker&lt;java.util.List&lt;Quote&gt;, Void&gt; {
+    <span class="keyword">@Override</span>  <span class="keyword">protected</span> List&lt;Quote&gt; doInBackground() <span class="keyword">throws</span> Exception {
+      List&lt;Quote&gt; result = <span class="keyword">null</span>;
+      <span class="keyword">try</span> {
+        result = fCurrentPortfolio.getPortfolio().getQuotes();
+      }
+      <span class="keyword">catch</span>(DataAccessException ex){
+        ex.printStackTrace();
+      }
+      <span class="keyword">return</span> result;
+    }
+    <span class="keyword">@Override</span> <span class="keyword">protected</span> <span class="keyword">void</span> done() {
+      <span class="keyword">try</span> {
+        <span class="comment">//access the data returned by doInBackground():
+</span>        List&lt;Quote&gt; quotes = get();
+        <span class="keyword">if</span> (quotes != <span class="keyword">null</span>){
+          showUpdated(quotes);
+        }
+        <span class="keyword">else</span> {
+          fSummaryView.showStatusMessage(<span class="literal">"Failed - Please connect to the web."</span>);
+        }
+      }
+      <span class="keyword">catch</span> (Exception ex) {
+        ex.printStackTrace();
+      }
+    }
+  }
+
+  <span class="keyword">private</span> <span class="keyword">void</span> showUpdated(List&lt;Quote&gt; aQuotes) {
+    fQuoteTable.setQuoteTable(aQuotes);
+    fSummaryView.setQuotes(aQuotes);
+    StringBuilder warning = <span class="keyword">new</span> StringBuilder();
+    <span class="keyword">if</span> (hasNoZeroPrices(aQuotes, warning)){
+      fSummaryView.showStatusMessage(<span class="literal">"Done."</span>);
+    }
+    <span class="keyword">else</span> {
+      fSummaryView.showStatusMessage(warning.toString());
+    }
+  }
+}
+ 
+</pre>
+
+<b>Example 3</b>
+<p></p><p>For a simple example using <code>java.util.Timer</code> and <code>java.util.TimerTask</code> in a non-Swing context, 
+please see this <a href="TopicActionc150.html?Id=54">related topic</a>.
+<br>
+</p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActionc150.html?Id=54">Schedule periodic tasks </a> <br>
+  <a href="TopicAction3abb.html?Id=153">Swing threads</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=160 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:42 GMT -->
+</html>

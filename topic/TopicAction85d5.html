@@ -1,0 +1,84 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=132 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Consider code generators</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Consider code generators</div>
+
+<br>Some types of classes share the same basic structure, and differ only
+in details. <a href="TopicAction2161.html?Id=1">Type-safe enumerations</a> and data-centric
+<a href="TopicActiond08d.html?Id=187">Model Objects</a> are two examples. In such cases, aids for rapid code generation
+become very useful. These may take several forms:
+<ul>
+<li>
+a simple template of text intended for copy-and-paste</li>
+
+<li>
+a <b>passive</b> code generator - generates source files which <i>may</i> need
+further edits. If further edits are performed, then they will be lost if
+the code generator is run a second time.</li>
+
+<li>
+an <b>active</b> code generator - generates source files which will <i>not</i>
+need further edits (the idea here is to use the code generator as part
+of the actual build, instead of relying on it for a one-time operation)</li>
+
+<li>
+a <b>round-trip</b> code generator - generates source files which <i>may</i>
+need further edits. If further edits are performed, then they will <i>not</i>
+be lost if the code generator is run a second time, since it will detect
+such edits, and use them to update its internal model.</li>
+</ul>
+Code generators often use simple, <i>ad hoc</i> textual descriptions as input.
+The <a href="http://www.codegeneration.net/">codegeneration.net</a> 
+web site is a useful reference for code generation.
+
+<p>The extensive use of code generation is often called Model-Driven Development
+(MDD), or Model-Driven Architecture (MDA).
+<br>
+</p>
+<p></p>
+
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=132 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

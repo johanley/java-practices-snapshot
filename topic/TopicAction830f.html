@@ -1,0 +1,102 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=9 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="collection,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Use standard Collections</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Use standard Collections</div>
+
+<br>In the <a href="http://docs.oracle.com/javase/8/docs/technotes/guides/collections/index.html">Collections Framework</a>, there are many implementation classes
+to choose from. Most of the time, one of these "primary implementations"
+is the appropriate choice
+<ul>
+<li>
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/ArrayList.html">ArrayList</a></code>,
+for an implementation of the <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/List.html">List</a></code>
+interface</li>
+
+<li>
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/LinkedHashMap.html">LinkedHashMap</a></code>, 
+for an implementation of the <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Map.html">Map</a></code>
+interface</li>
+
+<li>
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/LinkedHashSet.html">LinkedHashSet</a></code>, 
+for an implementation of the <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Set.html">Set</a></code>
+interface</li>
+
+<li>
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/ArrayDeque.html">ArrayDeque</a></code>, 
+for an implementation of both the the <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Deque.html">Deque</a></code>
+and 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Queue.html">Queue</a></code>
+interfaces</li>
+</ul>
+
+<p>Before JDK 1.5, 
+<a href="https://docs.oracle.com/javase/10/docs/api/java/util/HashMap.html"><code>HashMap</code></a> and 
+<a href="https://docs.oracle.com/javase/10/docs/api/java/util/HashSet.html"><code>HashSet</code></a> 
+were the preferred implementations of 
+<code>Map</code> and <code>Set</code>. However, the iterators returned by those classes have 
+the somewhat bizarre property of having an <em>undefined</em> order. That is, iterating over 
+a <code>HashMap</code> or <code>HashSet</code>
+can return elements in a different order at different times. Their iteration order is not guaranteed to be 
+repeatable (and often isn't). 
+Even though <code>HashMap</code> and <code>HashSet</code> have 
+slightly better overall performance, for most business applications it is likely best to avoid such 
+undefined behavior.
+
+</p><p>To retain the sorting of items being manipulated in a graphical user
+interface,
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/TreeSet.html">TreeSet</a></code>
+and <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/TreeMap.html">TreeMap</a></code>
+are useful. They force a collection to maintain a sort order when the user
+adds and deletes items.
+<br>
+</p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActionc6f5.html?Id=65">Choosing the right Collection</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=9 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+</html>

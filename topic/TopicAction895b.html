@@ -1,0 +1,185 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=144 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="email,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Send an email</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Send an email</div>
+
+<br>The <a href="https://javaee.github.io/javamail/">JavaMail API</a> is used to send emails:
+<ul>
+ <li>the latest version requires JDK 1.7+. Older versions are available for older JDK's.
+ </li><li>it's not part of core Java SE, but an optional extension. 
+ </li><li>in Java Enterprise Edition (JEE), JavaMail is provided by the container. 
+</li></ul>
+
+
+<p>The JavaMail packages can be accessed in two ways:
+</p><ul>
+ <li>if you're using a JEE container, then JavaMail is automatically available in the runtime environment.
+ </li><li>by placing <code>javax.mail.jar</code> (formerly <code>mail.jar</code>) in the classpath.
+ If you're using an older version of JavaMail with JDK 1.4 or 1.5, then you also need to add <code>activation.jar</code> to the classpath.
+ It comes from the <a href="http://www.oracle.com/technetwork/java/javase/index-jsp-136939.html">JavaBeans Activation Framework</a>.
+</li></ul>
+
+The JavaMail API uses a properties file for reading server names and related configuration.
+These settings will override any system defaults. Alternatively, the configuration
+can be set directly in code, using the JavaMail API.
+
+<p><b>Example</b>
+</p><p>An email configuration file (to run the example, substitute valid values
+for the uncommented items):
+<br>&nbsp;
+</p><p><code># Configuration file for javax.mail</code>
+<br><code># If a value for an item is not provided, then</code>
+<br><code># system defaults will be used. These items can</code>
+<br><code># also be set in code.</code>
+</p><p><code># Host whose mail services will be used</code>
+<br><code># (Default value : localhost)</code>
+<br><code>mail.host=mail.blah.com</code>
+</p><p><code># Return address to appear on emails</code>
+<br><code># (Default value : username@host)</code>
+<br><code>mail.from=webmaster@blah.net</code>
+</p><p><code># Other possible items include:</code>
+<br><code># mail.user=</code>
+<br><code># mail.store.protocol=</code>
+<br><code># mail.transport.protocol=</code>
+<br><code># mail.smtp.host=</code>
+<br><code># mail.smtp.user=</code>
+<br><code># mail.debug=</code>
+</p><p>A class which uses this file to send an email:
+<br></p><pre>
+<span class="keyword">import</span> java.util.*;
+<span class="keyword">import</span> java.io.*;
+<span class="keyword">import</span> java.nio.file.*;
+<span class="keyword">import</span> javax.mail.*;
+<span class="keyword">import</span> javax.mail.internet.*;
+
+<span class="comment">/**
+* Simple demonstration of using the javax.mail API.
+*
+* Run from the command line. Please edit the implementation
+* to use correct email addresses and host name.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Emailer {
+
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main( String... aArguments ){
+    Emailer emailer = <span class="keyword">new</span> Emailer();
+    <span class="comment">//the domains of these email addresses should be valid,
+</span>    <span class="comment">//or the example will fail:
+</span>    emailer.sendEmail(
+      <span class="literal">"fromblah@blah.com"</span>, <span class="literal">"toblah@blah.com"</span>,
+       <span class="literal">"Testing 1-2-3"</span>, <span class="literal">"blah blah blah"</span>
+    );
+   }
+
+  <span class="comment">/**
+  * Send a single email.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">void</span> sendEmail(
+    String aFromEmailAddr, String aToEmailAddr,
+    String aSubject, String aBody
+  ){
+    <span class="comment">//Here, no Authenticator argument is used (it is null).
+</span>    <span class="comment">//Authenticators are used to prompt the user for user
+</span>    <span class="comment">//name and password.
+</span>    Session session = Session.getDefaultInstance(fMailServerConfig, <span class="keyword">null</span>);
+    MimeMessage message = <span class="keyword">new</span> MimeMessage(session);
+    <span class="keyword">try</span> {
+      <span class="comment">//the "from" address may be set in code, or set in the
+</span>      <span class="comment">//config file under "mail.from" ; here, the latter style is used
+</span>      <span class="comment">//message.setFrom(new InternetAddress(aFromEmailAddr));
+</span>      message.addRecipient(
+        Message.RecipientType.TO, <span class="keyword">new</span> InternetAddress(aToEmailAddr)
+      );
+      message.setSubject(aSubject);
+      message.setText(aBody);
+      Transport.send(message);
+    }
+    <span class="keyword">catch</span> (MessagingException ex){
+      System.err.println(<span class="literal">"Cannot send email. "</span> + ex);
+    }
+  }
+
+  <span class="comment">/**
+  * Allows the config to be refreshed at runtime, instead of
+  * requiring a restart.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> refreshConfig() {
+    fMailServerConfig.clear();
+    fetchConfig();
+  }
+
+  <span class="comment">// PRIVATE 
+</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> Properties fMailServerConfig = <span class="keyword">new</span> Properties();
+
+  <span class="keyword">static</span> {
+    fetchConfig();
+  }
+
+  <span class="comment">/**
+  * Open a specific text file containing mail server
+  * parameters, and populate a corresponding Properties object.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> fetchConfig() {
+    <span class="comment">//This file contains the javax.mail config properties mentioned above.
+</span>    Path path = Paths.get(<span class="literal">"C:\\Temp\\MyMailServer.txt"</span>);
+    <span class="keyword">try</span> (InputStream input = Files.newInputStream(path)) {
+      fMailServerConfig.load(input);
+    }
+    <span class="keyword">catch</span> (IOException ex){
+      System.err.println(<span class="literal">"Cannot open and load mail server properties file."</span>);
+    }
+  }
+} 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction9163.html?Id=242">Launch other applications</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=144 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

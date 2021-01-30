@@ -1,0 +1,103 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=32 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="constants,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Interface for constants</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Interface for constants</div>
+
+<br>It's possible to place widely used constants in an interface. If a
+class implements such an interface, then the class can refer to those constants
+without a qualifying class name. This is only a minor advantage.
+
+<p><span class="highlight">The <a href="TopicActionda46.html?Id=195">static import</a> feature should always be
+considered as a replacement for this practice.</span>
+
+</p><p>Placing constants in an interface was a popular technique in the early days of Java, but now many
+consider it a distasteful use of interfaces, since interfaces should deal
+with the <i>services</i> provided by an object, not its data. As well,
+the constants used by a class are typically an implementation detail, but
+placing them in an interface promotes them to the public API of the class.
+
+</p><p><b>Example</b>
+<br></p><pre>
+<span class="keyword">interface</span> OlympicMedal {
+  <span class="keyword">static</span> <span class="keyword">final</span> String GOLD = <span class="literal">"Gold"</span>;
+  <span class="keyword">static</span> <span class="keyword">final</span> String SILVER = <span class="literal">"Silver"</span>;
+  <span class="keyword">static</span> <span class="keyword">final</span> String BRONZE = <span class="literal">"Bronze"</span>;
+}
+ 
+</pre>
+
+Here's an example of using this interface to reference its constants:
+<br><pre>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> OlympicAthlete <span class="keyword">implements</span> OlympicMedal {
+
+  <span class="keyword">public</span> OlympicAthlete(<span class="keyword">int</span> id){
+    <span class="comment">//..elided
+</span>  }
+
+  <span class="comment">//..elided
+</span>
+  <span class="keyword">public</span> <span class="keyword">void</span> winEvent(){
+    <span class="comment">//the athlete gets a gold medal
+</span>    <span class="comment">//note the reference is NOT qualified, as
+</span>    <span class="comment">//in OlympicMedal.GOLD
+</span>    medal = GOLD;
+  }
+
+  <span class="comment">// PRIVATE
+</span>  <span class="keyword">private</span> String medal; <span class="comment">//possibly null
+</span>} 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction2161.html?Id=1">Type Safe Enumerations</a> <br>
+  <a href="TopicAction03b1.html?Id=2">Class for constants</a> <br>
+  <a href="TopicActionda46.html?Id=195">Use static imports rarely</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=32 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

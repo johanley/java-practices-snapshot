@@ -1,0 +1,211 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=25 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="catch,exception,finally,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Finally and catch</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Finally and catch</div>
+
+<br>
+The <code>finally</code> block is used to ensure resources are recovered regardless of any problems that may occur.
+
+<p>There are several variations for using the <code>finally</code> block, according to how exceptions are handled.
+(See the excellent book <em>The Java Programming Language</em> by Arnold, Gosling, and Holmes for related information.)
+
+</p><p>If you're using JDK 7+, then <b>most uses of the <code>finally</code> block can be eliminated</b>, 
+simply by using a <a href="http://docs.oracle.com/javase/7/docs/technotes/guides/language/try-with-resources.html">try-with-resources</a>
+statement. 
+If a resource doesn't implement <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/AutoCloseable.html">AutoCloseable</a></code>, 
+then a <code>finally</code> block will still be needed, even in JDK 7+.
+Two examples would be:
+</p><ul>
+ <li>resources related to threads
+ </li><li>resources related to a <code><a href="https://docs.oracle.com/javase/10/docs/api/java/awt/Graphics.html">Graphics</a></code> object
+</li></ul>
+
+<p><b>JDK &lt; 7, and resources that aren't <code>AutoCloseable</code></b><br>
+The following examples are appropriate for older versions of the JDK. 
+They are also appropriate in JDK 7+, but only for resources that don't implement <code>AutoCloseable</code>.
+
+</p><p><b>Style 1</b>
+</p><p>If a method <em>throws</em> all exceptions, then it may use a <code>finally</code> with no <code>catch</code>:
+<br></p><pre>
+<span class="keyword">import</span> java.io.*;
+
+<span class="comment">/** Before JDK 7. */</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> SimpleFinally {
+  
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args) <span class="keyword">throws</span> IOException {
+    simpleFinally(<span class="literal">"C:\\Temp\\test.txt"</span>);
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> simpleFinally(String fileName) <span class="keyword">throws</span> IOException {
+    <span class="comment">//If this line throws an exception, then neither the try block
+</span>    <span class="comment">//nor the finally block will execute.
+</span>    <span class="comment">//That's a good thing, since reader would be null.
+</span>    BufferedReader reader = <span class="keyword">new</span> BufferedReader(<span class="keyword">new</span> FileReader(fileName));
+    <span class="keyword">try</span> {
+      <span class="comment">//Any exception in the try block will cause the finally block to execute
+</span>      String line = <span class="keyword">null</span>;
+      <span class="keyword">while</span> ((line = reader.readLine()) != <span class="keyword">null</span>) {
+        <span class="comment">//process the line...
+</span>      }
+    }
+    <span class="keyword">finally</span> {
+      <span class="comment">//The reader object will never be null here.
+</span>      <span class="comment">//This finally is only entered after the try block is 
+</span>      <span class="comment">//entered. But, it's NOT POSSIBLE to enter the try block 
+</span>      <span class="comment">//with a null reader object.
+</span>      reader.close();
+    }
+  }
+}
+ 
+</pre>
+
+<b>Style 2</b>
+<p></p><p>If a method <em>handles</em> all of the <em>checked</em> exceptions that may be thrown by its implementation, 
+then an interesting variation is to nest a 
+<code>try..finally</code> within a <code>try..catch</code>. This style is particularly useful when 
+the <code>finally</code> block throws the same exceptions as the rest of the code (which is common with 
+<code>java.io</code> operations.) Although this style may seem slightly complex, it appears
+to be superior to alternative styles:
+<br></p><pre>
+<span class="keyword">import</span> java.io.*;
+<span class="keyword">import</span> java.util.logging.*;
+
+<span class="comment">/** Before JDK 7. */</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> NestedFinally {
+  
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args) {
+    nestedFinally(<span class="literal">"C:\\Temp\\test.txt"</span>);
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> nestedFinally(String fileName) {
+    <span class="keyword">try</span> {
+      <span class="comment">//If the constructor throws an exception, the finally block will NOT execute
+</span>      BufferedReader reader = <span class="keyword">new</span> BufferedReader(<span class="keyword">new</span> FileReader(fileName));
+      <span class="keyword">try</span> {
+        String line = <span class="keyword">null</span>;
+        <span class="keyword">while</span> ((line = reader.readLine()) != <span class="keyword">null</span>) {
+          <span class="comment">//process the line...
+</span>        }
+      }
+      <span class="keyword">finally</span> {
+        <span class="comment">//no need to check for null
+</span>        <span class="comment">//any exceptions thrown here will be caught by 
+</span>        <span class="comment">//the outer catch block
+</span>        reader.close();
+      }
+    }
+    <span class="keyword">catch</span>(IOException ex){
+      logger.severe(<span class="literal">"Problem occured : "</span> + ex.getMessage());
+    }
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Logger logger =
+    Logger.getLogger(NestedFinally.<span class="keyword">class</span>.getPackage().getName())
+  ;
+}
+ 
+</pre>
+
+<b>Style 3</b>
+<p></p><p>A more verbose style places a <code>catch</code> within the <code>finally</code>. 
+This style is likely the least desirable, since it has the most blocks:
+<br></p><pre>
+<span class="keyword">import</span> java.io.BufferedReader;
+<span class="keyword">import</span> java.io.FileReader;
+<span class="keyword">import</span> java.io.IOException;
+<span class="keyword">import</span> java.util.logging.Logger;
+
+<span class="comment">/** Before JDK 7. */</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> CatchInsideFinally {
+  
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args) {
+    catchInsideFinally(<span class="literal">"C:\\Temp\\test.txt"</span>);
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> catchInsideFinally(String fileName) {
+    <span class="comment">//Declared here to be visible from finally block
+</span>    BufferedReader reader = <span class="keyword">null</span>;
+    <span class="keyword">try</span> {
+      <span class="comment">//if this line fails, finally will be executed, and reader will be null
+</span>      reader = <span class="keyword">new</span> BufferedReader(<span class="keyword">new</span> FileReader(fileName));
+      String line = <span class="keyword">null</span>;
+      <span class="keyword">while</span> ((line = reader.readLine()) != <span class="keyword">null</span>) {
+        <span class="comment">//process the line...
+</span>      }
+    }
+    <span class="keyword">catch</span>(IOException ex){
+      logger.severe(<span class="literal">"Problem occured : "</span> + ex.getMessage());
+    }
+    <span class="keyword">finally</span> {
+      <span class="keyword">try</span> {
+        <span class="comment">//need to check for null
+</span>        <span class="keyword">if</span> (reader != <span class="keyword">null</span>) {
+          reader.close();
+        }
+      }
+      <span class="keyword">catch</span>(IOException ex){
+        logger.severe(<span class="literal">"Problem occured. Cannot close reader : "</span> + ex.getMessage());
+      }
+    }
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Logger logger =
+    Logger.getLogger(CatchInsideFinally.<span class="keyword">class</span>.getPackage().getName())
+  ;
+} 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActiona0d7.html?Id=8">Always close streams</a> <br>
+  <a href="TopicAction693b.html?Id=43">Recovering resources</a> <br>
+  <a href="TopicAction9616.html?Id=253">Use finally to unlock</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=25 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+</html>

@@ -1,0 +1,233 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=3 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="array,copy,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Copy an array </title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Copy an array </div>
+
+<br>There are several ways to copy an array:
+<ul>
+
+<li>use the various <code>copyOf</code> and <code>copyOfRange</code> methods of the 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Arrays.html">Arrays</a></code> class - probably the simplest method</li> 
+
+<li>use <code>System.<a href="https://docs.oracle.com/javase/10/docs/api/java/lang/System.html#arraycopy(java.lang.Object,int,java.lang.Object,int,int)">arraycopy</a></code>
+- useful when copying parts of an array</li>
+
+<li>call its <code>clone</code> method, and do a cast - the simplest style, but
+only a shallow clone is performed</li>
+
+<li>use a <code>for</code> loop - more than one line, and needs a loop index</li>
+</ul>
+
+<b>Example</b>
+<p>This example class demonstrates:
+</p><ul>
+<li>relative performance of the various methods (in many cases the differences in speed will not be 
+of practical benefit).</li>
+<li>how <code>clone</code> is a shallow copy, and leads to independent storage
+only for primitive, one dimensional arrays.</li>
+</ul>
+<br><pre>
+<span class="keyword">import</span> java.util.*;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> ArrayCopier {
+
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main (String... args) {
+    String action = args[<span class="literal">0</span>];
+    <span class="keyword">int</span> numIterations = <span class="literal">0</span>;
+    <span class="keyword">if</span> (args.length == <span class="literal">2</span>) {
+      numIterations = Integer.parseInt(args[<span class="literal">1</span>]);
+    }
+
+    <span class="keyword">if</span> (<span class="literal">"performance"</span>.equals(action)) {
+      demoPerformance(numIterations);
+    }
+    <span class="keyword">else</span> <span class="keyword">if</span> (<span class="literal">"storage"</span>.equals(action)) {
+      demoIndependanceOfStorage();
+    }
+  }
+
+  <span class="comment">/**
+  * Display the time it takes to copy an array in various ways.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> demoPerformance(<span class="keyword">int</span> numIterations){
+    Stopwatch stopwatch = <span class="keyword">new</span> Stopwatch();
+    <span class="keyword">int</span>[] numbers = {<span class="literal">1</span>,<span class="literal">2</span>,<span class="literal">3</span>,<span class="literal">4</span>,<span class="literal">5</span>,<span class="literal">6</span>,<span class="literal">7</span>,<span class="literal">8</span>,<span class="literal">9</span>,<span class="literal">10</span>};
+
+    stopwatch.start();
+    copyUsingClone(numbers, numIterations);
+    stopwatch.stop();
+    log(<span class="literal">"Using clone: "</span> + stopwatch);
+
+    stopwatch.start();
+    copyUsingArraycopy(numbers, numIterations);
+    stopwatch.stop();
+    log(<span class="literal">"Using System.arraycopy: "</span> + stopwatch);
+
+    stopwatch.start();
+    copyUsingArraysCopyOf(numbers, numIterations);
+    stopwatch.stop();
+    log(<span class="literal">"Using Arrays.copyOf: "</span> + stopwatch);
+
+    stopwatch.start();
+    copyUsingForLoop(numbers, numIterations);
+    stopwatch.stop();
+    log(<span class="literal">"Using for loop: "</span> + stopwatch);
+  }
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> copyUsingClone(<span class="keyword">int</span>[] array , <span class="keyword">int</span> numIterations) {
+    <span class="keyword">for</span>(<span class="keyword">int</span> idx = <span class="literal">0</span> ; idx &lt; numIterations; ++idx) {
+
+      <span class="keyword">int</span>[] copy = (<span class="keyword">int</span>[])array.clone();
+
+    }
+  }
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> copyUsingArraycopy(<span class="keyword">int</span>[] array , <span class="keyword">int</span> numIterations) {
+    <span class="keyword">for</span>(<span class="keyword">int</span> idx = <span class="literal">0</span> ; idx &lt; numIterations; ++idx) {
+
+      <span class="keyword">int</span> [] copy = <span class="keyword">new</span> <span class="keyword">int</span>[array.length];
+      System.arraycopy( array, <span class="literal">0</span>, copy, <span class="literal">0</span>, array.length );
+
+    }
+  }
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> copyUsingArraysCopyOf(<span class="keyword">int</span>[] array , <span class="keyword">int</span> numIterations) {
+    <span class="keyword">for</span>(<span class="keyword">int</span> idx = <span class="literal">0</span> ; idx &lt; numIterations; ++idx) {
+
+      <span class="keyword">int</span>[] copy = Arrays.copyOf(array, array.length);
+
+    }
+  }
+
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> copyUsingForLoop(<span class="keyword">int</span>[] array , <span class="keyword">int</span> numIterations) {
+    <span class="keyword">for</span>(<span class="keyword">int</span> iterIdx = <span class="literal">0</span> ; iterIdx &lt; numIterations; ++iterIdx) {
+
+      <span class="keyword">int</span> [] copy = <span class="keyword">new</span> <span class="keyword">int</span>[array.length];
+      <span class="keyword">for</span> (<span class="keyword">int</span> idx = <span class="literal">0</span>; idx &lt; array.length; ++idx) {
+        copy[idx] = array[idx];
+      }
+
+    }
+  }
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(String message){
+    System.out.println(message);  
+  }
+  
+  <span class="comment">/**
+  * (The for-loop and System.arraycopy styles clearly have independent
+  * storage, and are not exercised in this method.)
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> demoIndependanceOfStorage() {
+    <span class="comment">//a clone of a one-dimensional array has independent storage
+</span>    <span class="keyword">int</span>[] numbers = {<span class="literal">1</span>,<span class="literal">1</span>,<span class="literal">1</span>,<span class="literal">1</span>};
+    <span class="keyword">int</span>[] numbersClone = (<span class="keyword">int</span>[])numbers.clone();
+    <span class="comment">//set 0th element to 0, and compare
+</span>    numbersClone[<span class="literal">0</span>] = <span class="literal">0</span>;
+    log(<span class="literal">"Altered clone has NOT affected original:"</span>);
+    log(<span class="literal">"numbersClone[0]: "</span> + numbersClone[<span class="literal">0</span>]);
+    log(<span class="literal">"numbers[0]: "</span> +  numbers[<span class="literal">0</span>]);
+
+    <span class="comment">//the clone of a multi-dimensional array does *not* have
+</span>    <span class="comment">//independant storage
+</span>    <span class="keyword">int</span>[][] matrix = { {<span class="literal">1</span>,<span class="literal">1</span>}, {<span class="literal">1</span>,<span class="literal">1</span>} };
+    <span class="keyword">int</span>[][] matrixClone = (<span class="keyword">int</span>[][])matrix.clone();
+    <span class="comment">//set 0-0th element to 0, and compare
+</span>    matrixClone[<span class="literal">0</span>][<span class="literal">0</span>] = <span class="literal">0</span>;
+    log(<span class="literal">"Altered clone has affected original:"</span>);
+    log(<span class="literal">"matrixClone element 0-0:"</span> + matrixClone[<span class="literal">0</span>][<span class="literal">0</span>]);
+    log(<span class="literal">"matrix element 0-0: "</span> + matrix[<span class="literal">0</span>][<span class="literal">0</span>]);
+
+    <span class="comment">//the clone of an array of objects as well is only shallow
+</span>    Date[] dates = {<span class="keyword">new</span> Date()};
+    log(<span class="literal">"Original date: "</span> + dates[<span class="literal">0</span>]);
+    Date[] datesClone = (Date[])dates.clone();
+    datesClone[<span class="literal">0</span>].setTime(<span class="literal">0</span>);
+    log(<span class="literal">"Altered clone has affected original:"</span>);
+    log(<span class="literal">"datesClone[0]:"</span> + datesClone[<span class="literal">0</span>]);
+    log(<span class="literal">"dates[0]: "</span> + dates[<span class="literal">0</span>]);
+  }
+} 
+</pre>
+
+<br><code>System.arraycopy</code> seems to have slightly better performance.
+Differences between the various styles are small, however, and
+would often be regarded as a micro-optimization. 
+(As usual, such judgements depend on the context).
+<p><code>&gt;java -cp . -Xint ArrayCopier performance 250000</code>
+</p><pre>Using clone: 108.168 ms
+Using System.arraycopy: 125.334 ms
+Using Arrays.copyOf: 190.490 ms
+Using for loop: 392.026 ms</pre>
+
+<p>The above example use the 
+<code><a href="http://docs.oracle.com/javase/7/docs/technotes/tools/windows/java.html#nonstandard" title="Non-standard options for java interpreter">-Xint</a></code> 
+option to turn off the Just
+In Time compiler. Here, bytecodes are interpreted at runtime, but never
+compiled by the HotSpot compiler into native code. This provides a uniform
+environment for executing tests of relative execution time, since there
+is no "warm-up" period.
+</p><p>Example run demonstrating independence of storage, or lack thereof:
+</p><p><code>&gt;java -cp . ArrayCopier storage</code>
+<br><code>Altered clone has NOT affected original:</code>
+<br><code>numbersClone[0]: 0</code>
+<br><code>numbers[0]: 1</code>
+<br><code>Altered clone has affected original:</code>
+<br><code>matrixClone element 0-0:0</code>
+<br><code>matrix element 0-0: 0</code>
+<br><code>Original date: Mon Sep 30 15:47:58 EDT 2002</code>
+<br><code>Altered clone has affected original:</code>
+<br><code>datesClone[0]:Wed Dec 31 19:00:00 EST 1969</code>
+<br><code>dates[0]: Wed Dec 31 19:00:00 EST 1969</code>
+<br>
+</p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActiondd78.html?Id=85">Time execution speed</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=3 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

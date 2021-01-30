@@ -1,0 +1,148 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=159 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:42 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="action,swing,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Actions</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Actions</div>
+
+<br>The Command pattern is described in 
+<i><a href="http://www.amazon.com/exec/obidos/ASIN/0201633612/ref=nosim/javapractices-20">Design Patterns</a></i>, 
+where menu items are used as an 
+example implementation.
+<p>In Swing, the <code><a href="https://docs.oracle.com/javase/10/docs/api/javax/swing/Action.html">Action</a></code>
+interface and the <code><a href="https://docs.oracle.com/javase/10/docs/api/javax/swing/AbstractAction.html">AbstractAction</a></code>
+base class implement the Command pattern. They eliminate duplication of
+code, and separate tasks from the details of their invocation:
+</p><ul>
+<li>
+the same <code>Action</code> object can be invoked in multiple ways, usually
+through a <code>JMenuItem</code> and <code>JToolBar</code> button (<code>JButton</code>
+and <code>JTextField</code> can also be used)</li>
+
+<li>
+text, mnemonic, accelerator, tooltip, command <code>String</code>, and icon
+are all defined once in an implementation of the <code>Action</code>, and are all
+shared by all associated graphical elements</li>
+
+<li>
+the enabled/disabled state of an <code>Action</code> is always reflected by
+all associated graphical elements</li>
+
+<li>
+<code>Action</code> objects can be passed directly to the constructor of <code><a href="https://docs.oracle.com/javase/10/docs/api/javax/swing/JMenuItem.html#JMenuItem(javax.swing.Action)">JMenuItem</a></code>
+and <code><a href="https://docs.oracle.com/javase/10/docs/api/javax/swing/JButton.html#JButton(javax.swing.Action)">JButton</a></code>,
+and also to <code><a href="https://docs.oracle.com/javase/10/docs/api/javax/swing/JToolBar.html#add(javax.swing.Action)">JToolBar.add</a></code></li>
+</ul>
+<b>Example</b>
+<p>A <code>JMenuItem</code> corresponding to <code>File-&gt;Save</code> can be created
+using this <code>Action</code>:
+<br></p><pre>
+<span class="keyword">package</span> hirondelle.stocks.file;
+
+<span class="keyword">import</span> java.awt.event.*;
+<span class="keyword">import</span> javax.swing.*;
+<span class="keyword">import</span> java.util.*;
+<span class="keyword">import</span> hirondelle.stocks.portfolio.PortfolioDAO;
+<span class="keyword">import</span> hirondelle.stocks.portfolio.CurrentPortfolio;
+<span class="keyword">import</span> hirondelle.stocks.util.ui.UiUtil;
+<span class="keyword">import</span> java.util.logging.Logger;
+<span class="keyword">import</span> hirondelle.stocks.util.Util;
+
+<span class="comment">/**
+* Save the edits performed on the {@link CurrentPortfolio}, and update the display 
+* to show that the &lt;tt&gt;CurrentPortfolio&lt;/tt&gt; no longer needs a save.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> FileSaveAction <span class="keyword">extends</span> AbstractAction <span class="keyword">implements</span> Observer {
+
+  <span class="comment">/**
+  * Constructor.
+  *  
+  * @param aCurrentPortfolio is to be saved by this action.
+  */</span>
+  <span class="keyword">public</span> FileSaveAction(CurrentPortfolio aCurrentPortfolio) {
+    <span class="keyword">super</span>(<span class="literal">"Save"</span>, UiUtil.getImageIcon(<span class="literal">"/toolbarButtonGraphics/general/Save"</span>)); 
+    fCurrentPortfolio = aCurrentPortfolio;
+    fCurrentPortfolio.addObserver(<span class="keyword">this</span>);
+    putValue(SHORT_DESCRIPTION, <span class="literal">"Save edits to the current portfolio"</span>);
+    putValue(
+      ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK)
+    );
+    putValue(LONG_DESCRIPTION, <span class="literal">"Save edits to the current portfolio"</span>);
+    putValue(MNEMONIC_KEY, <span class="keyword">new</span> Integer(KeyEvent.VK_S));    
+  }
+
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> actionPerformed(ActionEvent e) {
+    fLogger.info(<span class="literal">"Saving edits to the current portfolio."</span>);
+    PortfolioDAO portfolioDAO = <span class="keyword">new</span> PortfolioDAO();
+    portfolioDAO.save(fCurrentPortfolio.getPortfolio());
+    fCurrentPortfolio.setNeedsSave(<span class="keyword">false</span>);
+    fCurrentPortfolio.notifyObservers();
+  }  
+  
+  <span class="comment">/**
+  * Synchronize the state of this object with the state of the 
+  * &lt;tt&gt;CurrentPortfolio&lt;/tt&gt; passed to the constructor.
+  *
+  * This action is enabled only when the &lt;tt&gt;CurrentPortfolio&lt;/tt&gt; is titled and 
+  * needs a save.
+  */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">void</span> update(Observable aPublisher, Object aData) {
+    setEnabled(fCurrentPortfolio.getNeedsSave() &amp;&amp; !fCurrentPortfolio.isUntitled());
+  } 
+  
+  <span class="comment">// PRIVATE 
+</span>  <span class="keyword">private</span> CurrentPortfolio fCurrentPortfolio;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Logger fLogger = Util.getLogger(FileSaveAction.<span class="keyword">class</span>);
+}
+ 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction5c4c.html?Id=169">Align menu items</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=159 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:42 GMT -->
+</html>

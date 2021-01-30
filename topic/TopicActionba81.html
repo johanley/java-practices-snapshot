@@ -1,0 +1,650 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=96 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="escape,JSP,servlet,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Escape special characters</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Escape special characters</div>
+
+<br>
+<p>In an HTML document, outside of an HTML tag, you should always "escape" <a href="https://www.w3.org/International/questions/qa-escapes#use">these three characters</a>:
+</p><ul>
+ <li>&lt; 
+ </li><li>&gt;
+ </li><li>&amp;
+</li></ul>
+
+<p>In this context, <em>escaping</em> means to replace them with HTML <a href="http://www.w3.org/TR/html401/sgml/entities.html">character entities</a>. 
+For example, <code>&lt;</code> can be replaced with <code>&amp;lt;</code>.
+Another character entity that's occasionally useful is <code>&amp;nbsp;</code> (the non-breaking space). 
+
+</p><p>When you <a href="TopicAction24f9.html?Id=206">use UTF-8 as your character encoding</a>, 
+then, most of the time, the only escaping you need (for the visible text seen by a human) is for the above 3 
+characters <em>and only those characters</em>.
+For example, the copyright symbol © can (and should) be used directly in the text; there's no need to use 
+the corresponding character entity <code>&amp;copy;</code>. 
+
+</p><p>Arbitrary text <em>placed in an HTML tag</em> also often needs to be escaped, to ensure that the resulting HTML remains valid.
+</p><p>Problem characters can include:
+</p><ul>
+<li>
+&lt;</li>
+
+<li>
+&gt;</li>
+
+<li>
+"</li>
+
+<li>
+'</li>
+
+<li>
+\\</li>
+
+<li>
+&amp;</li>
+</ul>
+
+<p>Query strings (<code>Blah=1&amp;Name=Bob</code>) often need to be escaped
+as well. If the query string contains special characters, it will need
+to be "URL encoded". (See the javadoc for the <a href="https://docs.oracle.com/javase/10/docs/api/java/net/URLEncoder.html">URLEncoder</a> 
+class for further information.) This will ensure
+the query string conforms with valid HTTP.
+
+</p><p>There's often another issue, however, with regard to query strings.
+If a query string is placed in an <code>HREF</code> attribute, then even a
+URL encoded query string is often not of valid form. This is because <code>URLEncoder</code>
+produces valid <i>HTTP</i>, but it doesn't in general produce text which
+is a valid <i>HTML attribute</i> - the ampersand character needs to be
+replaced by the corresponding character entity <code>&amp;amp;</code>.
+</p><p>Here is an example of a utility class which escapes special characters
+for HTML, XML, regular expressions, and so on.
+<br></p><pre>
+<span class="keyword">package</span> hirondelle.web4j.util;
+
+<span class="keyword">import</span> java.net.URLEncoder;
+<span class="keyword">import</span> java.io.UnsupportedEncodingException;
+<span class="keyword">import</span> java.text.CharacterIterator;
+<span class="keyword">import</span> java.text.StringCharacterIterator;
+<span class="keyword">import</span> java.util.regex.Pattern;
+<span class="keyword">import</span> java.util.regex.Matcher;
+
+<span class="keyword">import</span> hirondelle.web4j.security.SafeText;
+<span class="keyword">import</span> hirondelle.web4j.ui.translate.Text;
+<span class="keyword">import</span> hirondelle.web4j.ui.translate.Tooltips;
+<span class="keyword">import</span> hirondelle.web4j.ui.translate.TextFlow;
+<span class="keyword">import</span> hirondelle.web4j.ui.tag.Populate;
+<span class="keyword">import</span> hirondelle.web4j.database.Report;
+
+<span class="comment">/**
+ Convenience methods for escaping special characters related to HTML, XML, 
+ and regular expressions.
+ 
+ &lt;P&gt;To keep you safe by default, WEB4J goes to some effort to escape 
+ characters in your data when appropriate, such that you &lt;em&gt;usually&lt;/em&gt;
+ don't need to think too much about escaping special characters. Thus, you
+  shouldn't need to &lt;em&gt;directly&lt;/em&gt; use the services of this class very often. 
+ 
+ &lt;P&gt;&lt;span class='highlight'&gt;For Model Objects containing free form user input, 
+ it is highly recommended that you use {@link SafeText}, not &lt;tt&gt;String&lt;/tt&gt;&lt;/span&gt;.
+ Free form user input is open to malicious use, such as
+ &lt;a href='http://www.owasp.org/index.php/Cross_Site_Scripting'&gt;Cross Site Scripting&lt;/a&gt;
+ attacks. 
+ Using &lt;tt&gt;SafeText&lt;/tt&gt; will protect you from such attacks, by always escaping 
+ special characters automatically in its &lt;tt&gt;toString()&lt;/tt&gt; method.   
+ 
+ &lt;P&gt;The following WEB4J classes will automatically escape special characters 
+ for you, when needed : 
+ &lt;ul&gt;
+ &lt;li&gt;the {@link SafeText} class, used as a building block class for your 
+ application's Model Objects, for modeling all free form user input
+ &lt;li&gt;the {@link Populate} tag used with forms
+ &lt;li&gt;the {@link Report} class used for creating quick reports
+ &lt;li&gt;the {@link Text}, {@link TextFlow}, and {@link Tooltips} custom tags used 
+ for translation
+ &lt;/ul&gt; 
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> EscapeChars {
+
+  <span class="comment">/**
+    Escape characters for text appearing in HTML markup.
+    
+    &lt;P&gt;This method exists as a defence against Cross Site Scripting (XSS) hacks.
+    The idea is to neutralize control characters commonly used by scripts, such that
+    they will not be executed by the browser. This is done by replacing the control
+    characters with their escaped equivalents.  
+    See {@link hirondelle.web4j.security.SafeText} as well.
+    
+    &lt;P&gt;The following characters are replaced with corresponding 
+    HTML character entities :
+    &lt;table border='1' cellpadding='3' cellspacing='0'&gt;
+    &lt;tr&gt;&lt;th&gt; Character &lt;/th&gt;&lt;th&gt;Replacement&lt;/th&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt; &lt; &lt;/td&gt;&lt;td&gt; &amp;lt; &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt; &gt; &lt;/td&gt;&lt;td&gt; &amp;gt; &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt; &amp; &lt;/td&gt;&lt;td&gt; &amp;amp; &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt; " &lt;/td&gt;&lt;td&gt; &amp;quot;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt; \t &lt;/td&gt;&lt;td&gt; &amp;#009;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt; ! &lt;/td&gt;&lt;td&gt; &amp;#033;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt; # &lt;/td&gt;&lt;td&gt; &amp;#035;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt; $ &lt;/td&gt;&lt;td&gt; &amp;#036;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt; % &lt;/td&gt;&lt;td&gt; &amp;#037;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt; ' &lt;/td&gt;&lt;td&gt; &amp;#039;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt; ( &lt;/td&gt;&lt;td&gt; &amp;#040;&lt;/td&gt;&lt;/tr&gt; 
+    &lt;tr&gt;&lt;td&gt; ) &lt;/td&gt;&lt;td&gt; &amp;#041;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt; * &lt;/td&gt;&lt;td&gt; &amp;#042;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt; + &lt;/td&gt;&lt;td&gt; &amp;#043; &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt; , &lt;/td&gt;&lt;td&gt; &amp;#044; &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt; - &lt;/td&gt;&lt;td&gt; &amp;#045; &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt; . &lt;/td&gt;&lt;td&gt; &amp;#046; &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt; / &lt;/td&gt;&lt;td&gt; &amp;#047; &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt; : &lt;/td&gt;&lt;td&gt; &amp;#058;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt; ; &lt;/td&gt;&lt;td&gt; &amp;#059;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt; = &lt;/td&gt;&lt;td&gt; &amp;#061;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt; ? &lt;/td&gt;&lt;td&gt; &amp;#063;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt; @ &lt;/td&gt;&lt;td&gt; &amp;#064;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt; [ &lt;/td&gt;&lt;td&gt; &amp;#091;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt; \ &lt;/td&gt;&lt;td&gt; &amp;#092;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt; ] &lt;/td&gt;&lt;td&gt; &amp;#093;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt; ^ &lt;/td&gt;&lt;td&gt; &amp;#094;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt; _ &lt;/td&gt;&lt;td&gt; &amp;#095;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt; ` &lt;/td&gt;&lt;td&gt; &amp;#096;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt; { &lt;/td&gt;&lt;td&gt; &amp;#123;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt; | &lt;/td&gt;&lt;td&gt; &amp;#124;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt; } &lt;/td&gt;&lt;td&gt; &amp;#125;&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td&gt; ~ &lt;/td&gt;&lt;td&gt; &amp;#126;&lt;/td&gt;&lt;/tr&gt;
+    &lt;/table&gt;
+    
+    &lt;P&gt;Note that JSTL's {@code &lt;c:out&gt;} escapes &lt;em&gt;only the first 
+    five&lt;/em&gt; of the above characters.
+   */</span>
+   <span class="keyword">public</span> <span class="keyword">static</span> String forHTML(String aText){
+     <span class="keyword">final</span> StringBuilder result = <span class="keyword">new</span> StringBuilder();
+     <span class="keyword">final</span> StringCharacterIterator iterator = <span class="keyword">new</span> StringCharacterIterator(aText);
+     <span class="keyword">char</span> character =  iterator.current();
+     <span class="keyword">while</span> (character != CharacterIterator.DONE ){
+       <span class="keyword">if</span> (character == <span class="literal">'&lt;'</span>) {
+         result.append(<span class="literal">"&amp;lt;"</span>);
+       }
+       <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'&gt;'</span>) {
+         result.append(<span class="literal">"&amp;gt;"</span>);
+       }
+       <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'&amp;'</span>) {
+         result.append(<span class="literal">"&amp;amp;"</span>);
+      }
+       <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'\"'</span>) {
+         result.append(<span class="literal">"&amp;quot;"</span>);
+       }
+       <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'\t'</span>) {
+         addCharEntity(<span class="literal">9</span>, result);
+       }
+       <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'!'</span>) {
+         addCharEntity(<span class="literal">33</span>, result);
+       }
+       <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'#'</span>) {
+         addCharEntity(<span class="literal">35</span>, result);
+       }
+       <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'$'</span>) {
+         addCharEntity(<span class="literal">36</span>, result);
+       }
+       <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'%'</span>) {
+         addCharEntity(<span class="literal">37</span>, result);
+       }
+       <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'\''</span>) {
+         addCharEntity(<span class="literal">39</span>, result);
+       }
+       <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'('</span>) {
+         addCharEntity(<span class="literal">40</span>, result);
+       }
+       <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">')'</span>) {
+         addCharEntity(<span class="literal">41</span>, result);
+       }
+       <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'*'</span>) {
+         addCharEntity(<span class="literal">42</span>, result);
+       }
+       <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'+'</span>) {
+         addCharEntity(<span class="literal">43</span>, result);
+       }
+       <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">','</span>) {
+         addCharEntity(<span class="literal">44</span>, result);
+       }
+       <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'-'</span>) {
+         addCharEntity(<span class="literal">45</span>, result);
+       }
+       <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'.'</span>) {
+         addCharEntity(<span class="literal">46</span>, result);
+       }
+       <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'/'</span>) {
+         addCharEntity(<span class="literal">47</span>, result);
+       }
+       <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">':'</span>) {
+         addCharEntity(<span class="literal">58</span>, result);
+       }
+       <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">';'</span>) {
+         addCharEntity(<span class="literal">59</span>, result);
+       }
+       <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'='</span>) {
+         addCharEntity(<span class="literal">61</span>, result);
+       }
+       <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'?'</span>) {
+         addCharEntity(<span class="literal">63</span>, result);
+       }
+       <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'@'</span>) {
+         addCharEntity(<span class="literal">64</span>, result);
+       }
+       <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'['</span>) {
+         addCharEntity(<span class="literal">91</span>, result);
+       }
+       <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'\\'</span>) {
+         addCharEntity(<span class="literal">92</span>, result);
+       }
+       <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">']'</span>) {
+         addCharEntity(<span class="literal">93</span>, result);
+       }
+       <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'^'</span>) {
+         addCharEntity(<span class="literal">94</span>, result);
+       }
+       <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'_'</span>) {
+         addCharEntity(<span class="literal">95</span>, result);
+       }
+       <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'`'</span>) {
+         addCharEntity(<span class="literal">96</span>, result);
+       }
+       <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'{'</span>) {
+         addCharEntity(<span class="literal">123</span>, result);
+       }
+       <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'|'</span>) {
+         addCharEntity(<span class="literal">124</span>, result);
+       }
+       <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'}'</span>) {
+         addCharEntity(<span class="literal">125</span>, result);
+       }
+       <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'~'</span>) {
+         addCharEntity(<span class="literal">126</span>, result);
+       }
+       <span class="keyword">else</span> {
+         <span class="comment">//the char is not a special one
+</span>         <span class="comment">//add it to the result as is
+</span>         result.append(character);
+       }
+       character = iterator.next();
+     }
+     <span class="keyword">return</span> result.toString();
+  }
+  
+
+  <span class="comment">/**
+   Escape all ampersand characters in a URL. 
+    
+   &lt;P&gt;Replaces all &lt;tt&gt;'&amp;'&lt;/tt&gt; characters with &lt;tt&gt;'&amp;amp;'&lt;/tt&gt;.
+   
+  &lt;P&gt;An ampersand character may appear in the query string of a URL.
+   The ampersand character is indeed valid in a URL.
+   &lt;em&gt;However, URLs usually appear as an &lt;tt&gt;HREF&lt;/tt&gt; attribute, and 
+   such attributes have the additional constraint that ampersands 
+   must be escaped.&lt;/em&gt;
+   
+   &lt;P&gt;The JSTL &lt;c:url&gt; tag does indeed perform proper URL encoding of 
+   query parameters. But it does not, in general, produce text which 
+   is valid as an &lt;tt&gt;HREF&lt;/tt&gt; attribute, simply because it does 
+   not escape the ampersand character. This is a nuisance when 
+   multiple query parameters appear in the URL, since it requires a little 
+   extra work.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> String forHrefAmpersand(String aURL){
+    <span class="keyword">return</span> aURL.replace(<span class="literal">"&amp;"</span>, <span class="literal">"&amp;amp;"</span>);
+  }
+   
+  <span class="comment">/**
+    Synonym for &lt;tt&gt;URLEncoder.encode(String, "UTF-8")&lt;/tt&gt;.
+   
+    &lt;P&gt;Used to ensure that HTTP query strings are in proper form, by escaping
+    special characters such as spaces.
+   
+    &lt;P&gt;It is important to note that if a query string appears in an &lt;tt&gt;HREF&lt;/tt&gt;
+    attribute, then there are two issues - ensuring the query string is valid HTTP
+    (it is URL-encoded), and ensuring it is valid HTML (ensuring the 
+    ampersand is escaped).
+   */</span>
+   <span class="keyword">public</span> <span class="keyword">static</span> String forURL(String aURLFragment){
+     String result = <span class="keyword">null</span>;
+     <span class="keyword">try</span> {
+       result = URLEncoder.encode(aURLFragment, <span class="literal">"UTF-8"</span>);
+     }
+     <span class="keyword">catch</span> (UnsupportedEncodingException ex){
+       <span class="keyword">throw</span> <span class="keyword">new</span> RuntimeException(<span class="literal">"UTF-8 not supported"</span>, ex);
+     }
+     <span class="keyword">return</span> result;
+   }
+
+  <span class="comment">/**
+   Escape characters for text appearing as XML data, between tags.
+   
+   &lt;P&gt;The following characters are replaced with corresponding character entities :
+   &lt;table border='1' cellpadding='3' cellspacing='0'&gt;
+   &lt;tr&gt;&lt;th&gt; Character &lt;/th&gt;&lt;th&gt; Encoding &lt;/th&gt;&lt;/tr&gt;
+   &lt;tr&gt;&lt;td&gt; &lt; &lt;/td&gt;&lt;td&gt; &amp;lt; &lt;/td&gt;&lt;/tr&gt;
+   &lt;tr&gt;&lt;td&gt; &gt; &lt;/td&gt;&lt;td&gt; &amp;gt; &lt;/td&gt;&lt;/tr&gt;
+   &lt;tr&gt;&lt;td&gt; &amp; &lt;/td&gt;&lt;td&gt; &amp;amp; &lt;/td&gt;&lt;/tr&gt;
+   &lt;tr&gt;&lt;td&gt; " &lt;/td&gt;&lt;td&gt; &amp;quot;&lt;/td&gt;&lt;/tr&gt;
+   &lt;tr&gt;&lt;td&gt; ' &lt;/td&gt;&lt;td&gt; &amp;#039;&lt;/td&gt;&lt;/tr&gt;
+   &lt;/table&gt;
+   
+   &lt;P&gt;Note that JSTL's {@code &lt;c:out&gt;} escapes the exact same set of 
+   characters as this method. &lt;span class='highlight'&gt;That is, {@code &lt;c:out&gt;}
+    is good for escaping to produce valid XML, but not for producing safe 
+    HTML.&lt;/span&gt;
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> String forXML(String aText){
+    <span class="keyword">final</span> StringBuilder result = <span class="keyword">new</span> StringBuilder();
+    <span class="keyword">final</span> StringCharacterIterator iterator = <span class="keyword">new</span> StringCharacterIterator(aText);
+    <span class="keyword">char</span> character =  iterator.current();
+    <span class="keyword">while</span> (character != CharacterIterator.DONE ){
+      <span class="keyword">if</span> (character == <span class="literal">'&lt;'</span>) {
+        result.append(<span class="literal">"&amp;lt;"</span>);
+      }
+      <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'&gt;'</span>) {
+        result.append(<span class="literal">"&amp;gt;"</span>);
+      }
+      <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'\"'</span>) {
+        result.append(<span class="literal">"&amp;quot;"</span>);
+      }
+      <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'\''</span>) {
+        result.append(<span class="literal">"&amp;#039;"</span>);
+      }
+      <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'&amp;'</span>) {
+         result.append(<span class="literal">"&amp;amp;"</span>);
+      }
+      <span class="keyword">else</span> {
+        <span class="comment">//the char is not a special one
+</span>        <span class="comment">//add it to the result as is
+</span>        result.append(character);
+      }
+      character = iterator.next();
+    }
+    <span class="keyword">return</span> result.toString();
+  }
+  
+  <span class="comment">/**
+   Escapes characters for text appearing as data in the 
+   &lt;a href='http://www.json.org/'&gt;Javascript Object Notation&lt;/a&gt;
+   (JSON) data interchange format.
+   
+   &lt;P&gt;The following commonly used control characters are escaped :
+   &lt;table border='1' cellpadding='3' cellspacing='0'&gt;
+   &lt;tr&gt;&lt;th&gt; Character &lt;/th&gt;&lt;th&gt; Escaped As &lt;/th&gt;&lt;/tr&gt;
+   &lt;tr&gt;&lt;td&gt; " &lt;/td&gt;&lt;td&gt; \" &lt;/td&gt;&lt;/tr&gt;
+   &lt;tr&gt;&lt;td&gt; \ &lt;/td&gt;&lt;td&gt; \\ &lt;/td&gt;&lt;/tr&gt;
+   &lt;tr&gt;&lt;td&gt; / &lt;/td&gt;&lt;td&gt; \/ &lt;/td&gt;&lt;/tr&gt;
+   &lt;tr&gt;&lt;td&gt; back space &lt;/td&gt;&lt;td&gt; \b &lt;/td&gt;&lt;/tr&gt; 
+   &lt;tr&gt;&lt;td&gt; form feed &lt;/td&gt;&lt;td&gt; \f &lt;/td&gt;&lt;/tr&gt;
+   &lt;tr&gt;&lt;td&gt; line feed &lt;/td&gt;&lt;td&gt; \n &lt;/td&gt;&lt;/tr&gt;
+   &lt;tr&gt;&lt;td&gt; carriage return &lt;/td&gt;&lt;td&gt; \r &lt;/td&gt;&lt;/tr&gt;
+   &lt;tr&gt;&lt;td&gt; tab &lt;/td&gt;&lt;td&gt; \t &lt;/td&gt;&lt;/tr&gt;
+   &lt;/table&gt;
+   
+   &lt;P&gt;See &lt;a href='http://www.ietf.org/rfc/rfc4627.txt'&gt;RFC 4627&lt;/a&gt; for more information.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> String forJSON(String aText){
+    <span class="keyword">final</span> StringBuilder result = <span class="keyword">new</span> StringBuilder();
+    StringCharacterIterator iterator = <span class="keyword">new</span> StringCharacterIterator(aText);
+    <span class="keyword">char</span> character = iterator.current();
+    <span class="keyword">while</span> (character != StringCharacterIterator.DONE){
+      <span class="keyword">if</span>( character == <span class="literal">'\"'</span> ){
+        result.append(<span class="literal">"\\\""</span>);
+      }
+      <span class="keyword">else</span> <span class="keyword">if</span>(character == <span class="literal">'\\'</span>){
+        result.append(<span class="literal">"\\\\"</span>);
+      }
+      <span class="keyword">else</span> <span class="keyword">if</span>(character == <span class="literal">'/'</span>){
+        result.append(<span class="literal">"\\/"</span>);
+      }
+      <span class="keyword">else</span> <span class="keyword">if</span>(character == <span class="literal">'\b'</span>){
+        result.append(<span class="literal">"\\b"</span>);
+      }
+      <span class="keyword">else</span> <span class="keyword">if</span>(character == <span class="literal">'\f'</span>){
+        result.append(<span class="literal">"\\f"</span>);
+      }
+      <span class="keyword">else</span> <span class="keyword">if</span>(character == <span class="literal">'\n'</span>){
+        result.append(<span class="literal">"\\n"</span>);
+      }
+      <span class="keyword">else</span> <span class="keyword">if</span>(character == <span class="literal">'\r'</span>){
+        result.append(<span class="literal">"\\r"</span>);
+      }
+      <span class="keyword">else</span> <span class="keyword">if</span>(character == <span class="literal">'\t'</span>){
+        result.append(<span class="literal">"\\t"</span>);
+      }
+      <span class="keyword">else</span> {
+        <span class="comment">//the char is not a special one
+</span>        <span class="comment">//add it to the result as is
+</span>        result.append(character);
+      }
+      character = iterator.next();
+    }
+    <span class="keyword">return</span> result.toString();    
+  }
+
+  <span class="comment">/**
+   Return &lt;tt&gt;aText&lt;/tt&gt; with all &lt;tt&gt;'&lt;'&lt;/tt&gt; and &lt;tt&gt;'&gt;'&lt;/tt&gt; characters
+   replaced by their escaped equivalents.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> String toDisableTags(String aText){
+    <span class="keyword">final</span> StringBuilder result = <span class="keyword">new</span> StringBuilder();
+    <span class="keyword">final</span> StringCharacterIterator iterator = <span class="keyword">new</span> StringCharacterIterator(aText);
+    <span class="keyword">char</span> character =  iterator.current();
+    <span class="keyword">while</span> (character != CharacterIterator.DONE ){
+      <span class="keyword">if</span> (character == <span class="literal">'&lt;'</span>) {
+        result.append(<span class="literal">"&amp;lt;"</span>);
+      }
+      <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'&gt;'</span>) {
+        result.append(<span class="literal">"&amp;gt;"</span>);
+      }
+      <span class="keyword">else</span> {
+        <span class="comment">//the char is not a special one
+</span>        <span class="comment">//add it to the result as is
+</span>        result.append(character);
+      }
+      character = iterator.next();
+    }
+    <span class="keyword">return</span> result.toString();
+  }
+  
+
+  <span class="comment">/**
+   Replace characters having special meaning in regular expressions
+   with their escaped equivalents, preceded by a '\' character.
+  
+   &lt;P&gt;The escaped characters include :
+  &lt;ul&gt;
+  &lt;li&gt;.
+  &lt;li&gt;\
+  &lt;li&gt;?, * , and +
+  &lt;li&gt;&amp;
+  &lt;li&gt;:
+  &lt;li&gt;{ and }
+  &lt;li&gt;[ and ]
+  &lt;li&gt;( and )
+  &lt;li&gt;^ and $
+  &lt;/ul&gt;
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> String forRegex(String aRegexFragment){
+    <span class="keyword">final</span> StringBuilder result = <span class="keyword">new</span> StringBuilder();
+
+    <span class="keyword">final</span> StringCharacterIterator iterator = 
+      <span class="keyword">new</span> StringCharacterIterator(aRegexFragment)
+    ;
+    <span class="keyword">char</span> character =  iterator.current();
+    <span class="keyword">while</span> (character != CharacterIterator.DONE ){
+      <span class="comment">/*
+       All literals need to have backslashes doubled.
+      */</span>
+      <span class="keyword">if</span> (character == <span class="literal">'.'</span>) {
+        result.append(<span class="literal">"\\."</span>);
+      }
+      <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'\\'</span>) {
+        result.append(<span class="literal">"\\\\"</span>);
+      }
+      <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'?'</span>) {
+        result.append(<span class="literal">"\\?"</span>);
+      }
+      <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'*'</span>) {
+        result.append(<span class="literal">"\\*"</span>);
+      }
+      <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'+'</span>) {
+        result.append(<span class="literal">"\\+"</span>);
+      }
+      <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'&amp;'</span>) {
+        result.append(<span class="literal">"\\&amp;"</span>);
+      }
+      <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">':'</span>) {
+        result.append(<span class="literal">"\\:"</span>);
+      }
+      <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'{'</span>) {
+        result.append(<span class="literal">"\\{"</span>);
+      }
+      <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'}'</span>) {
+        result.append(<span class="literal">"\\}"</span>);
+      }
+      <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'['</span>) {
+        result.append(<span class="literal">"\\["</span>);
+      }
+      <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">']'</span>) {
+        result.append(<span class="literal">"\\]"</span>);
+      }
+      <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'('</span>) {
+        result.append(<span class="literal">"\\("</span>);
+      }
+      <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">')'</span>) {
+        result.append(<span class="literal">"\\)"</span>);
+      }
+      <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'^'</span>) {
+        result.append(<span class="literal">"\\^"</span>);
+      }
+      <span class="keyword">else</span> <span class="keyword">if</span> (character == <span class="literal">'$'</span>) {
+        result.append(<span class="literal">"\\$"</span>);
+      }
+      <span class="keyword">else</span> {
+        <span class="comment">//the char is not a special one
+</span>        <span class="comment">//add it to the result as is
+</span>        result.append(character);
+      }
+      character = iterator.next();
+    }
+    <span class="keyword">return</span> result.toString();
+  }
+  
+  <span class="comment">/**
+   Escape &lt;tt&gt;'$'&lt;/tt&gt; and &lt;tt&gt;'\'&lt;/tt&gt; characters in replacement strings.
+   
+   &lt;P&gt;Synonym for &lt;tt&gt;Matcher.quoteReplacement(String)&lt;/tt&gt;.
+   
+   &lt;P&gt;The following methods use replacement strings which treat 
+   &lt;tt&gt;'$'&lt;/tt&gt; and &lt;tt&gt;'\'&lt;/tt&gt; as special characters:
+   &lt;ul&gt;
+   &lt;li&gt;&lt;tt&gt;String.replaceAll(String, String)&lt;/tt&gt;
+   &lt;li&gt;&lt;tt&gt;String.replaceFirst(String, String)&lt;/tt&gt;
+   &lt;li&gt;&lt;tt&gt;Matcher.appendReplacement(StringBuffer, String)&lt;/tt&gt;
+   &lt;/ul&gt;
+   
+   &lt;P&gt;If replacement text can contain arbitrary characters, then you 
+   will usually need to escape that text, to ensure special characters 
+   are interpreted literally.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> String forReplacementString(String aInput){
+    <span class="keyword">return</span> Matcher.quoteReplacement(aInput);
+  }
+  
+  <span class="comment">/**
+   Disable all &lt;tt&gt;&lt;SCRIPT&gt;&lt;/tt&gt; tags in &lt;tt&gt;aText&lt;/tt&gt;.
+   
+   &lt;P&gt;Insensitive to case.
+  */</span>  
+  <span class="keyword">public</span> <span class="keyword">static</span> String forScriptTagsOnly(String aText){
+    String result = <span class="keyword">null</span>;
+    Matcher matcher = SCRIPT.matcher(aText);
+    result = matcher.replaceAll(<span class="literal">"&amp;lt;SCRIPT&gt;"</span>);
+    matcher = SCRIPT_END.matcher(result);
+    result = matcher.replaceAll(<span class="literal">"&amp;lt;/SCRIPT&gt;"</span>);
+    <span class="keyword">return</span> result;
+  }
+  
+  <span class="comment">// PRIVATE //
+</span>  
+  <span class="keyword">private</span> EscapeChars(){
+    <span class="comment">//empty - prevent construction
+</span>  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Pattern SCRIPT = Pattern.compile(
+    <span class="literal">"&lt;SCRIPT&gt;"</span>, Pattern.CASE_INSENSITIVE
+   );
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Pattern SCRIPT_END = Pattern.compile(
+    <span class="literal">"&lt;/SCRIPT&gt;"</span>, Pattern.CASE_INSENSITIVE
+  );
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> addCharEntity(Integer aIdx, StringBuilder aBuilder){
+    String padding = <span class="literal">""</span>;
+    <span class="keyword">if</span>( aIdx &lt;= <span class="literal">9</span> ){
+       padding = <span class="literal">"00"</span>;
+    }
+    <span class="keyword">else</span> <span class="keyword">if</span>( aIdx &lt;= <span class="literal">99</span> ){
+      padding = <span class="literal">"0"</span>;
+    }
+    <span class="keyword">else</span> {
+      <span class="comment">//no prefix
+</span>    }
+    String number = padding + aIdx.toString();
+    aBuilder.append(<span class="literal">"&amp;#"</span> + number + <span class="literal">";"</span>);
+  }
+}
+ 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction18a7.html?Id=80">Replace a substring</a> <br>
+  <a href="TopicAction2c82.html?Id=201">Beware of doubly escaped ampersands</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=96 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+</html>

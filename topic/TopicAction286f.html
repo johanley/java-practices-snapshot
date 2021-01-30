@@ -1,0 +1,238 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=264 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="date,java.time,java.util.date,jdk8,offset,time,timezone,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Prefer modern date classes</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Prefer modern date classes</div>
+
+<br>
+The <a href="https://docs.oracle.com/javase/10/docs/api/java/util/Date.html">java.util.Date</a> class 
+and its related 
+<a href="https://docs.oracle.com/javase/10/docs/api/java/util/Calendar.html">Calendar</a> class 
+have been in the JDK for a long time. 
+However, these old date classes suffer from a number of defects in their design.
+
+<p>If possible, you should be using the newer 
+<a href="https://docs.oracle.com/javase/10/docs/api/java/time/package-summary.html">java.time</a> classes.
+They were <a href="https://docs.oracle.com/javase/tutorial/datetime/index.html">introduced in JDK 8</a>.
+
+</p><p>Reminders:
+</p><ul>
+ <li>you can convert old dates using <code>java.util.Date.toInstant()</code>
+ </li><li>when working with dates as strings, the various parse and format methods throw <em>unchecked</em> exceptions
+ </li><li><code>DayOfWeek.getValue()</code> 1..7 corresponds to Monday-to-Sunday
+ </li><li>the various enums defined by the package are good candidates for static imports
+ </li><li>the <code>Clock</code> class is intended for testing only
+ </li><li>JDBC uses <code>getObject/setObject</code> to deal with these new classes
+</li></ul>
+
+<p>
+ The <code>java.time</code> classes model time to a nanosecond precision.
+ However, many system clocks have a precision of a few milliseconds, so beware of spurious precision. 
+ (How a library models time is independent of the precision of your system clock.)
+
+
+</p><p>It's always useful to remember that <em>offset and timezone are two different ideas</em>.
+It's an error to treat them the same.
+An offset is a <em>fixed</em> difference from Universal Time (UT).
+In general, a time zone is not the same as an offset. 
+In North America and Europe, it's common that a time zone consists of <em>two</em> offsets, and a rule for 
+switching between them. 
+You may think that the difference is trivial, but keeping the difference clear is important for understanding what is going on.
+
+</p><p>Hence, in <code>java.time</code>, you have both <code>ZonedDateTime</code> and <code>OffsetDateTime</code>.
+(The class named <code>ZoneOffset</code> adds to the confusion! It should've been called simply <code>Offset</code>.)
+
+
+</p><p><b>Example</b>
+</p><p>Here's an example of using <code>java.time</code>.
+<br></p><pre>
+<span class="comment">/* Note the static imports here. */</span>
+<span class="keyword">import</span> <span class="keyword">static</span> java.time.DayOfWeek.MONDAY;
+<span class="keyword">import</span> <span class="keyword">static</span> java.time.temporal.TemporalAdjusters.firstDayOfMonth;
+<span class="keyword">import</span> <span class="keyword">static</span> java.time.temporal.TemporalAdjusters.next;
+
+<span class="keyword">import</span> java.time.Instant;
+<span class="keyword">import</span> java.time.LocalDate;
+<span class="keyword">import</span> java.time.LocalDateTime;
+<span class="keyword">import</span> java.time.Month;
+<span class="keyword">import</span> java.time.ZoneId;
+<span class="keyword">import</span> java.time.ZonedDateTime;
+<span class="keyword">import</span> java.time.format.DateTimeFormatter;
+<span class="keyword">import</span> java.time.temporal.ChronoUnit;
+<span class="keyword">import</span> java.util.Objects;
+<span class="keyword">import</span> java.util.Set;
+<span class="keyword">import</span> java.util.TreeSet;
+
+<span class="comment">/** 
+ The date-time classes added in JDK 8.
+ https://docs.oracle.com/javase/tutorial/datetime/iso/overview.html
+ http://www.oracle.com/technetwork/articles/java/jf14-date-time-2125367.html
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> PlayDate {
+  
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args) {
+    PlayDate pd = <span class="keyword">new</span> PlayDate();
+    pd.makeDate();
+    pd.makeDateTime();
+    pd.format();
+    pd.alterField();
+    pd.conversions();
+    pd.calc();
+    <span class="comment">//pd.listAllTimeZones();
+</span>    log(<span class="literal">"Done."</span>);
+  }
+  
+  <span class="keyword">void</span> makeDate(){
+    LocalDate date1 = LocalDate.parse(<span class="literal">"2017-12-31"</span>);
+    LocalDate date2 = LocalDate.now();
+    LocalDate date3 = LocalDate.of(<span class="literal">2017</span>, <span class="literal">12</span>, <span class="literal">31</span>);
+    LocalDate date4 = LocalDate.of(<span class="literal">2017</span>, Month.DECEMBER, <span class="literal">31</span>);
+    LocalDate date5 = LocalDate.now(ZoneId.of(<span class="literal">"America/New_York"</span>));
+  }
+  
+  <span class="keyword">void</span> makeDateTime(){
+    <span class="comment">//you can go to nanoseconds, but no further
+</span>    <span class="comment">//note the annoying 'T' separator
+</span>    LocalDateTime a = LocalDateTime.parse(<span class="literal">"2017-12-31T23:59:59.123456789"</span>);
+    <span class="comment">//this fails; you need to pass the 'T'
+</span>    <span class="comment">//LocalDateTime b = LocalDateTime.parse("2017-12-31 23:59:59.123456789");
+</span>    LocalDateTime b = LocalDateTime.now();
+    LocalDateTime c = LocalDateTime.of(<span class="literal">2017</span>,<span class="literal">12</span>,<span class="literal">31</span>,<span class="literal">18</span>,<span class="literal">59</span>,<span class="literal">59</span>);
+    LocalDateTime d = LocalDateTime.of(<span class="literal">2017</span>,<span class="literal">12</span>,<span class="literal">31</span>,<span class="literal">18</span>,<span class="literal">59</span>,<span class="literal">59</span>,<span class="literal">1</span>); <span class="comment">//with nanos at the end
+</span>  }
+  
+  <span class="keyword">void</span> listAllTimeZones(){
+    Set&lt;String&gt; ids = ZoneId.getAvailableZoneIds();
+    TreeSet&lt;String&gt; ordered = <span class="keyword">new</span> TreeSet&lt;&gt;(ids);
+    ordered.stream().forEach(id -&gt; log(id));
+  }
+  
+  <span class="keyword">void</span> format(){
+    LocalDate date = someDate();
+    LocalDateTime dateTime = someDateTime();
+    
+    <span class="comment">//2017-12-31
+</span>    demoFormat(DateTimeFormatter.ISO_LOCAL_DATE, date);
+    
+    <span class="comment">//2017-12-31T23:59:59 (annoyance: the 'T' in the middle)
+</span>    demoFormat(DateTimeFormatter.ISO_LOCAL_DATE_TIME, dateTime); 
+    
+    <span class="comment">//2017-12-31 23:59:59
+</span>    demoFormat(DateTimeFormatter.ofPattern(<span class="literal">"yyyy-MM-dd HH:mm:ss"</span>), dateTime); 
+  }
+  
+  <span class="comment">/** Using this single date highlights some aspects of formatting. */</span>
+  LocalDate someDate(){
+    <span class="keyword">return</span> LocalDate.of(<span class="literal">2017</span>, <span class="literal">12</span>, <span class="literal">31</span>);
+  }
+  
+  LocalDateTime someDateTime(){
+    <span class="keyword">return</span> LocalDateTime.of(<span class="literal">2017</span>, <span class="literal">12</span>, <span class="literal">31</span>, <span class="literal">23</span>, <span class="literal">59</span>, <span class="literal">59</span>);
+  }
+  
+  <span class="keyword">void</span> demoFormat(DateTimeFormatter formatter, LocalDate date){
+    log(formatter.format(date));
+  }
+  
+  <span class="keyword">void</span> demoFormat(DateTimeFormatter formatter, LocalDateTime dateTime){
+    log(formatter.format(dateTime));
+  }
+
+  <span class="comment">/** 
+   Most of the java.time classes are immutable.
+   To alter a date-time field to some new value, you call a method that 
+   returns a new object having the desired state. 
+  */</span>
+  <span class="keyword">void</span> alterField(){
+    LocalDate today = someDate();
+    LocalDate tomorrow = today.plusDays(<span class="literal">1</span>);
+    <span class="comment">//using static imports lets you avoid the more verbose style:
+</span>    <span class="comment">//  LocalDate startOfMonth = today.with(TemporalAdjusters.firstDayOfMonth());
+</span>    <span class="comment">//  LocalDate followingMonday = today.with(next(DayOfWeekWeek.MONDAY));
+</span>    LocalDate startOfMonth = today.with(firstDayOfMonth());
+    LocalDate followingMonday = today.with(next(MONDAY));
+  }
+  
+  <span class="keyword">void</span> conversions(){
+    java.util.Date now = <span class="keyword">new</span> java.util.Date();
+    Instant instant = now.toInstant(); <span class="comment">//toInstant() is a new conversion method
+</span>    
+    <span class="comment">//you need to use a timezone:
+</span>    LocalDateTime dateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
+    ZonedDateTime zonedDateTime = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault());
+    
+    LocalDateTime dateTime2 = zonedDateTime.toLocalDateTime(); <span class="comment">//convert to the no-tz form
+</span>    assert(dateTime.equals(dateTime2));
+  }
+  
+  <span class="keyword">void</span> calc(){
+    LocalDate a = LocalDate.parse(<span class="literal">"1900-01-01"</span>);
+    LocalDate b = LocalDate.parse(<span class="literal">"1999-12-31"</span>);
+    Long daysBetween = ChronoUnit.DAYS.between(a, b);
+    log(<span class="literal">"Num days in the 20th century: "</span> + (daysBetween + <span class="literal">1</span>));
+    
+    LocalDate now = LocalDate.now();
+    <span class="keyword">int</span> year = now.getYear();
+    <span class="keyword">if</span> (now.getMonthValue() == <span class="literal">12</span> &amp;&amp; now.getDayOfMonth() &gt; <span class="literal">25</span>){
+      year = year + <span class="literal">1</span>;
+    }
+    LocalDate christmas = LocalDate.of(year, <span class="literal">12</span>, <span class="literal">25</span>);
+    log(<span class="literal">"Days till Christmas: "</span> + ChronoUnit.DAYS.between(now, christmas));
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(Object thing){
+    <span class="comment">//note the null-friendly style:
+</span>    System.out.println(Objects.toString(thing));
+  }
+}
+ 
+</pre>
+
+<br>
+<p></p>
+<p></p>
+
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=264 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

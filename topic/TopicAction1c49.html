@@ -1,0 +1,80 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=109 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="session,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Always maintain HttpSessions </title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Always maintain HttpSessions </div>
+
+<br>If you are using sessions, you must ensure that they are properly maintained. 
+
+<p>
+Cookies are the usual mechanism for implementing sessions. 
+However, the user's browser may have cookies disabled. 
+In that case, you may want to fall back on URL rewriting, to ensure sessions are still maintained.
+(See <a href="TopicAction0836.html?Id=226">this topic</a> for a reason why you may not want to do this.)
+URL rewriting inserts a session identifier into the URLs found in web pages.
+
+</p><p>If you decide to use URL rewriting, then you will need to ensure that it's 
+applied to <i>every</i> link (and form's <code>action</code> attribute) in <i>every</i> page that can form part of a session.
+If you mistakenly emit a link which has no URL rewriting, then your users will lose their session information if they happen to click on that link.
+
+</p><p>To allow for this, an application should define a policy for rewriting URLs. 
+For example, one might decide to always use the JSTL tags <code>&lt;c:url&gt;</code> and <code>&lt;c:redirect&gt;</code> 
+(or similar tools) to emit all links in an application. These tags will automatically 
+rewrite URLs when needed. (Another option might be a servlet filter to automatically scan the output for links.)
+
+</p><p>Hard-coding "raw" links is always risky, since it can never allow for URL rewriting.
+
+<br>
+</p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction37f1.html?Id=95">Emit flexible URLs</a> <br>
+  <a href="TopicAction9f4f.html?Id=116">Beware of custom cookies</a> <br>
+  <a href="TopicAction159e.html?Id=175">Prefer JSTL tags</a> <br>
+  <a href="TopicAction542c.html?Id=191">Manage sessions closely</a> <br>
+  <a href="TopicAction0836.html?Id=226">Beware of URL rewriting</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=109 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

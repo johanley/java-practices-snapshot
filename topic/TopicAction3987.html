@@ -1,0 +1,110 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=198 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Choose form validation style carefully</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Choose form validation style carefully</div>
+
+<br>In web applications, validation of user input can be done with two
+different tools:
+<ul>
+<li>
+<a href="http://www.w3.org/TR/html4/interact/scripts.html">scripting</a>
+code executed by the browser (javascript, for example)</li>
+
+<li>
+regular java code executed by the server, as part of the web application</li>
+</ul>
+Server validation:
+<ul>
+<li>cannot be disabled by a change in browser preferences</li>
+<li>executes only after the <code>SUBMIT</code> button is pressed</li>
+<li>validates all fields of the form as one unit</li>
+<li>if an error is detected, a new web page is displayed, with an appropriate
+error message</li>
+</ul>
+
+Browser validation:
+<ul>
+<li>can be disabled by a change in browser preferences</li>
+<li>can be initiated in two ways : after the <code>SUBMIT</code> button is pressed,
+or after an input field has changed</li>
+<li>if executing after <code>SUBMIT</code> is pressed, the form's data is <code>POST</code>-ed
+to the server only if validation is successful</li>
+<li>if an error is detected, a message is presented to the user</li>
+<li>usually, no second HTTP request is sent to the server; the javascript simply works with the existing page</li>
+</ul>
+
+<i>Another important distinction between the two styles deals not with
+their behavior, but with their testability</i>. Validation code on the
+server can always be tested economically using tools such as <a href="TopicActiond5a5.html?Id=33">JUnit</a>.
+During the entire life of an application, such tests can be quickly repeated
+using automated means, helping to identify possible errors caused by code
+changes. Although tools such as <a href="http://httpunit.sourceforge.net/">HttpUnit</a> 
+can test javascript behavior in web applications, such tests do not seem to be as simple 
+to implement as JUnit tests on a <a href="TopicActiond08d.html?Id=187">Model Object</a>.
+
+<p>Browser validation seems most useful for:
+</p><ul>
+ <li>providing a specific user experience</li>
+ <li>low bandwidth environments</li>
+ <li>forms with a large number of fields, each validated as it's being input</li>
+</ul>
+If using scripting, should validation be done after <code>SUBMIT</code> is
+pressed, or as each field is changed? If there are no dependencies between
+fields, there is not much difference between the two styles. However, if
+there are dependencies between fields, which is quite common, then the
+validate-after-<code>SUBMIT</code> style is likely to be simpler to implement.
+<p>Many prefer to treat server validation as mandatory and browser validation
+as optional, either as a performance optimization or as the preferred user
+experience. If both are implemented, then this will usually represent significant
+code repetition.
+<br>
+</p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActiond5a5.html?Id=33">Use a testing framework (JUnit)</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=198 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

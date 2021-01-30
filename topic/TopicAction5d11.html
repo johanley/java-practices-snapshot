@@ -1,0 +1,274 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=5 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="validate,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Validate method arguments</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Validate method arguments</div>
+
+<br>The first lines of a method are usually devoted to checking the validity
+of method arguments. The idea is to fail as quickly as possible in the event
+of an error. This is particularly important for constructors.
+
+<p>It's a reasonable policy for a class to skip validating arguments of <code>private</code> methods. 
+The reason is that <code>private</code> methods can only be called from the class itself. Thus, 
+a class author should be able to confirm that all calls of a <code>private</code> method are valid. 
+If desired, the <code>assert</code> keyword can be used to verify <code>private</code> method arguments, 
+to check the internal consistency of the class. (Using <code>assert</code> for checking the arguments of
+a non-<code>private</code> method is <a href="TopicActionbf65.html?Id=100">not recommended</a>, since disabling such assertions
+would mean the <a href="TopicAction63b6.html?Id=194">contract</a> of the non-<code>private</code> method is no longer being enforced.)
+
+</p><p>When validating an argument, an <code>Exception</code> is thrown if the test fails.
+It's often one of these unchecked exceptions that are thrown:
+</p><ul>
+<li><code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/IllegalArgumentException.html">IllegalArgumentException</a></code>
+</li><li><code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/NullPointerException.html">NullPointerException</a></code>
+</li><li><code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/IllegalStateException.html">IllegalStateException</a></code>
+</li></ul>
+These are all subclasses of <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/RuntimeException.html">RuntimeException</a></code>. 
+
+<p>Checked exceptions can also be thrown,
+as shown in the <a href="TopicAction0ec8.html?Id=209">Model Object validation</a> topic. Many programmers
+<a href="TopicActionf005.html?Id=44">document these exceptions in the <code>@throws</code></a>
+clause of the method's javadoc, since they clearly state the method's requirements
+to the caller (the pre-conditions). Others, however, feel that 
+<a href="TopicActioncd9b.html?Id=171">manually documenting exceptions should be avoided</a>.
+
+</p><p>If <em>every</em> object parameter of <em>every</em> method in a class needs to be non-null
+in order to avoid throwing <code>NullPointerException</code>, then it's acceptable
+to state this once in the general class javadoc, instead of repeating it
+for each method. Another alternative is to state in <code>overview.html</code>
+(javadoc's summary description of an entire application) that <em>all</em> parameters
+are to be considered non-null unless explicitly stated otherwise.
+
+
+</p><p><b>Example 1</b>
+
+</p><p>The constructor of this class validates its arguments before doing anything
+else. If a validation fails, then an <code>IllegalArgumentException</code>
+is thrown.
+<br></p><pre>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> ElementaryParticle {
+
+  <span class="comment">/**
+   @param name has content.
+   @param speed is in the range 0 (inclusive) to 1 (inclusive), and
+   is expressed as a fraction of the speed of light. (The photon is
+   an example of an elementary particle which travels at this speed.)
+   @exception IllegalArgumentException if a param does not comply.
+  */</span>
+  <span class="keyword">public</span> ElementaryParticle (String name, <span class="keyword">double</span> speed) {
+    <span class="keyword">if</span> (!textHasContent(name)) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="literal">"Name has no content."</span>);
+    }
+    <span class="keyword">if</span> (speed &lt; <span class="literal">0.0</span> || speed &gt; <span class="literal">1.0</span>) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="literal">"Speed not in range [0..1]: "</span> + speed);
+    }
+    <span class="keyword">this</span>.name = name;
+    <span class="keyword">this</span>.speed = speed;
+  }
+
+  <span class="comment">//..other methods elided
+</span>
+  <span class="comment">// PRIVATE
+</span>  <span class="keyword">private</span> String name;
+  <span class="keyword">private</span> <span class="keyword">double</span> speed;
+
+  <span class="comment">/**
+   Returns true if aText is non-null and has visible content.
+  
+   This is a test which is often performed, and should probably
+   be placed in a general utility class.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">boolean</span> textHasContent(String text){
+    String EMPTY_STRING = <span class="literal">""</span>;
+    <span class="keyword">return</span> (text != <span class="keyword">null</span>) &amp;&amp; (!text.trim().equals(EMPTY_STRING));
+  }
+} 
+</pre>
+
+<br><b>Example 2</b>
+<p></p><p>Some validations are very common:
+</p><ul>
+<li>
+check that an object is not <code>null</code></li>
+
+<li>
+check that text has visible content</li>
+
+<li>
+check that a number is in some range</li>
+</ul>
+
+Providing a class for such validations can often be useful. In this example,
+the <code>Args</code> class throws <code>IllegalArgumentException</code> 
+if a corresponding boolean check fails. Using <code>Args</code> to validate
+arguments will increase legibility noticeably, especially in the case of
+multiple validations.
+<br><pre>
+<span class="keyword">package</span> hirondelle.web4j.util;
+
+<span class="keyword">import</span> java.util.regex.*;
+
+<span class="comment">/**
+ Utility methods for common argument validations.
+
+&lt;P&gt;Replaces &lt;tt&gt;if&lt;/tt&gt; statements at the start of a method with 
+ more compact method calls.
+ 
+ &lt;P&gt;Example use case.
+ &lt;P&gt;Instead of :
+ &lt;PRE&gt;
+ public void doThis(String aText){
+   if (!Util.textHasContent(aText)){
+     throw new IllegalArgumentException();
+   }
+   //..main body elided
+ }
+ &lt;/PRE&gt;
+ &lt;P&gt;One may instead write :
+ &lt;PRE&gt;
+ public void doThis(String aText){
+   Args.checkForContent(aText);
+   //..main body elided
+ }
+ &lt;/PRE&gt;
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Args {
+  
+  <span class="comment">/**
+   If &lt;code&gt;aText&lt;/code&gt; does not satisfy {@link Util#textHasContent}, then 
+   throw an &lt;code&gt;IllegalArgumentException&lt;/code&gt;.
+  
+   &lt;P&gt;Most text used in an application is meaningful only if it has visible content.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> checkForContent(String aText){
+    <span class="keyword">if</span>( ! Util.textHasContent(aText) ){
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="literal">"Text has no visible content"</span>);
+    }
+  }
+
+  <span class="comment">/**
+   If {@link Util#isInRange} returns &lt;code&gt;false&lt;/code&gt;, then 
+   throw an &lt;code&gt;IllegalArgumentException&lt;/code&gt;. 
+  
+   @param aLow is less than or equal to &lt;code&gt;aHigh&lt;/code&gt;.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> checkForRange(<span class="keyword">int</span> aNumber, <span class="keyword">int</span> aLow, <span class="keyword">int</span> aHigh) {
+    <span class="keyword">if</span> ( ! Util.isInRange(aNumber, aLow, aHigh) ) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(aNumber + <span class="literal">" not in range "</span> + aLow + <span class="literal">".."</span> + aHigh);
+    }
+  }
+
+  <span class="comment">/**
+   If &lt;tt&gt;aNumber&lt;/tt&gt; is less than &lt;tt&gt;1&lt;/tt&gt;, then throw an 
+   &lt;tt&gt;IllegalArgumentException&lt;/tt&gt;.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> checkForPositive(<span class="keyword">int</span> aNumber) {
+    <span class="keyword">if</span> (aNumber &lt; <span class="literal">1</span>) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(aNumber + <span class="literal">" is less than 1"</span>);
+    }
+  }
+
+  <span class="comment">/**
+   If {@link Util#matches} returns &lt;tt&gt;false&lt;/tt&gt;, then 
+   throw an &lt;code&gt;IllegalArgumentException&lt;/code&gt;. 
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> checkForMatch(Pattern aPattern, String aText){
+    <span class="keyword">if</span> (! Util.matches(aPattern, aText)){
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(
+        <span class="literal">"Text "</span> + Util.quote(aText) + <span class="literal">" does not match '"</span> +aPattern.pattern()+ <span class="literal">"'"</span>
+      );
+    }
+  }
+  
+  <span class="comment">/**
+   If &lt;code&gt;aObject&lt;/code&gt; is null, then throw a &lt;code&gt;NullPointerException&lt;/code&gt;.
+  
+   &lt;P&gt;Use cases :
+  &lt;pre&gt;
+   doSomething( Football aBall ){
+     //1. call some method on the argument : 
+     //if aBall is null, then exception is automatically thrown, so 
+     //there is no need for an explicit check for null.
+     aBall.inflate();
+    
+     //2. assign to a corresponding field (common in constructors): 
+     //if aBall is null, no exception is immediately thrown, so 
+     //an explicit check for null may be useful here
+     Args.checkForNull( aBall );
+     fBall = aBall;
+     
+     //3. pass on to some other method as parameter : 
+     //it may or may not be appropriate to have an explicit check 
+     //for null here, according the needs of the problem
+     Args.checkForNull( aBall ); //??
+     fReferee.verify( aBall );
+   }
+   &lt;/pre&gt;
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> checkForNull(Object aObject) {
+    <span class="keyword">if</span> (aObject == <span class="keyword">null</span>) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException();
+    }
+  }
+  
+  <span class="comment">// PRIVATE 
+</span>  <span class="keyword">private</span> Args(){
+    <span class="comment">//empty - prevent construction
+</span>  }
+}
+ 
+</pre>
+
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction0d31.html?Id=6">Validate state with class invariants</a> <br>
+  <a href="TopicActionf005.html?Id=44">Javadoc all exceptions</a> <br>
+  <a href="TopicActionbf65.html?Id=100">Assert is for private arguments only</a> <br>
+  <a href="TopicActioncd9b.html?Id=171">Avoid @throws in javadoc</a> <br>
+  <a href="TopicActiond08d.html?Id=187">Model Objects</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=5 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

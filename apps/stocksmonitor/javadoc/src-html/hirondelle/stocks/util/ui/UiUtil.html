@@ -1,0 +1,759 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/util/ui/UiUtil.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:53:04 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+UiUtil.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.stocks.util.ui;<a name=line.1></a>
+<a name=line.2></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Args;<a name=line.3></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Consts;<a name=line.4></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Util;<a name=line.5></a>
+<a name=line.6></a>
+<span class='keyword'>import</span> java.util.*;<a name=line.7></a>
+<span class='keyword'>import</span> java.text.*;<a name=line.8></a>
+<span class='keyword'>import</span> java.net.URL;<a name=line.9></a>
+<span class='keyword'>import</span> javax.swing.*;<a name=line.10></a>
+<span class='keyword'>import</span> javax.swing.border.Border;<a name=line.11></a>
+<span class='keyword'>import</span> java.awt.*;<a name=line.12></a>
+<span class='keyword'>import</span> javax.swing.plaf.metal.MetalLookAndFeel;<a name=line.13></a>
+<span class='keyword'>import</span> hirondelle.stocks.preferences.GeneralLookPreferencesEditor;<a name=line.14></a>
+<a name=line.15></a>
+<span class='comment'>/** Static convenience methods for GUIs which eliminate code duplication.*/</span><a name=line.16></a>
+<span class='keyword'>public</span> <span class='keyword'>final</span> <span class='keyword'>class</span> UiUtil {<a name=line.17></a>
+<a name=line.18></a>
+  <span class='comment'>/**<a name=line.19></a>
+  * &lt;tt&gt;pack&lt;/tt&gt;, center, and &lt;tt&gt;show&lt;/tt&gt; a window on the screen.<a name=line.20></a>
+  *<a name=line.21></a>
+  * &lt;P&gt;If the size of &lt;tt&gt;aWindow&lt;/tt&gt; exceeds that of the screen, <a name=line.22></a>
+  * then the size of &lt;tt&gt;aWindow&lt;/tt&gt; is reset to the size of the screen.<a name=line.23></a>
+  */</span><a name=line.24></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>void</span> centerAndShow(Window aWindow){<a name=line.25></a>
+    <span class='comment'>//note that the order here is important<a name=line.26></a>
+</span>    <a name=line.27></a>
+    aWindow.pack();<a name=line.28></a>
+    <span class='comment'>/*<a name=line.29></a>
+     * If called from outside the event dispatch thread (as is <a name=line.30></a>
+     * the case upon startup, in the launch thread), then <a name=line.31></a>
+     * in principle this code is not thread-safe: once pack has <a name=line.32></a>
+     * been called, the component is realized, and (most) further<a name=line.33></a>
+     * work on the component should take place in the event-dispatch <a name=line.34></a>
+     * thread. <a name=line.35></a>
+     *<a name=line.36></a>
+     * In practice, it is exceedingly unlikely that this will lead <a name=line.37></a>
+     * to an error, since invisible components cannot receive events.<a name=line.38></a>
+     */</span><a name=line.39></a>
+    Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();<a name=line.40></a>
+    Dimension window = aWindow.getSize();<a name=line.41></a>
+    <span class='comment'>//ensure that no parts of aWindow will be off-screen<a name=line.42></a>
+</span>    <span class='keyword'>if</span> (window.height &gt; screen.height) {<a name=line.43></a>
+      window.height = screen.height;<a name=line.44></a>
+    }<a name=line.45></a>
+    <span class='keyword'>if</span> (window.width &gt; screen.width) {<a name=line.46></a>
+      window.width = screen.width;<a name=line.47></a>
+    }<a name=line.48></a>
+    <span class='keyword'>int</span> xCoord = (screen.width/<span class='literal'>2</span> - window.width/<span class='literal'>2</span>);<a name=line.49></a>
+    <span class='keyword'>int</span> yCoord = (screen.height/<span class='literal'>2</span> - window.height/<span class='literal'>2</span>);<a name=line.50></a>
+    aWindow.setLocation( xCoord, yCoord );<a name=line.51></a>
+   <a name=line.52></a>
+    aWindow.setVisible(<span class='keyword'>true</span>);<a name=line.53></a>
+  }<a name=line.54></a>
+  <a name=line.55></a>
+  <span class='comment'>/**<a name=line.56></a>
+  * A window is packed, centered with respect to a parent, and then shown.<a name=line.57></a>
+  *<a name=line.58></a>
+  * &lt;P&gt;This method is intended for dialogs only.<a name=line.59></a>
+  *<a name=line.60></a>
+  * &lt;P&gt;If centering with respect to a parent causes any part of the dialog <a name=line.61></a>
+  * to be off screen, then the centering is overidden, such that all of the <a name=line.62></a>
+  * dialog will always appear fully on screen, but it will still appear <a name=line.63></a>
+  * near the parent.<a name=line.64></a>
+  *<a name=line.65></a>
+  * @param aWindow must have non-null result for &lt;tt&gt;aWindow.getParent&lt;/tt&gt;.<a name=line.66></a>
+  */</span><a name=line.67></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>void</span> centerOnParentAndShow(Window aWindow){<a name=line.68></a>
+    aWindow.pack();<a name=line.69></a>
+    <a name=line.70></a>
+    Dimension parent = aWindow.getParent().getSize();<a name=line.71></a>
+    Dimension window = aWindow.getSize();<a name=line.72></a>
+    <span class='keyword'>int</span> xCoord = <a name=line.73></a>
+      aWindow.getParent().getLocationOnScreen().x + <a name=line.74></a>
+     (parent.width/<span class='literal'>2</span> - window.width/<span class='literal'>2</span>)<a name=line.75></a>
+    ;<a name=line.76></a>
+    <span class='keyword'>int</span> yCoord = <a name=line.77></a>
+      aWindow.getParent().getLocationOnScreen().y + <a name=line.78></a>
+      (parent.height/<span class='literal'>2</span> - window.height/<span class='literal'>2</span>)<a name=line.79></a>
+    ;<a name=line.80></a>
+    <a name=line.81></a>
+    <span class='comment'>//Ensure that no part of aWindow will be off-screen<a name=line.82></a>
+</span>    Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();<a name=line.83></a>
+    <span class='keyword'>int</span> xOffScreenExcess = xCoord + window.width - screen.width;<a name=line.84></a>
+    <span class='keyword'>if</span> ( xOffScreenExcess &gt; <span class='literal'>0</span> ) {<a name=line.85></a>
+      xCoord = xCoord - xOffScreenExcess;<a name=line.86></a>
+    }<a name=line.87></a>
+    <span class='keyword'>if</span> (xCoord &lt; <span class='literal'>0</span> ) {<a name=line.88></a>
+      xCoord = <span class='literal'>0</span>;<a name=line.89></a>
+    }<a name=line.90></a>
+    <span class='keyword'>int</span> yOffScreenExcess = yCoord + window.height - screen.height;<a name=line.91></a>
+    <span class='keyword'>if</span> ( yOffScreenExcess &gt; <span class='literal'>0</span> ) {<a name=line.92></a>
+      yCoord = yCoord - yOffScreenExcess;<a name=line.93></a>
+    }<a name=line.94></a>
+    <span class='keyword'>if</span> (yCoord &lt; <span class='literal'>0</span>) {<a name=line.95></a>
+      yCoord = <span class='literal'>0</span>;<a name=line.96></a>
+    }<a name=line.97></a>
+    <a name=line.98></a>
+    aWindow.setLocation( xCoord, yCoord );<a name=line.99></a>
+    aWindow.setVisible(<span class='keyword'>true</span>);<a name=line.100></a>
+  }<a name=line.101></a>
+<a name=line.102></a>
+  <span class='comment'>/**<a name=line.103></a>
+  * Return a border of dimensions recommended by the Java Look and Feel <a name=line.104></a>
+  * Design Guidelines, suitable for many common cases.<a name=line.105></a>
+  *<a name=line.106></a>
+  *&lt;P&gt;Each side of the border has size {@link UiConsts#STANDARD_BORDER}.<a name=line.107></a>
+  */</span><a name=line.108></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> Border getStandardBorder(){<a name=line.109></a>
+    <span class='keyword'>return</span> BorderFactory.createEmptyBorder(<a name=line.110></a>
+      UiConsts.STANDARD_BORDER, <a name=line.111></a>
+      UiConsts.STANDARD_BORDER, <a name=line.112></a>
+      UiConsts.STANDARD_BORDER, <a name=line.113></a>
+      UiConsts.STANDARD_BORDER<a name=line.114></a>
+    );<a name=line.115></a>
+  }<a name=line.116></a>
+<a name=line.117></a>
+  <span class='comment'>/**<a name=line.118></a>
+  * Return text which conforms to the Look and Feel Design Guidelines <a name=line.119></a>
+  * for the title of a dialog : the application name, a colon, then <a name=line.120></a>
+  * the name of the specific dialog.<a name=line.121></a>
+  *<a name=line.122></a>
+  *&lt;P&gt;Example return value: &lt;tt&gt;StocksMonitor: Preferences&lt;/tt&gt;<a name=line.123></a>
+  *<a name=line.124></a>
+  * @param aSpecificDialogName must have visible content<a name=line.125></a>
+  */</span><a name=line.126></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> String getDialogTitle(String aSpecificDialogName){<a name=line.127></a>
+    Args.checkForContent(aSpecificDialogName);<a name=line.128></a>
+    StringBuilder result = <span class='keyword'>new</span> StringBuilder(Consts.APP_NAME);<a name=line.129></a>
+    result.append(<span class='literal'>": "</span>);<a name=line.130></a>
+    result.append(aSpecificDialogName);<a name=line.131></a>
+    <span class='keyword'>return</span> result.toString(); <a name=line.132></a>
+  }<a name=line.133></a>
+  <a name=line.134></a>
+  <span class='comment'>/**<a name=line.135></a>
+  * Make a horizontal row of buttons of equal size, whch are equally spaced, <a name=line.136></a>
+  * and aligned on the right.<a name=line.137></a>
+  *<a name=line.138></a>
+  * &lt;P&gt;The returned component has border spacing only on the top (of the size <a name=line.139></a>
+  * recommended by the Look and Feel Design Guidelines).<a name=line.140></a>
+  * All other spacing must be applied elsewhere ; usually, this will only mean <a name=line.141></a>
+  * that the dialog's top-level panel should use {@link #getStandardBorder}.<a name=line.142></a>
+  * <a name=line.143></a>
+  * @param aButtons contains the buttons to be placed in a row.<a name=line.144></a>
+  */</span><a name=line.145></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> JComponent getCommandRow(java.util.List&lt;JComponent&gt; aButtons){<a name=line.146></a>
+    equalizeSizes( aButtons );<a name=line.147></a>
+    JPanel panel = <span class='keyword'>new</span> JPanel();<a name=line.148></a>
+    LayoutManager layout = <span class='keyword'>new</span> BoxLayout(panel, BoxLayout.X_AXIS);<a name=line.149></a>
+    panel.setLayout(layout);<a name=line.150></a>
+    panel.setBorder(BorderFactory.createEmptyBorder(UiConsts.THREE_SPACES, <span class='literal'>0</span>, <span class='literal'>0</span>, <span class='literal'>0</span>));<a name=line.151></a>
+    panel.add(Box.createHorizontalGlue());<a name=line.152></a>
+    Iterator&lt;JComponent&gt; buttonsIter = aButtons.iterator();<a name=line.153></a>
+    <span class='keyword'>while</span> (buttonsIter.hasNext()) {<a name=line.154></a>
+      panel.add(buttonsIter.next());<a name=line.155></a>
+      <span class='keyword'>if</span> (buttonsIter.hasNext()) {<a name=line.156></a>
+        panel.add(Box.createHorizontalStrut(UiConsts.ONE_SPACE));<a name=line.157></a>
+      }<a name=line.158></a>
+    }<a name=line.159></a>
+    <span class='keyword'>return</span> panel;<a name=line.160></a>
+  }<a name=line.161></a>
+  <a name=line.162></a>
+  <span class='comment'>/**<a name=line.163></a>
+  * Make a vertical row of buttons of equal size, whch are equally spaced, <a name=line.164></a>
+  * and aligned on the right.<a name=line.165></a>
+  *<a name=line.166></a>
+  * &lt;P&gt;The returned component has border spacing only on the left (of the size <a name=line.167></a>
+  * recommended by the Look and Feel Design Guidelines).<a name=line.168></a>
+  * All other spacing must be applied elsewhere ; usually, this will only mean <a name=line.169></a>
+  * that the dialog's top-level panel should use {@link #getStandardBorder}.<a name=line.170></a>
+  * <a name=line.171></a>
+  * @param aButtons contains the buttons to be placed in a column<a name=line.172></a>
+  */</span><a name=line.173></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> JComponent getCommandColumn(java.util.List&lt;JComponent&gt; aButtons){<a name=line.174></a>
+    equalizeSizes(aButtons);<a name=line.175></a>
+    JPanel panel = <span class='keyword'>new</span> JPanel();<a name=line.176></a>
+    LayoutManager layout = <span class='keyword'>new</span> BoxLayout(panel, BoxLayout.Y_AXIS);<a name=line.177></a>
+    panel.setLayout(layout);<a name=line.178></a>
+    panel.setBorder(<a name=line.179></a>
+      BorderFactory.createEmptyBorder(<span class='literal'>0</span>,UiConsts.THREE_SPACES, <span class='literal'>0</span>,<span class='literal'>0</span>)<a name=line.180></a>
+    );<a name=line.181></a>
+    <span class='comment'>//(no for-each is used here, because of the 'not-yet-last' check)<a name=line.182></a>
+</span>    Iterator&lt;JComponent&gt; buttonsIter = aButtons.iterator();<a name=line.183></a>
+    <span class='keyword'>while</span> (buttonsIter.hasNext()) {<a name=line.184></a>
+      panel.add(buttonsIter.next());<a name=line.185></a>
+      <span class='keyword'>if</span> (buttonsIter.hasNext()) {<a name=line.186></a>
+        panel.add( Box.createVerticalStrut(UiConsts.ONE_SPACE) );<a name=line.187></a>
+      }<a name=line.188></a>
+    }<a name=line.189></a>
+    panel.add(Box.createVerticalGlue());<a name=line.190></a>
+    <span class='keyword'>return</span> panel;<a name=line.191></a>
+  }<a name=line.192></a>
+<a name=line.193></a>
+  <span class='comment'>/**<a name=line.194></a>
+  * Return an &lt;tt&gt;ImageIcon&lt;/tt&gt; using its &lt;tt&gt;String&lt;/tt&gt; identifier.<a name=line.195></a>
+  *<a name=line.196></a>
+  * @param aImageId starts with '/', and refers to an image resource <a name=line.197></a>
+  * which is accessible through {@link Class#getResource}.<a name=line.198></a>
+  */</span><a name=line.199></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> ImageIcon getImageIcon(String aImageId){<a name=line.200></a>
+    <span class='keyword'>if</span>( ! aImageId.startsWith(BACK_SLASH) ){<a name=line.201></a>
+      <span class='keyword'>throw</span> <span class='keyword'>new</span> IllegalArgumentException(<a name=line.202></a>
+        <span class='literal'>"Image identifier does not start with backslash: "</span> + aImageId<a name=line.203></a>
+      );<a name=line.204></a>
+    }<a name=line.205></a>
+    <span class='keyword'>return</span> fetchImageIcon(aImageId, UiUtil.<span class='keyword'>class</span>);<a name=line.206></a>
+  }<a name=line.207></a>
+<a name=line.208></a>
+  <span class='comment'>/**<a name=line.209></a>
+  * Return an &lt;tt&gt;ImageIcon&lt;/tt&gt; using its &lt;tt&gt;String&lt;/tt&gt; identifier, relative to <a name=line.210></a>
+  * a given class.<a name=line.211></a>
+  *<a name=line.212></a>
+  * @param aImageId does NOT start with '/', and must refer to an image resource which is <a name=line.213></a>
+  * accessible through {@link Class#getResource}.<a name=line.214></a>
+  * @param aClass the class relative to which the image is located.<a name=line.215></a>
+  */</span><a name=line.216></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> ImageIcon getImageIcon(String aImageId, Class&lt;?&gt; aClass){<a name=line.217></a>
+    <span class='keyword'>if</span>( aImageId.startsWith(BACK_SLASH) ){<a name=line.218></a>
+      <span class='keyword'>throw</span> <span class='keyword'>new</span> IllegalArgumentException(<a name=line.219></a>
+        <span class='literal'>"Image identifier starts with a backslash: "</span> + aImageId<a name=line.220></a>
+      );<a name=line.221></a>
+    }<a name=line.222></a>
+    <span class='keyword'>return</span> fetchImageIcon(aImageId, aClass);<a name=line.223></a>
+  }<a name=line.224></a>
+  <a name=line.225></a>
+  <span class='comment'>/**<a name=line.226></a>
+  * Return a square icon which paints nothing, and whose dimensions correspond <a name=line.227></a>
+  * to the user preference for icon size.<a name=line.228></a>
+  *<a name=line.229></a>
+  * &lt;P&gt;A common problem occurs with text alignment in menus, where there is <a name=line.230></a>
+  * a mixture of menu items with and without an icon. Adding an empty icon <a name=line.231></a>
+  * to menu items which do not have one will adjust its alignment to match <a name=line.232></a>
+  * that of the others which do have an icon.<a name=line.233></a>
+  */</span><a name=line.234></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> Icon getEmptyIcon(){<a name=line.235></a>
+    GeneralLookPreferencesEditor prefs = <span class='keyword'>new</span> GeneralLookPreferencesEditor();<a name=line.236></a>
+    <span class='keyword'>return</span> prefs.hasLargeIcons() ? EmptyIcon.SIZE_24 : EmptyIcon.SIZE_16;<a name=line.237></a>
+  }<a name=line.238></a>
+  <a name=line.239></a>
+  <span class='comment'>/**<a name=line.240></a>
+  * Return a &lt;tt&gt;Dimension&lt;/tt&gt; whose size is defined not in terms of pixels, <a name=line.241></a>
+  * but in terms of a given percent of the screen's width and height. <a name=line.242></a>
+  *<a name=line.243></a>
+  *&lt;P&gt; Use to set the preferred size of a component to a certain <a name=line.244></a>
+  * percentage of the screen.  <a name=line.245></a>
+  *<a name=line.246></a>
+  * @param aPercentWidth percentage width of the screen, in range &lt;tt&gt;1..100&lt;/tt&gt;.<a name=line.247></a>
+  * @param aPercentHeight percentage height of the screen, in range &lt;tt&gt;1..100&lt;/tt&gt;.<a name=line.248></a>
+  */</span><a name=line.249></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> Dimension getDimensionFromPercent(<a name=line.250></a>
+    <span class='keyword'>int</span> aPercentWidth, <span class='keyword'>int</span> aPercentHeight<a name=line.251></a>
+   ){<a name=line.252></a>
+    <span class='keyword'>int</span> low = <span class='literal'>1</span>;<a name=line.253></a>
+    <span class='keyword'>int</span> high = <span class='literal'>100</span>;<a name=line.254></a>
+    Args.checkForRange(aPercentWidth, low, high);<a name=line.255></a>
+    Args.checkForRange(aPercentHeight, low, high);<a name=line.256></a>
+    Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();<a name=line.257></a>
+    <span class='keyword'>return</span> calcDimensionFromPercent(screenSize, aPercentWidth, aPercentHeight);<a name=line.258></a>
+  }<a name=line.259></a>
+<a name=line.260></a>
+  <span class='comment'>/**<a name=line.261></a>
+   * Sets the items in &lt;tt&gt;aComponents&lt;/tt&gt; to the same size.<a name=line.262></a>
+   *<a name=line.263></a>
+   * &lt;P&gt;Sets each component's preferred and maximum sizes. <a name=line.264></a>
+   * The actual size is determined by the layout manager, whcih adjusts <a name=line.265></a>
+   * for locale-specific strings and customized fonts. (See this <a name=line.266></a>
+   * &lt;a href="http://java.sun.com/products/jlf/ed2/samcode/prefere.html"&gt;Sun doc&lt;/a&gt; <a name=line.267></a>
+   * for more information.)<a name=line.268></a>
+   *<a name=line.269></a>
+   * @param aComponents items whose sizes are to be equalized<a name=line.270></a>
+   */</span><a name=line.271></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>void</span> equalizeSizes(java.util.List&lt;JComponent&gt; aComponents) {<a name=line.272></a>
+    Dimension targetSize = <span class='keyword'>new</span> Dimension(<span class='literal'>0</span>,<span class='literal'>0</span>);<a name=line.273></a>
+    <span class='keyword'>for</span>(JComponent comp: aComponents ) {<a name=line.274></a>
+      Dimension compSize = comp.getPreferredSize();<a name=line.275></a>
+      <span class='keyword'>double</span> width = Math.max(targetSize.getWidth(), compSize.getWidth());<a name=line.276></a>
+      <span class='keyword'>double</span> height = Math.max(targetSize.getHeight(), compSize.getHeight());<a name=line.277></a>
+      targetSize.setSize(width, height);<a name=line.278></a>
+    }<a name=line.279></a>
+    setSizes(aComponents, targetSize);<a name=line.280></a>
+  }<a name=line.281></a>
+  <a name=line.282></a>
+  <span class='comment'>/**<a name=line.283></a>
+  * Create a pair of components, a &lt;tt&gt;JLabel&lt;/tt&gt; and an associated <a name=line.284></a>
+  * &lt;tt&gt;JTextField&lt;/tt&gt;, as is typically used for user input.<a name=line.285></a>
+  *<a name=line.286></a>
+  *&lt;P&gt;The &lt;tt&gt;JLabel&lt;/tt&gt; appears on the left, and the &lt;tt&gt;JTextField&lt;/tt&gt;<a name=line.287></a>
+  * appears on the same  row, just to the right of the &lt;tt&gt;JLabel&lt;/tt&gt;. <a name=line.288></a>
+  * The &lt;tt&gt;JLabel&lt;/tt&gt; has a mnemonic which forwards focus to the <a name=line.289></a>
+  * &lt;tt&gt;JTextField&lt;/tt&gt; when activated.<a name=line.290></a>
+  * <a name=line.291></a>
+  * @param aContainer holds the pair of components.<a name=line.292></a>
+  * @param aName text of the &lt;tt&gt;JLabel&lt;/tt&gt; component.<a name=line.293></a>
+  * @param aInitialValue possibly-null initial value to appear <a name=line.294></a>
+  * in the &lt;tt&gt;JTextField&lt;/tt&gt;; if &lt;tt&gt;null&lt;/tt&gt;, then <a name=line.295></a>
+  * &lt;tt&gt;JTextField&lt;/tt&gt; will be blank.<a name=line.296></a>
+  * @param aMnemonic &lt;tt&gt;KeyEvent&lt;/tt&gt; field, used as the mnemonic for <a name=line.297></a>
+  * the &lt;tt&gt;JLabel&lt;/tt&gt;.<a name=line.298></a>
+  * @param aConstraints applied to the &lt;tt&gt;JLabel&lt;/tt&gt;; the corresponding <a name=line.299></a>
+  * constraints for the &lt;tt&gt;JTextField&lt;/tt&gt; are the same as <a name=line.300></a>
+  * &lt;tt&gt;aConstraints&lt;/tt&gt;, except for &lt;tt&gt;gridx&lt;/tt&gt; being incremented by one; <a name=line.301></a>
+  * in addition, if &lt;tt&gt;aConstraints&lt;/tt&gt; has &lt;tt&gt;weightx=0&lt;/tt&gt; (the default),<a name=line.302></a>
+  * then the entry field will receive &lt;tt&gt;weightx=1.0&lt;/tt&gt; (entry field gets more <a name=line.303></a>
+  * horizontal space upon resize).<a name=line.304></a>
+  * @param aTooltip possibly-null text displayed as tool tip for the <a name=line.305></a>
+  * &lt;tt&gt;JTextField&lt;/tt&gt; ; if &lt;tt&gt;null&lt;/tt&gt;, the tool tip is turned off.<a name=line.306></a>
+  * @return the user input &lt;tt&gt;JTextField&lt;/tt&gt;.<a name=line.307></a>
+  */</span><a name=line.308></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> JTextField addSimpleEntryField(<a name=line.309></a>
+    Container aContainer, String aName, String aInitialValue, <a name=line.310></a>
+    <span class='keyword'>int</span> aMnemonic, GridBagConstraints aConstraints, String aTooltip<a name=line.311></a>
+  ){<a name=line.312></a>
+    Args.checkForNull(aName);<a name=line.313></a>
+    <a name=line.314></a>
+    JLabel label = <span class='keyword'>new</span> JLabel(aName);<a name=line.315></a>
+    label.setDisplayedMnemonic(aMnemonic);<a name=line.316></a>
+    aContainer.add( label, aConstraints );<a name=line.317></a>
+<a name=line.318></a>
+    JTextField result = <span class='keyword'>new</span> JTextField(UiConsts.SIMPLE_FIELD_WIDTH);<a name=line.319></a>
+    label.setLabelFor(result);<a name=line.320></a>
+    result.setToolTipText(aTooltip);<a name=line.321></a>
+    <span class='keyword'>if</span> (aInitialValue != <span class='keyword'>null</span>) {<a name=line.322></a>
+      result.setText(aInitialValue);<a name=line.323></a>
+    }<a name=line.324></a>
+    aConstraints.gridx = ++aConstraints.gridx;<a name=line.325></a>
+    <span class='keyword'>if</span> (aConstraints.weightx == <span class='literal'>0.0</span>){<a name=line.326></a>
+      aConstraints.weightx = <span class='literal'>1.0</span>;<a name=line.327></a>
+    }<a name=line.328></a>
+    aContainer.add(result, aConstraints);<a name=line.329></a>
+    <span class='keyword'>return</span> result;<a name=line.330></a>
+  }<a name=line.331></a>
+<a name=line.332></a>
+  <span class='comment'>/**<a name=line.333></a>
+  * Return a set of constraints with convenient default values.<a name=line.334></a>
+  *<a name=line.335></a>
+  *&lt;P&gt;Return constraints with these values :<a name=line.336></a>
+  *&lt;ul&gt;<a name=line.337></a>
+  * &lt;li&gt; &lt;tt&gt;gridx, gridy&lt;/tt&gt; - set to &lt;tt&gt;aX, aY&lt;/tt&gt;<a name=line.338></a>
+  * &lt;li&gt; &lt;tt&gt;anchor - GridBagConstraints.WEST&lt;/tt&gt;<a name=line.339></a>
+  * &lt;li&gt; &lt;tt&gt;insets - Insets(0,0,0, UiConsts.ONE_SPACE)&lt;/tt&gt;<a name=line.340></a>
+  *&lt;/ul&gt;<a name=line.341></a>
+  * <a name=line.342></a>
+  *&lt;P&gt; All other items simply take their default values :<a name=line.343></a>
+  *&lt;ul&gt;<a name=line.344></a>
+  * &lt;li&gt; &lt;tt&gt;fill - GridBagConstraints.NONE&lt;/tt&gt;<a name=line.345></a>
+  * &lt;li&gt; &lt;tt&gt;gridwidth, gridheight - 0, 0&lt;/tt&gt; <a name=line.346></a>
+  * &lt;li&gt; &lt;tt&gt;weightx , weighty - 0, 0&lt;/tt&gt;<a name=line.347></a>
+  * &lt;li&gt; &lt;tt&gt;ipadx, ipady - 0, 0&lt;/tt&gt;<a name=line.348></a>
+  *&lt;/ul&gt;<a name=line.349></a>
+  *<a name=line.350></a>
+  * &lt;P&gt;The caller is free to change the returned constraints, to customize for <a name=line.351></a>
+  * their particular needs.<a name=line.352></a>
+  *<a name=line.353></a>
+  * @param aY in range &lt;tt&gt;0..10&lt;/tt&gt;.<a name=line.354></a>
+  * @param aX in range &lt;tt&gt;0..10&lt;/tt&gt;.<a name=line.355></a>
+  */</span><a name=line.356></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> GridBagConstraints getConstraints(<span class='keyword'>int</span> aY, <span class='keyword'>int</span> aX){<a name=line.357></a>
+    <span class='keyword'>int</span> low = <span class='literal'>0</span>;<a name=line.358></a>
+    <span class='keyword'>int</span> high = <span class='literal'>10</span>;<a name=line.359></a>
+    Args.checkForRange(aY, low, high);<a name=line.360></a>
+    Args.checkForRange(aX, low, high);<a name=line.361></a>
+    GridBagConstraints result = <span class='keyword'>new</span> GridBagConstraints();<a name=line.362></a>
+    result.gridy = aY;<a name=line.363></a>
+    result.gridx = aX;<a name=line.364></a>
+    result.anchor = GridBagConstraints.WEST;<a name=line.365></a>
+    result.insets = <span class='keyword'>new</span> Insets(<span class='literal'>0</span>,<span class='literal'>0</span>,<span class='literal'>0</span>,UiConsts.ONE_SPACE);<a name=line.366></a>
+    <span class='keyword'>return</span> result;<a name=line.367></a>
+  }<a name=line.368></a>
+<a name=line.369></a>
+  <span class='comment'>/**<a name=line.370></a>
+  * Return {@link #getConstraints(int, int)}, with the addition of setting <a name=line.371></a>
+  * &lt;tt&gt;gridwidth&lt;/tt&gt; to &lt;tt&gt;aWidth&lt;/tt&gt;, and setting <a name=line.372></a>
+  * &lt;tt&gt;gridheight&lt;/tt&gt; to &lt;tt&gt;aHeight&lt;/tt&gt;.<a name=line.373></a>
+  *<a name=line.374></a>
+  * &lt;P&gt;The caller is free to change the returned constraints, to customize for<a name=line.375></a>
+  * their particular needs.<a name=line.376></a>
+  *<a name=line.377></a>
+  * @param aY in range &lt;tt&gt;0..10&lt;/tt&gt;.<a name=line.378></a>
+  * @param aX in range &lt;tt&gt;0..10&lt;/tt&gt;.<a name=line.379></a>
+  * @param aWidth in range &lt;tt&gt;1..10&lt;/tt&gt;.<a name=line.380></a>
+  * @param aHeight in range &lt;tt&gt;1..10&lt;/tt&gt;.<a name=line.381></a>
+  */</span><a name=line.382></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> GridBagConstraints getConstraints(<span class='keyword'>int</span> aY, <span class='keyword'>int</span> aX, <span class='keyword'>int</span> aWidth, <span class='keyword'>int</span> aHeight){<a name=line.383></a>
+    <span class='keyword'>int</span> low = <span class='literal'>0</span>;<a name=line.384></a>
+    <span class='keyword'>int</span> high = <span class='literal'>10</span>;<a name=line.385></a>
+    Args.checkForRange(aHeight, low, high);<a name=line.386></a>
+    Args.checkForRange(aWidth, low, high);<a name=line.387></a>
+    GridBagConstraints result = getConstraints(aY, aX);<a name=line.388></a>
+    result.gridheight = aHeight;<a name=line.389></a>
+    result.gridwidth = aWidth;<a name=line.390></a>
+    <span class='keyword'>return</span> result;<a name=line.391></a>
+  }<a name=line.392></a>
+  <a name=line.393></a>
+  <span class='comment'>/**<a name=line.394></a>
+  * Create a pair of &lt;tt&gt;JLabel&lt;/tt&gt; components, as is typically needed <a name=line.395></a>
+  * for display of a name-value pair.<a name=line.396></a>
+  *<a name=line.397></a>
+  * &lt;P&gt;The name appears on the left, and the value appears on the right, <a name=line.398></a>
+  * all on the same row. A colon and an empty space are appended to the name. <a name=line.399></a>
+  * <a name=line.400></a>
+  * &lt;P&gt; If the the length of "value" label is greater than <a name=line.401></a>
+  * {@link UiConsts#MAX_LABEL_LENGTH}, then the text is truncated, an ellipsis<a name=line.402></a>
+  * is placed at its end, and the full text is placed in a tooltip.<a name=line.403></a>
+  * <a name=line.404></a>
+  * @param aContainer holds the pair of components.<a name=line.405></a>
+  * @param aName text of the name &lt;tt&gt;JLabel&lt;/tt&gt;.<a name=line.406></a>
+  * @param aValue possibly-null ; if null, then an empty &lt;tt&gt;String&lt;/tt&gt;<a name=line.407></a>
+  * is used for the value; otherwise &lt;tt&gt;Object.toString&lt;/tt&gt; is used.<a name=line.408></a>
+  * @param aConstraints for the name &lt;tt&gt;JLabel&lt;/tt&gt;; the corresponding <a name=line.409></a>
+  * constraints for the value &lt;tt&gt;JLabel&lt;/tt&gt; are mostly taken from <a name=line.410></a>
+  * &lt;tt&gt;aConstraints&lt;/tt&gt;, except for &lt;tt&gt;gridx&lt;/tt&gt; being incremented by one<a name=line.411></a>
+  * (&lt;tt&gt;weightx&lt;/tt&gt; may differ as well - see &lt;tt&gt;aWeightOnDisplay&lt;/tt&gt;.)<a name=line.412></a>
+  * @param aWeightOnDisplay if true, then set &lt;tt&gt;weightx&lt;/tt&gt; for the value <a name=line.413></a>
+  * field to 1.0 (to give it more horizontal space upon resize).<a name=line.414></a>
+  * @return the &lt;tt&gt;JLabel&lt;/tt&gt; for the value (which is usually variable).<a name=line.415></a>
+  */</span><a name=line.416></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> JLabel addSimpleDisplayField(<a name=line.417></a>
+    Container aContainer, String aName,  Object aValue, <a name=line.418></a>
+    GridBagConstraints aConstraints, <span class='keyword'>boolean</span> aWeightOnDisplay<a name=line.419></a>
+  ){<a name=line.420></a>
+    StringBuilder formattedName = <span class='keyword'>new</span> StringBuilder(aName);<a name=line.421></a>
+    formattedName.append(<span class='literal'>": "</span>);<a name=line.422></a>
+    JLabel name = <span class='keyword'>new</span> JLabel( formattedName.toString() );<a name=line.423></a>
+    aContainer.add( name, aConstraints );<a name=line.424></a>
+    <a name=line.425></a>
+    String valueText = (aValue != <span class='keyword'>null</span>? aValue.toString() : Consts.EMPTY_STRING);<a name=line.426></a>
+    JLabel value = <span class='keyword'>new</span> JLabel(valueText);<a name=line.427></a>
+    truncateLabelIfLong(value);<a name=line.428></a>
+    aConstraints.gridx = ++aConstraints.gridx;<a name=line.429></a>
+    <span class='keyword'>if</span> (aWeightOnDisplay){<a name=line.430></a>
+      aConstraints.weightx = <span class='literal'>1.0</span>;<a name=line.431></a>
+    }<a name=line.432></a>
+    aContainer.add( value, aConstraints );<a name=line.433></a>
+    <a name=line.434></a>
+    <span class='keyword'>return</span> value;<a name=line.435></a>
+  }<a name=line.436></a>
+  <a name=line.437></a>
+  <span class='comment'>/**<a name=line.438></a>
+  * Present a number of read-only items to the user as a vertical listing <a name=line.439></a>
+  * of &lt;tt&gt;JLabel&lt;/tt&gt; name-value pairs.<a name=line.440></a>
+  *<a name=line.441></a>
+  * &lt;P&gt;Each pair is added in the style of <a name=line.442></a>
+  * {@link #addSimpleDisplayField} (its &lt;tt&gt;aConstraints&lt;/tt&gt; param are those <a name=line.443></a>
+  * returned by {@link #getConstraints(int, int)}, and its &lt;tt&gt;aWeightOnDisplay&lt;/tt&gt; <a name=line.444></a>
+  * param is set to &lt;tt&gt;true&lt;/tt&gt;).<a name=line.445></a>
+  *<a name=line.446></a>
+  * &lt;P&gt;The order of presentation is determined by the iteration order of <a name=line.447></a>
+  * &lt;tt&gt;aNameValuePairs&lt;/tt&gt;.<a name=line.448></a>
+  *<a name=line.449></a>
+  *&lt;P&gt;The number of items which should be presented using this method is limited, since<a name=line.450></a>
+  * no scrolling mechanism is given to the user.<a name=line.451></a>
+  *<a name=line.452></a>
+  * @param aContainer holds the display fields.<a name=line.453></a>
+  * @param aNameValuePairs has &lt;tt&gt;String&lt;/tt&gt; keys for the names, <a name=line.454></a>
+  * and values are possibly null &lt;tt&gt;Object&lt;/tt&gt;s; <a name=line.455></a>
+  * if null, then an empty &lt;tt&gt;String&lt;/tt&gt; is displayed, otherwise<a name=line.456></a>
+  * &lt;tt&gt;Object.toString&lt;/tt&gt; is called on the value and displayed.<a name=line.457></a>
+  */</span><a name=line.458></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>void</span> addSimpleDisplayFields(<a name=line.459></a>
+    Container aContainer, Map&lt;String, String&gt; aNameValuePairs<a name=line.460></a>
+  ) {<a name=line.461></a>
+    Set&lt;String&gt; keys = aNameValuePairs.keySet();<a name=line.462></a>
+    <span class='keyword'>int</span> rowIdx = <span class='literal'>0</span>;<a name=line.463></a>
+    <span class='keyword'>for</span>(String name: keys) {<a name=line.464></a>
+      String value = aNameValuePairs.get(name);<a name=line.465></a>
+      <span class='keyword'>if</span>(value == <span class='keyword'>null</span>){<a name=line.466></a>
+        value = Consts.EMPTY_STRING;<a name=line.467></a>
+      }<a name=line.468></a>
+      UiUtil.addSimpleDisplayField(<a name=line.469></a>
+        aContainer, <a name=line.470></a>
+        name, <a name=line.471></a>
+        value, <a name=line.472></a>
+        UiUtil.getConstraints(rowIdx,<span class='literal'>0</span>),<a name=line.473></a>
+        <span class='keyword'>true</span><a name=line.474></a>
+      );<a name=line.475></a>
+      ++rowIdx;<a name=line.476></a>
+    }<a name=line.477></a>
+  }<a name=line.478></a>
+ <a name=line.479></a>
+  <span class='comment'>/**<a name=line.480></a>
+  * Adds "glue" (an empty component with desired resizing behavior) to the bottom <a name=line.481></a>
+  * row of a &lt;tt&gt;GridBagLayout&lt;/tt&gt; of components. When resized, this glue will <a name=line.482></a>
+  * take up extra vertical space.<a name=line.483></a>
+  *<a name=line.484></a>
+  * &lt;P&gt;This method is especially useful for text data presented in a listing or <a name=line.485></a>
+  * tabular form. Such components naturally resize horizontally, while their vertical <a name=line.486></a>
+  * resizing should often be absent. If such a listing is resized vertically, then this <a name=line.487></a>
+  * glue can take up the remaining vertical space, keeping the text at the top.<a name=line.488></a>
+  *<a name=line.489></a>
+  * @param aPanel uses &lt;tt&gt;GridBagLayout&lt;/tt&gt;, and contains components whose <a name=line.490></a>
+  * &lt;tt&gt;weighty&lt;/tt&gt; values are all 0.0 (the default).<a name=line.491></a>
+  * @param aLastRowIdx index of the last row of components, in which the glue will be<a name=line.492></a>
+  * placed.<a name=line.493></a>
+  */</span><a name=line.494></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>void</span> addVerticalGridGlue(JPanel aPanel, <span class='keyword'>int</span> aLastRowIdx) {   <a name=line.495></a>
+    GridBagConstraints glueConstraints = UiUtil.getConstraints(aLastRowIdx,<span class='literal'>0</span>);<a name=line.496></a>
+    glueConstraints.weighty = <span class='literal'>1.0</span>;<a name=line.497></a>
+    glueConstraints.fill = GridBagConstraints.VERTICAL;<a name=line.498></a>
+    aPanel.add(<span class='keyword'>new</span> JLabel(), glueConstraints);<a name=line.499></a>
+  }<a name=line.500></a>
+  <a name=line.501></a>
+  <span class='comment'>/**<a name=line.502></a>
+  * Return a &lt;tt&gt;String&lt;/tt&gt;, suitable for presentation to the end user, <a name=line.503></a>
+  * representing a percentage having two decimal places, using the default locale.<a name=line.504></a>
+  *<a name=line.505></a>
+  * &lt;P&gt;An example return value is "5.15%". The intent of this method is to <a name=line.506></a>
+  * provide a standard representation and number of decimals for the entire <a name=line.507></a>
+  * application. If a different number of decimal places is required, then <a name=line.508></a>
+  * the caller should use &lt;tt&gt;NumberFormat&lt;/tt&gt; instead.<a name=line.509></a>
+  */</span><a name=line.510></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> String getLocalizedPercent( Number aNumber ){<a name=line.511></a>
+    NumberFormat localFormatter = NumberFormat.getPercentInstance();<a name=line.512></a>
+    localFormatter.setMinimumFractionDigits(<span class='literal'>2</span>);<a name=line.513></a>
+    <span class='keyword'>return</span> localFormatter.format(aNumber.doubleValue());<a name=line.514></a>
+  }<a name=line.515></a>
+  <a name=line.516></a>
+  <span class='comment'>/**<a name=line.517></a>
+  * Return a &lt;tt&gt;String&lt;/tt&gt;, suitable for presentation to the end user, <a name=line.518></a>
+  * representing an integral number with no decimal places, using the default <a name=line.519></a>
+  * locale.<a name=line.520></a>
+  *<a name=line.521></a>
+  * &lt;P&gt;An example return value is "8,000". The intent of this method is to <a name=line.522></a>
+  * provide a standard representation of integers for the entire <a name=line.523></a>
+  * application.<a name=line.524></a>
+  */</span><a name=line.525></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> String getLocalizedInteger( Number aNumber ) {<a name=line.526></a>
+    NumberFormat localFormatter = NumberFormat.getNumberInstance();<a name=line.527></a>
+    <span class='keyword'>return</span> localFormatter.format(aNumber.intValue());<a name=line.528></a>
+  }<a name=line.529></a>
+<a name=line.530></a>
+  <span class='comment'>/**<a name=line.531></a>
+  * Return a &lt;tt&gt;String&lt;/tt&gt;, suitable for presentation to the end user, <a name=line.532></a>
+  * representing a date in &lt;tt&gt;DateFormat.SHORT&lt;/tt&gt; and the default locale.<a name=line.533></a>
+  */</span><a name=line.534></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> String getLocalizedTime(Date aDate){<a name=line.535></a>
+    DateFormat dateFormat = DateFormat.getTimeInstance(DateFormat.SHORT);<a name=line.536></a>
+    <span class='keyword'>return</span> dateFormat.format(aDate);<a name=line.537></a>
+  }<a name=line.538></a>
+<a name=line.539></a>
+  <span class='comment'>/**<a name=line.540></a>
+  * Make the sytem emit a beep.<a name=line.541></a>
+  *<a name=line.542></a>
+  * &lt;P&gt;May not beep unless the speakers are turned on, so this cannot <a name=line.543></a>
+  * be guaranteed to work.<a name=line.544></a>
+  */</span><a name=line.545></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>void</span> beep(){<a name=line.546></a>
+    Toolkit.getDefaultToolkit().beep();<a name=line.547></a>
+  }<a name=line.548></a>
+<a name=line.549></a>
+  <span class='comment'>/**<a name=line.550></a>
+  * An alternative to multi-line labels, for the presentation of <a name=line.551></a>
+  * several lines of text, and for which the line breaks are determined <a name=line.552></a>
+  * solely by the widget.<a name=line.553></a>
+  *<a name=line.554></a>
+  * @param aText must have visible content, doesn't contain newline characters or html.<a name=line.555></a>
+  * @return &lt;tt&gt;JTextArea&lt;/tt&gt; which is not editable, has improved spacing over the <a name=line.556></a>
+  * supplied default (placing {@link UiConsts#ONE_SPACE} on the left and right), <a name=line.557></a>
+  * which wraps lines on word boundaries, and whose background color is the <a name=line.558></a>
+  * same as {@link javax.swing.plaf.metal.MetalLookAndFeel#getMenuBackground}.<a name=line.559></a>
+  */</span><a name=line.560></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> JTextArea getStandardTextArea(String aText){<a name=line.561></a>
+    Args.checkForContent(aText);<a name=line.562></a>
+    <span class='keyword'>if</span> ( aText.indexOf(Consts.NEW_LINE) != -<span class='literal'>1</span> ){<a name=line.563></a>
+      <span class='keyword'>throw</span> <span class='keyword'>new</span> IllegalArgumentException(<span class='literal'>"Must not contain new line characters: "</span> + aText);<a name=line.564></a>
+    }<a name=line.565></a>
+    JTextArea result = <span class='keyword'>new</span> JTextArea(aText);<a name=line.566></a>
+    result.setEditable(<span class='keyword'>false</span>);<a name=line.567></a>
+    result.setWrapStyleWord(<span class='keyword'>true</span>);<a name=line.568></a>
+    result.setLineWrap(<span class='keyword'>true</span>);<a name=line.569></a>
+    result.setMargin( <span class='keyword'>new</span> Insets(<span class='literal'>0</span>,UiConsts.ONE_SPACE,<span class='literal'>0</span>,UiConsts.ONE_SPACE) );<a name=line.570></a>
+    <span class='comment'>//this is a bit hacky: the desired color is "secondary3", but cannot see how <a name=line.571></a>
+</span>    <span class='comment'>//to reference it directly; hence, an element which uses secondary3 is used instead.<a name=line.572></a>
+</span>    result.setBackground( MetalLookAndFeel.getMenuBackground() ); <a name=line.573></a>
+    <a name=line.574></a>
+    <span class='keyword'>return</span> result;<a name=line.575></a>
+  }<a name=line.576></a>
+  <a name=line.577></a>
+  <span class='comment'>/**<a name=line.578></a>
+  * An alternative to multi-line labels, for the presentation of <a name=line.579></a>
+  * several lines of text, and for which line breaks are determined <a name=line.580></a>
+  * solely by &lt;tt&gt;aText&lt;/tt&gt;, and not by the widget.<a name=line.581></a>
+  *<a name=line.582></a>
+  * @param aText has visible content<a name=line.583></a>
+  * @return &lt;tt&gt;JTextArea&lt;/tt&gt; which is not editable, has improved spacing over the <a name=line.584></a>
+  * supplied default (placing {@link UiConsts#ONE_SPACE} on the left and right), <a name=line.585></a>
+  * and whose background color is the same as <a name=line.586></a>
+  * {@link javax.swing.plaf.metal.MetalLookAndFeel#getMenuBackground}.<a name=line.587></a>
+  */</span><a name=line.588></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> JTextArea getStandardTextAreaHardNewLines(String aText){<a name=line.589></a>
+    Args.checkForContent(aText);<a name=line.590></a>
+    JTextArea result = <span class='keyword'>new</span> JTextArea(aText);<a name=line.591></a>
+    result.setEditable(<span class='keyword'>false</span>);<a name=line.592></a>
+    result.setMargin(<span class='keyword'>new</span> Insets(<span class='literal'>0</span>,UiConsts.ONE_SPACE,<span class='literal'>0</span>,UiConsts.ONE_SPACE));<a name=line.593></a>
+    result.setBackground( MetalLookAndFeel.getMenuBackground() ); <a name=line.594></a>
+    <span class='keyword'>return</span> result;<a name=line.595></a>
+  }<a name=line.596></a>
+  <a name=line.597></a>
+  <span class='comment'>/**<a name=line.598></a>
+  * Imposes a uniform horizontal alignment on all items in a container.<a name=line.599></a>
+  *<a name=line.600></a>
+  *&lt;P&gt; Intended especially for &lt;tt&gt;BoxLayout&lt;/tt&gt;, where all components need <a name=line.601></a>
+  * to share the same alignment in order for display to be reasonable. <a name=line.602></a>
+  * (Indeed, this method may only work for &lt;tt&gt;BoxLayout&lt;/tt&gt;, since apparently <a name=line.603></a>
+  * it is the only layout to use &lt;tt&gt;setAlignmentX, setAlignmentY&lt;/tt&gt;.)<a name=line.604></a>
+  *<a name=line.605></a>
+  * @param aContainer contains only &lt;tt&gt;JComponent&lt;/tt&gt; objects.<a name=line.606></a>
+  */</span><a name=line.607></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>void</span> alignAllX(Container aContainer, UiUtil.AlignX aAlignment){<a name=line.608></a>
+    java.util.List&lt;Component&gt; components = Arrays.asList( aContainer.getComponents() );<a name=line.609></a>
+    <span class='keyword'>for</span>(Component comp: components){<a name=line.610></a>
+      JComponent jcomp = (JComponent)comp;<a name=line.611></a>
+      jcomp.setAlignmentX(aAlignment.getValue());<a name=line.612></a>
+    }<a name=line.613></a>
+  }<a name=line.614></a>
+  <a name=line.615></a>
+  <span class='comment'>/** Enumeration for horizontal alignment. */</span><a name=line.616></a>
+  <span class='keyword'>public</span> <span class='keyword'>enum</span> AlignX {<a name=line.617></a>
+    LEFT(Component.LEFT_ALIGNMENT),<a name=line.618></a>
+    CENTER(Component.CENTER_ALIGNMENT),<a name=line.619></a>
+    RIGHT(Component.RIGHT_ALIGNMENT);<a name=line.620></a>
+    <span class='keyword'>public</span> <span class='keyword'>float</span> getValue(){<a name=line.621></a>
+      <span class='keyword'>return</span> fValue;<a name=line.622></a>
+    }<a name=line.623></a>
+    <span class='keyword'>private</span> <span class='keyword'>final</span> <span class='keyword'>float</span> fValue;<a name=line.624></a>
+    <span class='keyword'>private</span> AlignX(<span class='keyword'>float</span> aValue){<a name=line.625></a>
+      fValue = aValue;<a name=line.626></a>
+    }<a name=line.627></a>
+  }<a name=line.628></a>
+  <a name=line.629></a>
+  <span class='comment'>/**<a name=line.630></a>
+  * Imposes a uniform vertical alignment on all items in a container.<a name=line.631></a>
+  *<a name=line.632></a>
+  *&lt;P&gt; Intended especially for &lt;tt&gt;BoxLayout&lt;/tt&gt;, where all components need <a name=line.633></a>
+  * to share the same alignment in order for display to be reasonable.<a name=line.634></a>
+  * (Indeed, this method may only work for &lt;tt&gt;BoxLayout&lt;/tt&gt;, since apparently <a name=line.635></a>
+  * it is the only layout to use &lt;tt&gt;setAlignmentX, setAlignmentY&lt;/tt&gt;.)<a name=line.636></a>
+  *<a name=line.637></a>
+  * @param aContainer contains only &lt;tt&gt;JComponent&lt;/tt&gt; objects.<a name=line.638></a>
+  */</span><a name=line.639></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>void</span> alignAllY(Container aContainer, UiUtil.AlignY aAlignment){<a name=line.640></a>
+    java.util.List components = Arrays.asList( aContainer.getComponents() );<a name=line.641></a>
+    Iterator compsIter = components.iterator();<a name=line.642></a>
+    <span class='keyword'>while</span> ( compsIter.hasNext() ) {<a name=line.643></a>
+      JComponent comp = (JComponent)compsIter.next();<a name=line.644></a>
+      comp.setAlignmentY( aAlignment.getValue() );<a name=line.645></a>
+    }<a name=line.646></a>
+  }<a name=line.647></a>
+<a name=line.648></a>
+  <span class='comment'>/** Type-safe enumeration vertical alignment. */</span><a name=line.649></a>
+  <span class='keyword'>public</span> <span class='keyword'>enum</span> AlignY {<a name=line.650></a>
+    TOP(Component.TOP_ALIGNMENT),<a name=line.651></a>
+    CENTER(Component.CENTER_ALIGNMENT),<a name=line.652></a>
+    BOTTOM(Component.BOTTOM_ALIGNMENT);<a name=line.653></a>
+    <span class='keyword'>float</span> getValue(){<a name=line.654></a>
+      <span class='keyword'>return</span> fValue;<a name=line.655></a>
+    }<a name=line.656></a>
+    <span class='keyword'>private</span> <span class='keyword'>final</span> <span class='keyword'>float</span> fValue;<a name=line.657></a>
+    <span class='keyword'>private</span> AlignY( <span class='keyword'>float</span> aValue){<a name=line.658></a>
+      fValue = aValue;<a name=line.659></a>
+    }<a name=line.660></a>
+  }<a name=line.661></a>
+  <a name=line.662></a>
+  <span class='comment'>/**<a name=line.663></a>
+  * Ensure that &lt;tt&gt;aRootPane&lt;/tt&gt; has no default button associated with it.<a name=line.664></a>
+  *<a name=line.665></a>
+  * &lt;P&gt;Intended mainly for dialogs where the user is confirming a delete action.<a name=line.666></a>
+  * In this case, an explicit Yes or No is preferred, with no default action being <a name=line.667></a>
+  * taken when the user hits the Enter key. <a name=line.668></a>
+  */</span><a name=line.669></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>void</span> noDefaultButton(JRootPane aRootPane){<a name=line.670></a>
+    aRootPane.setDefaultButton(<span class='keyword'>null</span>);<a name=line.671></a>
+  }<a name=line.672></a>
+<a name=line.673></a>
+  <span class='comment'>// PRIVATE<a name=line.674></a>
+</span>  <a name=line.675></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String BACK_SLASH = <span class='literal'>"/"</span>;<a name=line.676></a>
+<a name=line.677></a>
+  <span class='comment'>/**<a name=line.678></a>
+  * If &lt;tt&gt;aIconName&lt;/tt&gt; indicates that the icon is part of the standard graphic<a name=line.679></a>
+  * repository (by starting with "/toolbar"), then append either "16.gif" or <a name=line.680></a>
+  * "24.gif" to the name, according to the user's current preference for icon size.<a name=line.681></a>
+  */</span><a name=line.682></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> String addSizeToStandardIcon(String aIconName){<a name=line.683></a>
+    assert( Util.textHasContent(aIconName) );<a name=line.684></a>
+    StringBuilder result = <span class='keyword'>new</span> StringBuilder(aIconName);<a name=line.685></a>
+    <span class='keyword'>if</span> ( aIconName.startsWith(<span class='literal'>"/toolbar"</span>) ) {<a name=line.686></a>
+      GeneralLookPreferencesEditor prefs = <span class='keyword'>new</span> GeneralLookPreferencesEditor();<a name=line.687></a>
+      <span class='keyword'>if</span> ( prefs.hasLargeIcons() ) {<a name=line.688></a>
+        result.append(<span class='literal'>"24.gif"</span>);<a name=line.689></a>
+      }<a name=line.690></a>
+      <span class='keyword'>else</span> {<a name=line.691></a>
+        result.append(<span class='literal'>"16.gif"</span>);<a name=line.692></a>
+      }<a name=line.693></a>
+    }<a name=line.694></a>
+    <span class='keyword'>return</span> result.toString();<a name=line.695></a>
+  }<a name=line.696></a>
+<a name=line.697></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>void</span> setSizes(java.util.List aComponents, Dimension aDimension){<a name=line.698></a>
+    Iterator compsIter = aComponents.iterator();      <a name=line.699></a>
+    <span class='keyword'>while</span> ( compsIter.hasNext() ) {<a name=line.700></a>
+      JComponent comp = (JComponent) compsIter.next();<a name=line.701></a>
+      comp.setPreferredSize((Dimension)aDimension.clone());<a name=line.702></a>
+      comp.setMaximumSize((Dimension)aDimension.clone());<a name=line.703></a>
+    }<a name=line.704></a>
+  }<a name=line.705></a>
+<a name=line.706></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> Dimension calcDimensionFromPercent(<a name=line.707></a>
+    Dimension aSourceDimension, <span class='keyword'>int</span> aPercentWidth, <span class='keyword'>int</span> aPercentHeight<a name=line.708></a>
+  ){<a name=line.709></a>
+    <span class='keyword'>int</span> width = aSourceDimension.width * aPercentWidth/<span class='literal'>100</span>;<a name=line.710></a>
+    <span class='keyword'>int</span> height = aSourceDimension.height * aPercentHeight/<span class='literal'>100</span>;<a name=line.711></a>
+    <span class='keyword'>return</span> <span class='keyword'>new</span> Dimension(width, height);<a name=line.712></a>
+  }<a name=line.713></a>
+<a name=line.714></a>
+  <span class='comment'>/**<a name=line.715></a>
+  * If aLabel has text which is longer than MAX_LABEL_LENGTH, then truncate <a name=line.716></a>
+  * the label text and place an ellipsis at the end; the original text is placed <a name=line.717></a>
+  * in a tooltip.<a name=line.718></a>
+  *<a name=line.719></a>
+  * This is particularly useful for displaying file names, whose length <a name=line.720></a>
+  * can vary widely between deployments.<a name=line.721></a>
+  */</span><a name=line.722></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>void</span> truncateLabelIfLong(JLabel aLabel){<a name=line.723></a>
+    String originalText = aLabel.getText();<a name=line.724></a>
+    <span class='keyword'>if</span> (originalText.length() &gt; UiConsts.MAX_LABEL_LENGTH){<a name=line.725></a>
+      aLabel.setToolTipText( originalText );<a name=line.726></a>
+      String truncatedText = <a name=line.727></a>
+        originalText.substring(<span class='literal'>0</span>, UiConsts.MAX_LABEL_LENGTH) + Consts.ELLIPSIS<a name=line.728></a>
+      ;<a name=line.729></a>
+      aLabel.setText(truncatedText);<a name=line.730></a>
+    }<a name=line.731></a>
+  }<a name=line.732></a>
+  <a name=line.733></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> ImageIcon fetchImageIcon(String aImageId, Class&lt;?&gt; aClass){<a name=line.734></a>
+    String imgLocation = addSizeToStandardIcon(aImageId);<a name=line.735></a>
+    URL imageURL = aClass.getResource(imgLocation);<a name=line.736></a>
+    <span class='keyword'>if</span> ( imageURL != <span class='keyword'>null</span> ) {<a name=line.737></a>
+      <span class='keyword'>return</span> <span class='keyword'>new</span> ImageIcon(imageURL);<a name=line.738></a>
+    }<a name=line.739></a>
+    <span class='keyword'>else</span> {<a name=line.740></a>
+      <span class='keyword'>throw</span> <span class='keyword'>new</span> IllegalArgumentException(<span class='literal'>"Cannot retrieve image using id: "</span> + aImageId);<a name=line.741></a>
+    }<a name=line.742></a>
+  }<a name=line.743></a>
+} <a name=line.744></a>
+</PRE><a name=line.745></a>
+ </BODY><a name=line.746></a>
+<HTML><a name=line.747></a>

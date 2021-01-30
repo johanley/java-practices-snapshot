@@ -1,0 +1,384 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=55 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="toString,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Implementing toString</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Implementing toString</div>
+
+<br>The <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Object.html#toString()">toString</a></code>
+method is widely implemented. It provides a simple, convenient mechanism
+for debugging classes during development.
+It's also widely used for logging, and for passing informative error messages
+to <code>Exception</code> constructors and assertions. When used in these
+<em>informal</em> ways, the exact format of <code>toString</code> is not part of the 
+<a href="TopicAction63b6.html?Id=194">contract</a> of the method, and callers should not rely on the exact format 
+of the returned <code>String</code>.
+
+<p>The <code>toString</code> method may <em>occasionally</em> be used more formally,
+however. An example is a simple mechanism for translating an object into a 
+well-defined textual form (<code>toString</code>) and back again (<code>valueOf</code>).
+In this case, it's particularly important to specify the exact form of such text in javadoc. 
+
+</p><p>When implementing <code>toString</code>, <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/StringBuilder.html">StringBuilder</a></code>
+can be used instead of the + concatenation operator, since the <code>StringBuilder.append</code>
+operation is slightly faster.
+
+</p><p><b>Example 1</b>
+<br></p><pre>
+<span class="keyword">import</span> java.util.*;
+<span class="keyword">import</span> java.time.LocalDate;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Truck {
+
+  <span class="comment">/** Simple test harness.  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args){
+    Truck truck = <span class="keyword">new</span> Truck();
+    System.out.println(truck);
+  }
+
+  <span class="comment">/**
+  * Intended only for debugging.
+  *
+  * &lt;P&gt;Here, the contents of every field are placed into the result, with
+  * one field per line.
+  */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> String toString() {
+    StringBuilder result = <span class="keyword">new</span> StringBuilder();
+    String NL = System.getProperty(<span class="literal">"line.separator"</span>);
+    
+    result.append(<span class="keyword">this</span>.getClass().getName() + <span class="literal">" Object {"</span> + NL);
+    result.append(<span class="literal">" Name: "</span> + name + NL);
+    result.append(<span class="literal">" Number of doors: "</span> + numDoors + NL);
+    result.append(<span class="literal">" Manufactured on: "</span> + whenManufactured + NL );
+    result.append(<span class="literal">" Color: "</span> + color + NL);
+    <span class="comment">//Note that Collections and Maps also override toString
+</span>    result.append(<span class="literal">" Options: "</span> + options + NL);
+    result.append(<span class="literal">"}"</span>);
+
+    <span class="keyword">return</span> result.toString();
+  }
+
+  <span class="comment">//..other methods elided
+</span>  
+  <span class="comment">// PRIVATE //
+</span>
+  <span class="comment">/** Some toy data for illustrating toString(). */</span>
+  <span class="keyword">private</span> String name = <span class="literal">"Dodge"</span>;
+  <span class="keyword">private</span> Integer numDoors = <span class="literal">2</span>;
+  <span class="keyword">private</span> LocalDate whenManufactured = LocalDate.of(<span class="literal">2007</span>, <span class="literal">9</span>, <span class="literal">1</span>);
+  <span class="keyword">private</span> String color = <span class="literal">"Black"</span>;
+  <span class="keyword">private</span> List&lt;String&gt; options = List.of(<span class="literal">"Air Con"</span>, <span class="literal">"Cruise Control"</span>);
+}  
+</pre>
+
+<br>Example output:
+<p></p><pre><code>
+Truck Object {
+ Name: Dodge
+ Number of doors: 2
+ Manufactured on: 2007-09-01
+ Color: Black
+ Options: [Air Con, Cruise Control]
+}</code></pre>
+
+<p><b>Example 2</b>
+</p><p>This implementation uses reflection to inspect
+both field names and field values. Note that superclass fields do not
+contribute to this implementation.
+<br></p><pre>
+<span class="keyword">import</span> java.util.*;
+<span class="keyword">import</span> java.lang.reflect.Field;
+<span class="keyword">import</span> java.time.LocalDate;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Van {
+
+  <span class="comment">/**
+  * Build a Van object and display its textual representation.
+  *
+  * Note that the Collection classes have
+  * their own implementation of &lt;code&gt;toString&lt;/code&gt;, as exemplified here
+  * by the List field holding the Options.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main (String... args) {
+    List&lt;String&gt; options = <span class="keyword">new</span> ArrayList&lt;&gt;();
+    options.add(<span class="literal">"Air Conditioning"</span>);
+    options.add(<span class="literal">"Leather Interior"</span>);
+
+    Van van = <span class="keyword">new</span> Van(<span class="literal">"Dodge"</span>, <span class="literal">4</span>, LocalDate.now(), <span class="literal">"Blue"</span>, options);
+    log(van);
+  }
+
+  <span class="keyword">public</span> Van(
+    String name,
+    Integer numDoors,
+    LocalDate whenManufactured,
+    String color,
+    List&lt;String&gt; options
+  ){
+    <span class="keyword">this</span>.name = name;
+    <span class="keyword">this</span>.numDoors = numDoors;
+    <span class="keyword">this</span>.whenManufactured = whenManufactured;
+    <span class="keyword">this</span>.color = color;
+    <span class="keyword">this</span>.options = options;
+  }
+
+  <span class="comment">//..other methods elided
+</span>
+  <span class="comment">/**
+  * Intended only for debugging.
+  *
+  * &lt;P&gt;Here, a generic implementation uses reflection to print
+  * names and values of all fields &lt;em&gt;declared in this class&lt;/em&gt;. Note that
+  * superclass fields are left out of this implementation.
+  *
+  * &lt;p&gt;The format of the presentation could be standardized by using
+  * a MessageFormat object with a standard pattern.
+  */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> String toString() {
+    StringBuilder result = <span class="keyword">new</span> StringBuilder();
+    String NL = System.getProperty(<span class="literal">"line.separator"</span>);
+
+    result.append(<span class="keyword">this</span>.getClass().getName());
+    result.append(<span class="literal">" Object {"</span>);
+    result.append(NL);
+
+    <span class="comment">//determine fields declared in this class only (no fields of superclass)
+</span>    Field[] fields = <span class="keyword">this</span>.getClass().getDeclaredFields();
+
+    <span class="comment">//print field names paired with their values
+</span>    <span class="keyword">for</span> (Field field : fields) {
+      result.append(<span class="literal">"  "</span>);
+      <span class="keyword">try</span> {
+        result.append(field.getName());
+        result.append(<span class="literal">": "</span>);
+        <span class="comment">//requires access to private field:
+</span>        result.append(field.get(<span class="keyword">this</span>));
+      }
+      <span class="keyword">catch</span> (IllegalAccessException ex) {
+        log(ex.toString());
+      }
+      result.append(NL);
+    }
+    result.append(<span class="literal">"}"</span>);
+
+    <span class="keyword">return</span> result.toString();
+  }
+
+  <span class="comment">// PRIVATE 
+</span>  <span class="keyword">private</span> String name;
+  <span class="keyword">private</span> Integer numDoors;
+  <span class="keyword">private</span> LocalDate whenManufactured;
+  <span class="keyword">private</span> String color;
+  <span class="keyword">private</span> List&lt;String&gt; options;
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(Object thing) {
+    System.out.println(thing.toString());
+  }
+} 
+</pre>
+
+<br>Example output:
+<p></p>
+<p>
+</p><pre><code>
+Van Object {
+  name: Dodge
+  numDoors: 4
+  whenManufactured: 2018-08-14
+  color: Blue
+  options: [Air Conditioning, Leather Interior]
+}
+</code></pre>
+
+<br><b>Example 3</b>
+<p><code>QuoteField</code> is a <a href="TopicAction2161.html?Id=1">type safe enumeration</a>.
+The return value of <code>toString</code> is used in the normal operation of the program - not just 
+for logging.
+Note that it forms a pair with the <code>valueFrom(String)</code> method, since one formats
+the object into a <code>String</code>, and the other parses a <code>String</code>
+into an object. 
+<br></p><pre>
+<span class="keyword">package</span> hirondelle.stocks.table;
+
+<span class="comment">/**
+* Enumeration for the fields of the 
+* {@link hirondelle.stocks.quotes.Quote} class.
+* 
+* Advantages to using this class as part of a table model :
+* &lt;ul&gt;
+* &lt;li&gt; can parse text which maps table columns to fields
+* &lt;li&gt; can be used for column names
+* &lt;li&gt; length of &lt;tt&gt;QuoteField.values()&lt;/tt&gt; gives the column count
+* &lt;/ul&gt;
+*/</span>
+<span class="keyword">public</span> <span class="keyword">enum</span> QuoteField { 
+
+  Stock(<span class="literal">"Stock"</span>),
+  Price(<span class="literal">"Price"</span>),
+  Change(<span class="literal">"Change"</span>),
+  PercentChange(<span class="literal">"%Change"</span>),
+  Profit(<span class="literal">"Profit"</span>),
+  PercentProfit(<span class="literal">"%Profit"</span>);
+
+  <span class="comment">/**
+  * Return a text representation of the &lt;tt&gt;QuoteField&lt;/tt&gt;.
+  *
+  * Return values : &lt;tt&gt;Stock, Price, Change, %Change, Profit, %Profit&lt;/tt&gt;.
+  * @return value contains only letters, and possibly a percent sign.
+  */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> String toString() { 
+    <span class="keyword">return</span> fName;  
+  }
+
+  <span class="comment">/** 
+  * Parse text into a &lt;tt&gt;QuoteField&lt;/tt&gt;.
+  * 
+  * &lt;P&gt;The text is matched according to the value of {@link #toString()}, 
+  * not from the symbolic name of the enumerated item.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> QuoteField valueFrom(String aText){
+    <span class="keyword">for</span> (QuoteField quoteField: values()){
+      <span class="keyword">if</span>(quoteField.toString().equals(aText)) {
+        <span class="keyword">return</span> quoteField;
+      }
+    }
+    <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="literal">"Cannot parse into a QuoteField: "</span> + aText);
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">final</span> String fName;
+
+  <span class="comment">/**
+  * @param aName only letters and percent sign are valid characters.
+  */</span>
+  <span class="keyword">private</span> QuoteField(String aName) { 
+    fName = aName;
+  }
+} 
+</pre>
+
+<br>
+<p></p>
+
+
+<p></p><p><b>Example 4</b>
+</p><p>The <a href="TopicAction5f31.html?Id=188">WEB4J</a> tool 
+provides a utility method for implementing <code>toString</code> in a single 
+line of code. Its implementation uses reflection.
+<br></p><pre>
+<span class="keyword">import</span> java.math.BigDecimal;
+<span class="keyword">import</span> hirondelle.web4j.model.ModelCtorException;
+<span class="keyword">import</span> hirondelle.web4j.model.ModelUtil;
+<span class="keyword">import</span> hirondelle.web4j.model.Id;
+<span class="keyword">import</span> hirondelle.web4j.model.Check;
+<span class="keyword">import</span> hirondelle.web4j.util.Util;
+<span class="keyword">import</span> hirondelle.web4j.model.Validator;
+
+<span class="comment">/**  Model Object for a Restaurant. */</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Resto {
+
+  <span class="comment">/**
+  * Full constructor.
+  *  
+  * @param aId underlying database internal identifier (optional) 1..50 characters
+  * @param aName of the restaurant (required), 2..50 characters
+  * @param aLocation street address of the restaurant (optional), 2..50 characters
+  * @param aPrice of the fish and chips meal (optional) $0.00..$100.00
+  * @param aComment on the restaurant in general (optional) 2..50 characters
+  */</span>
+  <span class="keyword">public</span> Resto(
+    Id aId, String aName, String aLocation, BigDecimal aPrice, String aComment
+  ) <span class="keyword">throws</span> ModelCtorException {
+    fId = aId;
+    fName = Util.trimPossiblyNull(aName);
+    fLocation = Util.trimPossiblyNull(aLocation);
+    fPrice = aPrice;
+    fComment = Util.trimPossiblyNull(aComment);
+    validateState();
+  }
+  
+  <span class="keyword">public</span> Id getId() { <span class="keyword">return</span> fId; }
+  <span class="keyword">public</span> String getName() {  <span class="keyword">return</span> fName; }
+  <span class="keyword">public</span> String getLocation() {  <span class="keyword">return</span> fLocation;  }
+  <span class="keyword">public</span> BigDecimal getPrice() { <span class="keyword">return</span> fPrice; }
+  <span class="keyword">public</span> String getComment() {  <span class="keyword">return</span> fComment; }
+
+  <span class="comment">/** Intended for debugging only.  */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> String toString() {
+    <span class="keyword">return</span> ModelUtil.toStringFor(<span class="keyword">this</span>);
+  }
+
+  <span class="comment">//..elided
+</span>
+  <span class="comment">//PRIVATE//
+</span>  <span class="keyword">private</span> <span class="keyword">final</span> Id fId;
+  <span class="keyword">private</span> <span class="keyword">final</span> String fName;
+  <span class="keyword">private</span> <span class="keyword">final</span> String fLocation;
+  <span class="keyword">private</span> <span class="keyword">final</span> BigDecimal fPrice;
+  <span class="keyword">private</span> <span class="keyword">final</span> String fComment;
+ 
+  <span class="comment">//..elided
+</span>
+}
+ 
+</pre>
+
+<br>Example output:
+<p></p><pre>
+hirondelle.fish.main.resto.Resto {
+ Name: Cedars Eatery
+ Location: Water and Prince
+ Id: 6
+ Comment: Big portions
+ Price: 7.89
+}
+</pre>
+
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction851d.html?Id=4">String concatenation does not scale</a> <br>
+  <a href="TopicAction8d16.html?Id=21">Factory methods</a> <br>
+  <a href="TopicActiond1f0.html?Id=131">Arrays as String </a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=55 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:33 GMT -->
+</html>

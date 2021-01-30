@@ -1,0 +1,152 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=166 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:45 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="layout,swing,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Layout Managers</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Layout Managers</div>
+
+<br>Layout Managers should almost always be used. Hard coding positions
+and sizes is usually not appropriate.
+<p>Most common layouts:
+</p><ul>
+<li>
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/awt/GridBagLayout.html">GridBagLayout</a></code>
+- excellent when many components involved</li>
+
+<li>
+<code><a href="https://docs.oracle.com/javase/10/docs/api/javax/swing/BoxLayout.html">BoxLayout</a></code>
+(and associated <code>Box</code> class) - "glue" and "struts" (defined in <code><a href="https://docs.oracle.com/javase/10/docs/api/javax/swing/Box.html">Box</a></code>,
+not <code>BoxLayout</code>), combined with proper alignment and equalization
+of sizes, produce results pleasing to the eye</li>
+
+<li>
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/awt/BorderLayout.html">BorderLayout</a></code>
+- often suitable for a top level container</li>
+</ul>
+Least common layouts:
+<ul>
+<li>
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/awt/FlowLayout.html">FlowLayout</a></code>
+- items can appear on different rows, according to size of container</li>
+
+<li>
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/awt/GridLayout.html">GridLayout</a></code>
+- forces all components to be the same size</li>
+
+<li>
+<code><a href="https://docs.oracle.com/javase/10/docs/api/javax/swing/SpringLayout.html">SpringLayout</a></code>
+- added in JDK 1.4</li>
+</ul>
+Layout Managers are often mixed together in a single frame or dialog, where
+a top level container has its own Layout Manager (often a <code>BoxLayout</code>
+or <code>BorderLayout</code>), and smaller parts use their own layout, completely
+independent of the others.
+
+<p>Please see the topic on <a href="TopicAction08d2.html?Id=236">JGoodies Forms</a> for an interesting alternative to the standard JDK classes for layouts. 
+
+</p><p><b>Example 1</b>
+</p><p>Here's an example of a dialog box which uses four nested <code>BoxLayout</code>
+objects to arrange its elements. The brightly colored areas group elements
+which share the same <code>BoxLayout</code> :
+</p><p><img SRC="../images/EditPortfolioShowingBoxes.gif" ALT="Highlighted layout managers" BORDER="0" height="242" width="613">
+</p><p><b>Red</b> - (vertical layout) "struts" provide uniform spacing around
+each <code>JButton</code>, while "glue" takes up the remaining extra space
+below the <code>Delete</code> button
+</p><p><b>Blue</b> - (horizontal layout) again, struts provide uniform spacing
+around each <code>JButton</code>, and glue takes up the remaining extra space
+to the left of the <code>OK</code> button.
+</p><p><b>Black</b> - (horizontal layout) contains the <code>JTable</code> and
+the <code>Add-Change-Delete</code> buttons
+</p><p><b>Yellow</b> - (vertical layout) the top level container for Black
+and Blue
+</p><p>Yellow and Blue form a <a href="TopicAction7910.html?Id=150">standardized dialog</a>,
+in which top level layout and the <code>OK</code>, <code>Cancel</code> buttons
+are defined by an abstract base class. Concrete subclasses define both
+the contents of Black and the action taken by the <code>OK</code> button.
+</p><p>The sizing and alignment of <code>JButton</code> objects in <code>BoxLayout</code>
+is not automatic, unfortunately. See <a href="TopicAction2994.html?Id=152">Common utility
+tasks</a> for these related utility methods :
+</p><ul>
+<li>
+<code>getCommandRow</code></li>
+
+<li>
+<code>getCommandColumn</code></li>
+
+<li>
+<code>equalizeSizes</code></li>
+
+<li>
+<code>alignAllX</code>, <code>alignAllY</code></li>
+</ul>
+<b>Example 2</b>
+<p>Here's a typical data entry dialog :
+</p><p><img SRC="../images/ChangeStockShowingBoxes.gif" ALT="Highlighted layout managers" BORDER="0" height="196" width="352">
+</p><p><b>Blue</b> - the standardized command row (same as Example 1)
+</p><p><b>Black</b> - uses <code>GridBagLayout</code>.&nbsp; See <a href="TopicAction2994.html?Id=152">Common
+utility tasks</a> for these utility methods related to <code>GridBagLayout</code>
+and <code>GridBagConstraints</code> :
+</p><ul>
+<li>
+<code>addSimpleEntryField</code> - add a related <code>JLabel</code> and <code>JTextField</code>
+to a <code>GridBagLayout</code></li>
+
+<li>
+<code>addSimpleDisplayField</code> - add a pair of related <code>JLabel</code>
+objects to a <code>GridBagLayout</code></li>
+
+<li>
+<code>getConstraints</code> - a default set of constraints, which can be modified
+as desired</li>
+</ul>
+<b>Yellow</b> - the standardized top level layout (same as Example 1)
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction7910.html?Id=150">Standardized dialogs</a> <br>
+  <a href="TopicAction2994.html?Id=152">Swing utility tasks</a> <br>
+  <a href="TopicAction08d2.html?Id=236">Consider JGoodies Forms for layouts</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=166 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:46 GMT -->
+</html>

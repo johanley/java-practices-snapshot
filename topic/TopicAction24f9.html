@@ -1,0 +1,132 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=206 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Prefer UTF 8 in all layers</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Prefer UTF 8 in all layers</div>
+
+<br>If an application displays text with strange, unexpected characters,
+the likely cause is an incorrect character encoding.
+
+<p>Character encodings control how tools translate raw bytes into text.
+The best default character encoding is likely UTF-8. It can represent characters
+in almost all languages, and in an efficient manner. So, it seems to make
+sense to adopt UTF-8 as an excellent default character encoding.
+The W3C itself <a href="https://www.w3.org/International/questions/qa-choosing-encodings">recommends</a> such a practice.
+
+</p><p>Simple ASCII encoding should usually be avoided, since it's so limited.
+As well, the default encoding used by the Servlet specification is ISO-8859-1,
+which is restricted to West European languages.
+
+</p><p>In a web application, character encodings are used in three separate
+areas - the browser, the server, and the database. <b>To work together correctly,
+the same character encoding must be used in each of these areas</b>. See this
+<a href="http://www.oracle.com/technetwork/articles/javase/httpcharset-142283.html?">excellent
+article</a> by John O'Connor for further discussion.
+
+</p><p><b>Browser</b>
+<br>The browser uses an encoding to present text to the user, and to send requests (often with parameters)
+to the server. The request parameter encoding will be the same as the page
+encoding, unless instructed otherwise. A JSP can instruct the browser on
+the desired encoding by using a <code>page</code> directive, such as:
+</p><p><code>&lt;%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"
+%&gt;</code>
+
+</p><p>META tags may be used instead:</p>
+<p>
+<code>&lt;meta charset="UTF-8"&gt;</code><br>
+<code>&lt;meta http-equiv="Content-Type"&nbsp; content="text/html; charset=UTF-8"&gt;</code>
+
+</p><p>As usual, such a policy should be defined in one place, if possible
+(for example, in a template page).
+
+</p><p><b>Server</b>
+<br>In principle, the browser should respond to the server by including
+the character encoding it has already received from the server. In practice,
+however, browsers do not do a very good job at this. So, even though a
+JSP has indicated the character encoding, it's likely a good practice
+to "reset" the character encoding of the request, using, for example :
+</p><p><code>request.setCharacterEncoding("UTF-8");</code>
+</p><p>A&nbsp;<code>Controller</code> could perform this for every incoming request,
+perhaps using a value configured in&nbsp;<code>web.xml</code>. This method
+must be called early in processing, before any parameter values are retrieved.
+</p><p>For reference, the servlet API has these methods for managing character
+encoding :
+</p><ul>
+<li>
+<code>ServletRequest.<a href="https://docs.oracle.com/javaee/7/api/javax/servlet/ServletRequest.html#getCharacterEncoding--">getCharacterEncoding</a></code></li>
+
+<li>
+<code>ServletRequest.<a href="https://docs.oracle.com/javaee/7/api/javax/servlet/ServletRequest.html#setCharacterEncoding-java.lang.String-">setCharacterEncoding</a></code></li>
+
+<li>
+<code>ServletResponse.<a href="https://docs.oracle.com/javaee/7/api/javax/servlet/ServletResponse.html#setLocale-java.util.Locale-">setLocale</a></code></li>
+
+<li>
+<code>ServletResponse.<a href="https://docs.oracle.com/javaee/7/api/javax/servlet/ServletResponse.html#setContentType-java.lang.String-">setContentType</a></code></li>
+</ul>
+<b>Database</b>
+<br>The database has a character encoding as well. Please consult your
+database documentation for further information.
+
+<p><b>Stated Encoding Must Match Actual Encoding</b>
+<br>It's important to note that such encoding settings don't <em>define</em> the encoding as such, 
+in the sense that they don't define or change how the text is actually represented as bytes. 
+<b>Rather, they act simply as <em>advice</em> to tools, by stating what the encoding is <em>supposed</em> to be.</b> 
+Of course, it's an error to advise a tool that the encoding is <em>X</em> when it's actually <em>Y</em>.
+
+</p><p>A good example of this is the encoding of Java Server Pages. 
+If a JSP is saved as ISO-8859-1, and its <code>page</code> directive states that its encoding is UTF-8, then that's a mistake.
+Such mistakes are very easy to make, since the error is not detected until later, when you see weird characters in your web page. 
+Thus, <b>you need to pay attention to which encoding is in effect when you save such files on your system.</b> 
+Unfortunately, many systems are not set up to use UTF-8 as the default.
+
+<br>
+</p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActionaf43.html?Id=257">Beware of Byte Order Marks</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=206 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

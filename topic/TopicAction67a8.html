@@ -1,0 +1,172 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=258 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Wrapper (Decorator)</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Wrapper (Decorator)</div>
+
+<br>Wrapper (or Decorator) is one of the most important design patterns.
+<p>Wrappers are commonly used in:
+</p><ul> 
+ <li>input-output stream APIs
+ </li><li>servlet filters
+ </li><li>GUI toolkits (when adding scrollbars or other decorations to components, for example)
+</li></ul>
+
+<p>The basic idea of a wrapper is to <em>call-forward</em> to an underlying object, while simultaneously allowing for new code to be 
+executed <em>just before and/or just after</em> the call. 
+Wrappers can be chained together, one after another.
+In this way, you can mix-and-match behaviors in various ways.
+
+</p><p>Note that this changes the behavior of an <em>object</em>, without needing to alter the implementation of a <em>class</em>, 
+and also without needing to <em>extend</em> a class.
+
+</p><p>Here's an example implementation of a wrapper design pattern (other variations are also possible):
+<br></p><pre>
+<span class="keyword">import</span> java.util.function.Function;
+
+<span class="comment">/** 
+ Wrapper (Decorator) design pattern.
+ The core idea here is transforming text: text in, text out. 
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> WrapperDemoFunctional {
+
+  <span class="comment">/** Demo harness. */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args){
+    <span class="comment">//we take a simple trim to be the core operation here:
+</span>    Function&lt;String, String&gt; coreOperation = p -&gt; p.trim();
+    String output = coreOperation.apply(<span class="literal">" blah "</span>);
+    show(output); <span class="comment">// 'blah'
+</span>
+    <span class="comment">//now we can add behaviour to the core operation, by wrapping it 
+</span>    <span class="comment">//in other objects that implement the same (functional) interface
+</span>    Function&lt;String, String&gt; wrappedOperation = <span class="keyword">new</span> Capitalizer(coreOperation);
+    <span class="comment">//notice it does TWO things: trims (core) and capitalizes (wrapper)
+</span>    show(wrappedOperation.apply(<span class="literal">" blah "</span>)); <span class="comment">// 'BLAH'
+</span>
+    <span class="keyword">int</span> MAX_CHARS = <span class="literal">3</span>;
+    wrappedOperation = <span class="keyword">new</span> Chopper(coreOperation, MAX_CHARS);
+    show(wrappedOperation.apply(<span class="literal">" blah "</span>)); <span class="comment">// 'bla'
+</span>    
+    <span class="comment">//you can chain objects together with wild abandon, to implement 
+</span>    <span class="comment">//many glorious variations on behaviour
+</span>    wrappedOperation = <span class="keyword">new</span> Chopper(<span class="keyword">new</span> Capitalizer(coreOperation), MAX_CHARS);
+    show(wrappedOperation.apply(<span class="literal">" blah "</span>)); <span class="comment">// 'BLA'
+</span>  }
+
+  <span class="comment">/** Show the result of the text transformations. */</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> show(String text){
+    String QT = <span class="literal">"'"</span>;
+    System.out.println(QT + text + QT);
+  }
+  
+  <span class="comment">/**
+   This class both implements the interface AND is constructed 
+   with an implementation of the same (functional) interface.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">class</span> BaseWrapper <span class="keyword">implements</span> Function&lt;String, String&gt; {
+    BaseWrapper(Function&lt;String, String&gt; transformer){
+      <span class="keyword">this</span>.transformer = transformer;
+    }
+    <span class="comment">/** Template method, calls 'before' and 'after' methods. */</span>
+    <span class="keyword">@Override</span> <span class="keyword">public</span> String apply(String aText) {
+      String text = before(aText);
+      text = transformer.apply(text); <span class="comment">//call-forward
+</span>      <span class="keyword">return</span> after(text);
+    }
+    <span class="comment">/** This overridable default implementation does nothing.*/</span>
+    String before(String text){
+      <span class="keyword">return</span> text;
+    }
+    <span class="comment">/** This overridable default implementation does nothing.*/</span>
+    String after(String text){
+      <span class="keyword">return</span> text;
+    }
+    <span class="keyword">private</span> Function&lt;String, String&gt; transformer;
+  }
+  
+  <span class="comment">/** Capitalize before applying the core operation. */</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">class</span> Capitalizer <span class="keyword">extends</span> BaseWrapper {
+    Capitalizer(Function&lt;String, String&gt; transformer){
+      <span class="keyword">super</span>(transformer);
+    }
+    <span class="keyword">@Override</span> String before(String text) {
+      String result = text;
+       <span class="keyword">if</span> (text != <span class="keyword">null</span>){
+         result = result.toUpperCase();
+       }
+       <span class="keyword">return</span> result;
+    }
+  }
+
+  <span class="comment">/** Limit to N characters after applying the core operation. */</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">class</span> Chopper <span class="keyword">extends</span> BaseWrapper {
+    Chopper(Function&lt;String, String&gt; transformer, <span class="keyword">int</span> limit){
+      <span class="keyword">super</span>(transformer);
+      <span class="keyword">this</span>.limit = limit;
+    }
+    <span class="keyword">@Override</span> String after(String text) {
+      String result = text;
+       <span class="keyword">if</span> (text != <span class="keyword">null</span>){
+         result = result.substring(<span class="literal">0</span>, limit);
+       }
+       <span class="keyword">return</span> result;
+    }
+    <span class="keyword">private</span> <span class="keyword">int</span> limit;
+  }
+} 
+</pre>
+
+The output of this class is:
+<pre>'blah'
+'BLAH'
+'bla'
+'BLA'</pre>
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActione01b.html?Id=164">Template method</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=258 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

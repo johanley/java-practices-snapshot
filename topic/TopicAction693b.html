@@ -1,0 +1,212 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=43 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="resources,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Recovering resources</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Recovering resources</div>
+
+<br>Expensive resources should be reclaimed as soon as possible, by an
+explict call to a clean-up method defined for this purpose. If this is
+not done, then system performance can degrade.
+In the worst cases, the system can even fail entirely.
+
+<p>Resources include:
+</p><ul>
+<li>input-output streams</li>
+<li>database result sets, statements, and connections</li>
+<li>threads</li>
+<li>graphic resources</li>
+<li>sockets</li>
+</ul>
+Resources which are created locally within a method must be cleaned up
+within the same method, by calling a method appropriate to the resource
+itself, such as <code>close</code> or <code>dispose</code>. (The exact name of the method
+is arbitrary, but it usually has those conventional names.)
+
+This is usually done automatically, using the 
+<a href="http://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html">try-with-resources</a> 
+feature, added in JDK 7.
+
+<p>If try-with-resources isn't available, then you need to clean up resources explicitly, by calling a clean-up 
+method in a <code>finally</code> clause. 
+
+</p><p>For the case of a resource which is a <i>field</i>, however, there's more work to do:
+</p><ul>
+<li>
+implement a clean-up method which the user must call when finished with
+the object, with a name such as <code>close</code> or <code>dispose</code></li>
+
+<li>
+the caller should be able to query an object to see if its clean-up method
+has been executed</li>
+
+<li>
+non-<code>private</code> methods (other than the clean-up method itself) should
+throw an <code>IllegalStateException</code> if the clean-up method has already
+been invoked</li>
+
+<li>
+as a safety net, implement <code>finalize</code> to call the clean-up method
+as well; if the user of the class neglects to call the clean-up method,
+then this may allow recovery of the resource by the system</li>
+
+<li>
+<a href="TopicAction691e.html?Id=24">never rely</a> solely on <code>finalize</code></li>
+</ul>
+This example shows a class which retains a database connection during its
+lifetime. (This example is artificial. Actually writing such a class would not seem necessary in practice, 
+since connection pools already perform such clean-up in the background. 
+It's used merely to demonstrate the ideas mentioned above.)
+<br><pre>
+<span class="keyword">import</span> java.sql.*;
+
+<span class="comment">/**
+* This class has an enforced life cycle: after destroy is
+* called, no useful method can be called on this object
+* without throwing an IllegalStateException.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> DbConnection {
+
+  <span class="keyword">public</span> DbConnection () {
+    <span class="comment">//build a connection and assign it to a field
+</span>    <span class="comment">//elided.. fConnection = ConnectionPool.getInstance().getConnection();
+</span>  }
+
+  <span class="comment">/**
+  * Ensure the resources of this object are cleaned up in an orderly manner.
+  *
+  * The user of this class must call destroy when finished with
+  * the object. Calling destroy a second time is permitted, but is
+  * a no-operation.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">void</span> destroy() <span class="keyword">throws</span> SQLException {
+    <span class="keyword">if</span> (isDestroyed) {
+       <span class="keyword">return</span>;
+    }
+    <span class="keyword">else</span>{
+      <span class="keyword">if</span> (connection != <span class="keyword">null</span>) connection.close();
+      connection = <span class="keyword">null</span>;
+      <span class="comment">//flag that destory has been called, and that
+</span>      <span class="comment">//no further calls on this object are valid
+</span>      isDestroyed = <span class="keyword">true</span>;
+    }
+  }
+
+  <span class="comment">/**
+  * Fetches something from the db.
+  *
+  * This is an example of a non-private method which must ensure that
+  * &lt;code&gt;destroy&lt;/code&gt; has not yet been called
+  * before proceeding with execution.
+  */</span>
+  <span class="keyword">synchronized</span> <span class="keyword">public</span> Object fetchBlah(String id) <span class="keyword">throws</span> SQLException {
+    validatePlaceInLifeCycle();
+    <span class="comment">//..elided
+</span>    <span class="keyword">return</span> <span class="keyword">null</span>;
+  }
+
+  <span class="comment">/**
+  * If the user fails to call &lt;code&gt;destroy&lt;/code&gt;, then implementing
+  * finalize will act as a safety net, but this is not foolproof.
+  */</span>
+  <span class="keyword">protected</span> <span class="keyword">void</span> finalize() <span class="keyword">throws</span> Throwable{
+    <span class="keyword">try</span>{
+      destroy();
+    }
+    <span class="keyword">finally</span>{
+      <span class="keyword">super</span>.finalize();
+    }
+  }
+
+  <span class="comment">/**
+  * Allow the user to determine if &lt;code&gt;destroy&lt;/code&gt; has been called.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">boolean</span> isDestoyed() {
+    <span class="keyword">return</span> isDestroyed;
+  }
+
+  <span class="comment">// PRIVATE
+</span>
+  <span class="comment">/**
+  * Connection which is constructed and managed by this object.
+  * The user of this class must call destroy in order to release this
+  * Connection resource.
+  */</span>
+  <span class="keyword">private</span> Connection connection;
+
+  <span class="comment">/**
+  * This object has a specific "life cycle", such that methods must be called
+  * in the order: others + destroy. isDestroyed keeps track of the lifecycle,
+  * and non-private methods must check this value at the start of execution.
+  * If destroy is called more than once, a no-operation occurs.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">boolean</span> isDestroyed;
+
+  <span class="comment">/**
+  * Once &lt;code&gt;destroy&lt;/code&gt; has been called, the services of this class
+  * are no longer available.
+  *
+  * @throws IllegalStateException if &lt;code&gt;destroy&lt;/code&gt; has
+  * already been called.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">void</span> validatePlaceInLifeCycle(){
+    <span class="keyword">if</span> (isDestroyed) {
+      String message = <span class="literal">"Method cannot be called after destroy has been called."</span>;
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(message);
+    }
+  }
+} 
+</pre>
+
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActiona0d7.html?Id=8">Always close streams</a> <br>
+  <a href="TopicAction691e.html?Id=24">Never rely on finalize</a> <br>
+  <a href="TopicActione028.html?Id=25">Finally and catch</a> <br>
+  <a href="TopicAction799b.html?Id=127">Get database connection</a> <br>
+  <a href="TopicActionbbc4.html?Id=250">Always shut down an ExecutorService</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=43 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

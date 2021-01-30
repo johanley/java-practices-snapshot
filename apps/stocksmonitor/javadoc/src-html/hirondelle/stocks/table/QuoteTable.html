@@ -1,0 +1,287 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/table/QuoteTable.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:38 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+QuoteTable.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.stocks.table;<a name=line.1></a>
+<a name=line.2></a>
+<span class='keyword'>import</span> java.util.*;<a name=line.3></a>
+<span class='keyword'>import</span> javax.swing.*;<a name=line.4></a>
+<span class='keyword'>import</span> javax.swing.table.*;<a name=line.5></a>
+<span class='keyword'>import</span> java.beans.*;<a name=line.6></a>
+<a name=line.7></a>
+<span class='keyword'>import</span> hirondelle.stocks.quotes.Quote;<a name=line.8></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Args;<a name=line.9></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.ui.UiUtil;<a name=line.10></a>
+<span class='keyword'>import</span> hirondelle.stocks.preferences.QuoteTablePreferencesEditor;<a name=line.11></a>
+<a name=line.12></a>
+<span class='comment'>/**<a name=line.13></a>
+* Graphical component which displays the latest quote information for the <a name=line.14></a>
+* {@link hirondelle.stocks.portfolio.CurrentPortfolio}.<a name=line.15></a>
+*<a name=line.16></a>
+*&lt;P&gt; Listens to a {@link QuoteFilterFactory} and to a <a name=line.17></a>
+* {@link QuoteTablePreferencesEditor}, for updates on how to display <a name=line.18></a>
+* its information.<a name=line.19></a>
+*<a name=line.20></a>
+* &lt;P&gt; The sort of the table is altered by the user by clicking on column headers.<a name=line.21></a>
+*/</span><a name=line.22></a>
+<span class='keyword'>public</span> <span class='keyword'>final</span> <span class='keyword'>class</span> QuoteTable <span class='keyword'>extends</span> JScrollPane <a name=line.23></a>
+  <span class='keyword'>implements</span> PropertyChangeListener, Observer {<a name=line.24></a>
+<a name=line.25></a>
+  <span class='comment'>/**<a name=line.26></a>
+  * Constructor.<a name=line.27></a>
+  *  <a name=line.28></a>
+  * @param aTablePrefsEditor observed by this class to fetch and update <a name=line.29></a>
+  * user preferences for the display of this component.<a name=line.30></a>
+  * @param aQuoteFilterFactory observed by this class to fetch the <a name=line.31></a>
+  * {@link QuoteFilter} to be applied to this component's data.<a name=line.32></a>
+  */</span><a name=line.33></a>
+  <span class='keyword'>public</span> QuoteTable(<a name=line.34></a>
+    QuoteTablePreferencesEditor aTablePrefsEditor, <a name=line.35></a>
+    QuoteFilterFactory aQuoteFilterFactory<a name=line.36></a>
+  ){<a name=line.37></a>
+    fTablePrefsEditor = aTablePrefsEditor;<a name=line.38></a>
+    fTablePrefsEditor.addObserver(<span class='keyword'>this</span>);<a name=line.39></a>
+    fQuoteFilterFactory = aQuoteFilterFactory;<a name=line.40></a>
+    fQuoteFilterFactory.addPropertyChangeListener(<span class='keyword'>this</span>);<a name=line.41></a>
+    fModel = <span class='keyword'>new</span> QuoteTableModel();<a name=line.42></a>
+    fTable = <span class='keyword'>new</span> JTable(fModel);<a name=line.43></a>
+    fTableSortIndicator = <span class='keyword'>new</span> TableSortIndicator(fTable, UP_ICON, DOWN_ICON);<a name=line.44></a>
+    fTableSortIndicator.addObserver(<span class='keyword'>this</span>);<span class='comment'>//bad practice; 'this' not yet constructed<a name=line.45></a>
+</span>    initGui();<a name=line.46></a>
+  }<a name=line.47></a>
+  <a name=line.48></a>
+  <span class='comment'>/**<a name=line.49></a>
+  * Update display of this table using new {@link Quote} <a name=line.50></a>
+  * objects.<a name=line.51></a>
+  */</span><a name=line.52></a>
+  <span class='keyword'>public</span> <span class='keyword'>void</span> setQuoteTable(List&lt;Quote&gt; aQuotes) {<a name=line.53></a>
+    fModel.setQuoteTable(aQuotes);<a name=line.54></a>
+  }<a name=line.55></a>
+ <a name=line.56></a>
+  <span class='comment'>/**<a name=line.57></a>
+  * Update the display of this table, not using new underlying data, but using <a name=line.58></a>
+  * new preferences for its display.<a name=line.59></a>
+  *<a name=line.60></a>
+  *&lt;P&gt; Listens to the {@link QuoteTablePreferencesEditor}<a name=line.61></a>
+  * passed to the constructor. <a name=line.62></a>
+  *<a name=line.63></a>
+  * &lt;P&gt;(Sort is special since it may be updated both by clicking on the column<a name=line.64></a>
+  * headers, or by setting a preference.)<a name=line.65></a>
+  */</span><a name=line.66></a>
+  <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> update(Observable aObservable, Object aData) {<a name=line.67></a>
+    <span class='keyword'>if</span> ( aObservable == fTablePrefsEditor ) {<a name=line.68></a>
+      synchWithPrefs();<a name=line.69></a>
+    } <a name=line.70></a>
+    <span class='keyword'>else</span> <span class='keyword'>if</span> ( aObservable == fTableSortIndicator ) {<a name=line.71></a>
+      fModel.filterAndSortQuotes();<a name=line.72></a>
+    }<a name=line.73></a>
+    <span class='keyword'>else</span> {<a name=line.74></a>
+      <span class='keyword'>throw</span> <span class='keyword'>new</span> AssertionError(<span class='literal'>"Unknown observable: "</span> + aObservable);<a name=line.75></a>
+    }<a name=line.76></a>
+  }<a name=line.77></a>
+<a name=line.78></a>
+  <span class='comment'>/**<a name=line.79></a>
+  * Update the view in response to the selection by the end user of a new <a name=line.80></a>
+  * {@link QuoteFilter} for filtering displayed items.<a name=line.81></a>
+  *<a name=line.82></a>
+  * &lt;P&gt;Listens to the &lt;tt&gt;QuoteFilterFactory&lt;/tt&gt; passed to the constructor.<a name=line.83></a>
+  */</span><a name=line.84></a>
+  <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> propertyChange(PropertyChangeEvent event) {<a name=line.85></a>
+    fModel.filterAndSortQuotes();<a name=line.86></a>
+  }<a name=line.87></a>
+  <a name=line.88></a>
+  <span class='comment'>// PRIVATE <a name=line.89></a>
+</span>  <a name=line.90></a>
+  <span class='keyword'>private</span> QuoteTablePreferencesEditor fTablePrefsEditor;<a name=line.91></a>
+  <span class='keyword'>private</span> QuoteFilterFactory fQuoteFilterFactory;<a name=line.92></a>
+  <span class='keyword'>private</span> JTable fTable;<a name=line.93></a>
+  <span class='keyword'>private</span> QuoteTableModel fModel;<a name=line.94></a>
+  <a name=line.95></a>
+  <span class='comment'>/**<a name=line.96></a>
+  * Allows user to select a different sort for the quotes, and provides a visual <a name=line.97></a>
+  * indicator of the current sort.<a name=line.98></a>
+  */</span>  <a name=line.99></a>
+  <span class='keyword'>private</span> TableSortIndicator fTableSortIndicator;<a name=line.100></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> ImageIcon UP_ICON =<a name=line.101></a>
+    UiUtil.getImageIcon(<span class='literal'>"/toolbarButtonGraphics/navigation/Up"</span>)<a name=line.102></a>
+  ;<a name=line.103></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> ImageIcon DOWN_ICON =<a name=line.104></a>
+    UiUtil.getImageIcon(<span class='literal'>"/toolbarButtonGraphics/navigation/Down"</span>)<a name=line.105></a>
+  ;<a name=line.106></a>
+  <a name=line.107></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> initGui(){<a name=line.108></a>
+    fTable.getTableHeader().setReorderingAllowed(<span class='keyword'>false</span>);<a name=line.109></a>
+    fTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);<a name=line.110></a>
+    synchWithPrefs();<a name=line.111></a>
+    setViewportView( fTable );<a name=line.112></a>
+  }<a name=line.113></a>
+  <a name=line.114></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> synchWithPrefs(){  <a name=line.115></a>
+    fTable.setShowHorizontalLines( fTablePrefsEditor.hasHorizontalLines() );<a name=line.116></a>
+    fTable.setShowVerticalLines ( fTablePrefsEditor.hasVerticalLines() );<a name=line.117></a>
+    fTable.setRowHeight( fTablePrefsEditor.getRowHeight() );<a name=line.118></a>
+    fModel.setColumnMapping( <span class='keyword'>new</span> ArrayList(fTablePrefsEditor.getColumnOrder()) );<a name=line.119></a>
+    synchWithTableRendererPrefs();<a name=line.120></a>
+    <span class='keyword'>int</span> sortIdx = fModel.fColumnMapping.indexOf( fTablePrefsEditor.getSortField() );<a name=line.121></a>
+    fTableSortIndicator.setSortBy( <span class='keyword'>new</span> SortBy(SortOrder.DESCENDING, sortIdx) ) ;<a name=line.122></a>
+  }<a name=line.123></a>
+  <a name=line.124></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> synchWithTableRendererPrefs(){<a name=line.125></a>
+    <span class='keyword'>for</span> (<span class='keyword'>int</span> idx = <span class='literal'>0</span>; idx &lt; fTable.getColumnCount(); ++idx) {<a name=line.126></a>
+      String colName = fTable.getColumnName(idx);<a name=line.127></a>
+      QuoteField field = QuoteField.valueFrom(colName);<a name=line.128></a>
+      <span class='keyword'>if</span> ( <a name=line.129></a>
+        field == QuoteField.Change || <a name=line.130></a>
+        field == QuoteField.PercentChange || <a name=line.131></a>
+        field == QuoteField.Profit ||<a name=line.132></a>
+        field == QuoteField.PercentProfit<a name=line.133></a>
+      ) {<a name=line.134></a>
+        fTable.getColumnModel().getColumn(idx).setCellRenderer(<span class='keyword'>new</span> RenderRedGreen());<a name=line.135></a>
+      }<a name=line.136></a>
+      <span class='keyword'>else</span> <span class='keyword'>if</span> ( field == QuoteField.Price ) {<a name=line.137></a>
+        fTable.getColumnModel().getColumn(idx).setCellRenderer(<span class='keyword'>new</span> RenderPrice());<a name=line.138></a>
+      }<a name=line.139></a>
+      <span class='keyword'>else</span> <span class='keyword'>if</span> ( field == QuoteField.Stock ){<a name=line.140></a>
+        fTable.getColumnModel().getColumn(idx).setCellRenderer(<span class='keyword'>new</span> RenderStockName());<a name=line.141></a>
+      }<a name=line.142></a>
+    }<a name=line.143></a>
+  }<a name=line.144></a>
+<a name=line.145></a>
+  <span class='comment'>// TABLE MODEL <a name=line.146></a>
+</span>  <span class='keyword'>private</span> <span class='keyword'>final</span> <span class='keyword'>class</span> QuoteTableModel <span class='keyword'>extends</span> AbstractTableModel {<a name=line.147></a>
+    QuoteTableModel(){<a name=line.148></a>
+      setColumnMapping(<span class='keyword'>new</span> ArrayList(fTablePrefsEditor.getColumnOrder()));<a name=line.149></a>
+      <span class='comment'>//needed for startup: fQuoteTable can never be null, or the <a name=line.150></a>
+</span>      <span class='comment'>//rendering of the table will throw NPE.<a name=line.151></a>
+</span>      fQuoteTable =  Collections.emptyList();<a name=line.152></a>
+      fFilteredSortedQuoteTable = Collections.emptyList();<a name=line.153></a>
+    }<a name=line.154></a>
+    <span class='comment'>/**<a name=line.155></a>
+    * @param aColumnMapping is a list of {@link QuoteField} <a name=line.156></a>
+    * objects, the order of which defines the presentation order of columns.<a name=line.157></a>
+    */</span><a name=line.158></a>
+    <span class='keyword'>void</span> setColumnMapping(List&lt;QuoteField&gt; aColumnMapping ){<a name=line.159></a>
+      <span class='keyword'>if</span> (aColumnMapping == <span class='keyword'>null</span> || aColumnMapping.size() != QuoteField.values().length ){<a name=line.160></a>
+        <span class='keyword'>throw</span> <span class='keyword'>new</span> IllegalArgumentException( <span class='literal'>"Column mapping null or of unexpected size."</span>);<a name=line.161></a>
+      }<a name=line.162></a>
+      fColumnMapping = Collections.unmodifiableList(aColumnMapping);<a name=line.163></a>
+      fireTableStructureChanged();<a name=line.164></a>
+    }<a name=line.165></a>
+    <span class='comment'>/**<a name=line.166></a>
+    * Set the quotes which are to be displayed to the user. <a name=line.167></a>
+    */</span><a name=line.168></a>
+    <span class='keyword'>void</span> setQuoteTable( List&lt;Quote&gt; aQuoteTable ){<a name=line.169></a>
+      Args.checkForNull(aQuoteTable);<a name=line.170></a>
+      fQuoteTable = Collections.unmodifiableList(aQuoteTable);<a name=line.171></a>
+      filterAndSortQuotes();<a name=line.172></a>
+    }<a name=line.173></a>
+    <span class='keyword'>@Override</span> <span class='keyword'>public</span> String getColumnName(<span class='keyword'>int</span> aColumnIdx) { <a name=line.174></a>
+      <span class='keyword'>return</span> getField(aColumnIdx).toString();<a name=line.175></a>
+    }<a name=line.176></a>
+    <span class='keyword'>@Override</span> <span class='keyword'>public</span> Class&lt;?&gt; getColumnClass(<span class='keyword'>int</span> aColumnIdx) {<a name=line.177></a>
+      Object value = getValueAt(<span class='literal'>0</span>, aColumnIdx);<a name=line.178></a>
+      <span class='keyword'>return</span> value.getClass();<a name=line.179></a>
+    }<a name=line.180></a>
+    <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>int</span> getColumnCount() {<a name=line.181></a>
+      <span class='keyword'>return</span> fColumnMapping.size();<a name=line.182></a>
+    }  <a name=line.183></a>
+    <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>int</span> getRowCount() {<a name=line.184></a>
+      <span class='keyword'>return</span> fFilteredSortedQuoteTable.size();<a name=line.185></a>
+    }<a name=line.186></a>
+    <span class='keyword'>@Override</span> <span class='keyword'>public</span> Object getValueAt(<span class='keyword'>int</span> aRowIdx, <span class='keyword'>int</span> aColumnIdx) {<a name=line.187></a>
+      <span class='keyword'>if</span> (aRowIdx &lt; <span class='literal'>0</span> || aRowIdx &gt; getRowCount()-<span class='literal'>1</span>) {<a name=line.188></a>
+        <span class='keyword'>throw</span> <span class='keyword'>new</span> IllegalArgumentException(<span class='literal'>"Row index is out of range: "</span> + aRowIdx);<a name=line.189></a>
+      }<a name=line.190></a>
+      <span class='keyword'>if</span> (aColumnIdx &lt; <span class='literal'>0</span> || aColumnIdx &gt; getColumnCount()-<span class='literal'>1</span>) {<a name=line.191></a>
+        <span class='keyword'>throw</span> <span class='keyword'>new</span> IllegalArgumentException(<span class='literal'>"Column index is out of range: "</span> + aColumnIdx);<a name=line.192></a>
+      }<a name=line.193></a>
+      Quote quote = (Quote)fFilteredSortedQuoteTable.get(aRowIdx);<a name=line.194></a>
+      <span class='comment'>//decide which field to grab based on configured mapping<a name=line.195></a>
+</span>      QuoteField field = getField(aColumnIdx);<a name=line.196></a>
+      <span class='keyword'>return</span> getFieldValue( quote, field );<a name=line.197></a>
+    }<a name=line.198></a>
+<a name=line.199></a>
+    <span class='comment'>// PRIVATE<a name=line.200></a>
+</span><a name=line.201></a>
+    <span class='comment'>/**<a name=line.202></a>
+    * List containing {@link Quote} objects.<a name=line.203></a>
+    *<a name=line.204></a>
+    *&lt;p&gt;It is not compulsory that all items in &lt;tt&gt;fQuoteTable&lt;/tt&gt; be displayed; <a name=line.205></a>
+    * if the the user has selected a particular filter, then only a portion of <a name=line.206></a>
+    * &lt;tt&gt;fQuoteTable&lt;/tt&gt; will be displayed. <a name=line.207></a>
+    */</span><a name=line.208></a>
+    <span class='keyword'>private</span> List&lt;Quote&gt; fQuoteTable;<a name=line.209></a>
+<a name=line.210></a>
+    <span class='comment'>/**<a name=line.211></a>
+    * The elements of &lt;tt&gt;fQuoteTable&lt;/tt&gt; which the user wishes to display, and in <a name=line.212></a>
+    * the desired order.<a name=line.213></a>
+    */</span><a name=line.214></a>
+    <span class='keyword'>private</span> List&lt;Quote&gt; fFilteredSortedQuoteTable;<a name=line.215></a>
+<a name=line.216></a>
+    <span class='comment'>/**<a name=line.217></a>
+    * A list of {@link QuoteField} <a name=line.218></a>
+    * objects, the order of which defines the presentation order of columns.<a name=line.219></a>
+    */</span><a name=line.220></a>
+    <span class='keyword'>private</span> List&lt;QuoteField&gt; fColumnMapping;<a name=line.221></a>
+<a name=line.222></a>
+    <span class='keyword'>private</span> <span class='keyword'>void</span> filterAndSortQuotes(){<a name=line.223></a>
+      fFilteredSortedQuoteTable = fQuoteFilterFactory.getSelectedFilter().sift(fQuoteTable);<a name=line.224></a>
+      Collections.sort(fFilteredSortedQuoteTable, getQuoteSorter());<a name=line.225></a>
+      <span class='keyword'>if</span> (fTableSortIndicator.getSortBy().getOrder() == SortOrder.ASCENDING) {<a name=line.226></a>
+        Collections.reverse(fFilteredSortedQuoteTable);<a name=line.227></a>
+      }<a name=line.228></a>
+      fireTableDataChanged();<a name=line.229></a>
+    }<a name=line.230></a>
+    <a name=line.231></a>
+    <span class='keyword'>private</span> Comparator&lt;Quote&gt; getQuoteSorter(){<a name=line.232></a>
+      SortBy sortBy = fTableSortIndicator.getSortBy();<a name=line.233></a>
+      QuoteField quoteField = fModel.getField( sortBy.getColumn() );<a name=line.234></a>
+      <span class='keyword'>return</span> QuoteSorterFactory.getSorter( quoteField );<a name=line.235></a>
+    }<a name=line.236></a>
+    <a name=line.237></a>
+    <span class='keyword'>private</span> QuoteField getField( <span class='keyword'>int</span> aColumnIdx ){<a name=line.238></a>
+      <span class='keyword'>return</span> (QuoteField)fColumnMapping.get(aColumnIdx);<a name=line.239></a>
+    }<a name=line.240></a>
+<a name=line.241></a>
+    <span class='keyword'>private</span> Object getFieldValue(Quote aQuote, QuoteField aField) {<a name=line.242></a>
+      Object result = <span class='keyword'>null</span>;<a name=line.243></a>
+      <span class='keyword'>if</span> ( aField == QuoteField.Stock ){<a name=line.244></a>
+        <span class='comment'>//If default renderer used, then Object.toString generates the cell value.<a name=line.245></a>
+</span>        <span class='comment'>//If StockNameRenderer is used, then Stock.getName and Stock.getTicker are <a name=line.246></a>
+</span>        <span class='comment'>//both used, in the cell value and tooltip.<a name=line.247></a>
+</span>        result = aQuote.getStock();<a name=line.248></a>
+      }<a name=line.249></a>
+      <span class='keyword'>else</span> <span class='keyword'>if</span> (aField == QuoteField.Price)  {<a name=line.250></a>
+        result = aQuote.getPrice(); <a name=line.251></a>
+      }<a name=line.252></a>
+      <span class='keyword'>else</span> <span class='keyword'>if</span> (aField == QuoteField.Change)  {<a name=line.253></a>
+        result = aQuote.getChange(); <a name=line.254></a>
+      }<a name=line.255></a>
+      <span class='keyword'>else</span> <span class='keyword'>if</span> (aField == QuoteField.PercentChange)  {<a name=line.256></a>
+        result = aQuote.getPercentChange();<a name=line.257></a>
+      }<a name=line.258></a>
+      <span class='keyword'>else</span> <span class='keyword'>if</span> (aField == QuoteField.Profit) {<a name=line.259></a>
+        result = aQuote.getProfit();<a name=line.260></a>
+      }<a name=line.261></a>
+      <span class='keyword'>else</span> <span class='keyword'>if</span> (aField == QuoteField.PercentProfit) {<a name=line.262></a>
+        result = aQuote.getPercentProfit();<a name=line.263></a>
+      }<a name=line.264></a>
+      <span class='keyword'>else</span> {<a name=line.265></a>
+        <span class='keyword'>throw</span> <span class='keyword'>new</span> AssertionError(<span class='literal'>"Unknown field: "</span> + aField);<a name=line.266></a>
+      }<a name=line.267></a>
+      <span class='keyword'>return</span> result;<a name=line.268></a>
+    }<a name=line.269></a>
+  }  <a name=line.270></a>
+}<a name=line.271></a>
+ <a name=line.272></a>
+</PRE><a name=line.273></a>
+ </BODY><a name=line.274></a>
+<HTML><a name=line.275></a>

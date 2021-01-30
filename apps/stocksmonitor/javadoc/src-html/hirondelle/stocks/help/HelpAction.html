@@ -1,0 +1,125 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/help/HelpAction.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:37 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+HelpAction.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.stocks.help;<a name=line.1></a>
+<a name=line.2></a>
+<span class='keyword'>import</span> java.awt.event.*;<a name=line.3></a>
+<span class='keyword'>import</span> javax.swing.*;<a name=line.4></a>
+<span class='keyword'>import</span> java.util.logging.*;<a name=line.5></a>
+<span class='keyword'>import</span> javax.help.*;<a name=line.6></a>
+<span class='keyword'>import</span> java.net.URL;<a name=line.7></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Args;<a name=line.8></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Util;<a name=line.9></a>
+<a name=line.10></a>
+<span class='comment'>/**<a name=line.11></a>
+* Display the help system for the application.<a name=line.12></a>
+*<a name=line.13></a>
+* &lt;P&gt;Display one of table of contents, index, or search tab, according <a name=line.14></a>
+* to argument passed to the constructor. This implementation uses <a name=line.15></a>
+* Sun's &lt;a href=http://java.sun.com/products/javahelp/&gt;JavaHelp&lt;/a&gt; tool.<a name=line.16></a>
+*<a name=line.17></a>
+* &lt;P&gt;This action activates the Help key (often &lt;tt&gt;F1&lt;/tt&gt;) for this application. <a name=line.18></a>
+* When the help key is pressed, the help system's table of contents is displayed.<a name=line.19></a>
+*<a name=line.20></a>
+* &lt;P&gt;This action is unusual in that it corresponds to more than one menu item <a name=line.21></a>
+* (Contents, Index, and Search).<a name=line.22></a>
+*<a name=line.23></a>
+* &lt;P&gt;Note: the displayed JavaHelp screen is not centered; it's left as is, <a name=line.24></a>
+* since the JavaHelp GUI is often cut off at the bottom anyway, and centering would <a name=line.25></a>
+* make this problem worse.<a name=line.26></a>
+*/</span><a name=line.27></a>
+<span class='keyword'>public</span> <span class='keyword'>final</span> <span class='keyword'>class</span> HelpAction <span class='keyword'>extends</span> AbstractAction {<a name=line.28></a>
+<a name=line.29></a>
+  <span class='comment'>/**<a name=line.30></a>
+  * Constructor.<a name=line.31></a>
+  *  <a name=line.32></a>
+  * @param aFrame parent window to which the help window is attached<a name=line.33></a>
+  * @param aText name of the menu item for this help action<a name=line.34></a>
+  * @param aMnemonicKeyEvent mnemonic for &lt;tt&gt;aText&lt;/tt&gt;<a name=line.35></a>
+  * @param aIcon possibly-null graphic to be displayed alongside the text, or <a name=line.36></a>
+  * in a toolbar<a name=line.37></a>
+  * @param aView determines which help window is to be displayed: Contents, Index, <a name=line.38></a>
+  * or Search<a name=line.39></a>
+  */</span><a name=line.40></a>
+  <span class='keyword'>public</span> HelpAction(<a name=line.41></a>
+    JFrame aFrame, String aText, <span class='keyword'>int</span> aMnemonicKeyEvent, Icon aIcon, View aView<a name=line.42></a>
+  ) {<a name=line.43></a>
+    <span class='keyword'>super</span>(aText, aIcon);<a name=line.44></a>
+    Args.checkForNull(aFrame);<a name=line.45></a>
+    Args.checkForNull(aText);<a name=line.46></a>
+    Args.checkForNull(aView);<a name=line.47></a>
+    fFrame = aFrame;<a name=line.48></a>
+    fView = aView;<a name=line.49></a>
+    putValue(SHORT_DESCRIPTION, <span class='literal'>"StocksMonitor Help"</span>);<a name=line.50></a>
+    putValue(LONG_DESCRIPTION, <span class='literal'>"Displays JavaHelp for StocksMonitor."</span>);<a name=line.51></a>
+    putValue(MNEMONIC_KEY, <span class='keyword'>new</span> Integer(aMnemonicKeyEvent) );    <a name=line.52></a>
+    initHelpSystem(); <a name=line.53></a>
+  }<a name=line.54></a>
+<a name=line.55></a>
+  <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> actionPerformed(ActionEvent event) {<a name=line.56></a>
+    fLogger.info(<span class='literal'>"Showing help system."</span>);<a name=line.57></a>
+    fHelpBroker.setCurrentView( fView.toString() );<a name=line.58></a>
+    fDisplayHelp.actionPerformed( event );<a name=line.59></a>
+  }<a name=line.60></a>
+  <a name=line.61></a>
+  <span class='comment'>/** Enumeration for the style of presentation of the the Help system. */</span><a name=line.62></a>
+  <span class='keyword'>public</span> <span class='keyword'>enum</span> View {<a name=line.63></a>
+    SEARCH(<span class='literal'>"Search"</span>), <a name=line.64></a>
+    CONTENTS(<span class='literal'>"TOC"</span>), <a name=line.65></a>
+    INDEX(<span class='literal'>"Index"</span>);<a name=line.66></a>
+    <span class='keyword'>@Override</span> <span class='keyword'>public</span> String toString(){<a name=line.67></a>
+      <span class='keyword'>return</span> fName;<a name=line.68></a>
+    }<a name=line.69></a>
+    <span class='keyword'>private</span> View(String aName){<a name=line.70></a>
+      fName = aName;<a name=line.71></a>
+    }<a name=line.72></a>
+    <span class='keyword'>private</span> String fName;<a name=line.73></a>
+  } <a name=line.74></a>
+<a name=line.75></a>
+  <span class='comment'>// PRIVATE <a name=line.76></a>
+</span>  <span class='keyword'>private</span> JFrame fFrame;<a name=line.77></a>
+  <span class='keyword'>private</span> View fView;<a name=line.78></a>
+  <span class='comment'>/** Path used by a classloader to find the JavaHelp files. */</span><a name=line.79></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String PATH_TO_JAVA_HELP =<a name=line.80></a>
+    <span class='literal'>"hirondelle/stocks/help/JavaHelp/HelpSet.hs"</span><a name=line.81></a>
+  ;<a name=line.82></a>
+  <span class='keyword'>private</span> ClassLoader DEFAULT_CLASS_LOADER = <span class='keyword'>null</span>;<a name=line.83></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> Logger fLogger = Util.getLogger(HelpAction.<span class='keyword'>class</span>); <a name=line.84></a>
+  <a name=line.85></a>
+  <span class='keyword'>private</span> HelpBroker fHelpBroker;<a name=line.86></a>
+  <span class='keyword'>private</span> CSH.DisplayHelpFromSource fDisplayHelp;<a name=line.87></a>
+  <a name=line.88></a>
+  <span class='comment'>/** Initialize the JavaHelp system. */</span><a name=line.89></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> initHelpSystem(){<a name=line.90></a>
+    <span class='comment'>//optimization to avoid repeated init<a name=line.91></a>
+</span>    <span class='keyword'>if</span> ( fHelpBroker != <span class='keyword'>null</span> &amp;&amp; fDisplayHelp != <span class='keyword'>null</span>) <span class='keyword'>return</span>;<a name=line.92></a>
+    <a name=line.93></a>
+    <span class='comment'>//(uses the classloader mechanism)<a name=line.94></a>
+</span>    ClassLoader loader = <span class='keyword'>this</span>.getClass().getClassLoader();<a name=line.95></a>
+    URL helpSetURL = HelpSet.findHelpSet(loader, PATH_TO_JAVA_HELP);<a name=line.96></a>
+    assert helpSetURL != <span class='keyword'>null</span> : <span class='literal'>"Cannot find help system."</span>;<a name=line.97></a>
+    <span class='keyword'>try</span> {<a name=line.98></a>
+      HelpSet helpSet = <span class='keyword'>new</span> HelpSet(DEFAULT_CLASS_LOADER, helpSetURL);<a name=line.99></a>
+      fHelpBroker = helpSet.createHelpBroker();<a name=line.100></a>
+      fHelpBroker.enableHelpKey( fFrame.getRootPane(), <span class='literal'>"overview"</span>, helpSet );<a name=line.101></a>
+      fDisplayHelp = <span class='keyword'>new</span> CSH.DisplayHelpFromSource(fHelpBroker);<a name=line.102></a>
+    }<a name=line.103></a>
+    <span class='keyword'>catch</span> (HelpSetException ex) {<a name=line.104></a>
+      fLogger.severe(<span class='literal'>"Cannot create help system with: "</span> + helpSetURL);<a name=line.105></a>
+    }<a name=line.106></a>
+    assert fHelpBroker != <span class='keyword'>null</span> : <span class='literal'>"HelpBroker is null."</span>;<a name=line.107></a>
+  }<a name=line.108></a>
+}<a name=line.109></a>
+ <a name=line.110></a>
+</PRE><a name=line.111></a>
+ </BODY><a name=line.112></a>
+<HTML><a name=line.113></a>

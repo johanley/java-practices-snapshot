@@ -1,0 +1,168 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=271 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="delete,directory,tree,recursive,rmdir,symlink,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Delete a directory tree</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Delete a directory tree</div>
+
+<br>
+
+When you delete a directory tree:
+<ul>
+ <li>you're in trouble if you do it incorrectly. It's a dangerous operation. 
+ </li><li>you can't delete a directory that still has files in it. 
+ </li><li>you can't delete items if you have insufficient (file system) permissions to do so.
+ </li><li>you should be aware of how symbolic links are being treated.
+</li></ul>
+
+If the deletion operation <em>follows</em> symbolic links, then the file to which the link points is 
+also deleted, in addition to the link itself. 
+Most of the time, you likely want to avoid that.  
+
+<p><b>Example</b>
+<br></p><pre>
+<span class="keyword">import</span> java.io.File;
+<span class="keyword">import</span> java.io.IOException;
+<span class="keyword">import</span> java.nio.file.FileVisitResult;
+<span class="keyword">import</span> java.nio.file.Files;
+<span class="keyword">import</span> java.nio.file.Path;
+<span class="keyword">import</span> java.nio.file.Paths;
+<span class="keyword">import</span> java.nio.file.SimpleFileVisitor;
+<span class="keyword">import</span> java.nio.file.attribute.BasicFileAttributes;
+<span class="keyword">import</span> java.util.Comparator;
+<span class="keyword">import</span> java.util.Objects;
+<span class="keyword">import</span> java.util.stream.Stream;
+
+<span class="comment">/** 
+ Delete a tree of files.
+ 
+ On Windows, use 'mklink' to create a symlink, if you wish to 
+ test the behaviour.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> RemoveDirTree {
+  
+  <span class="comment">/**
+   Here, 'reverseOrder' is used to replace the natural 
+   sort order of File objects. This avoids the possibility of trying
+   to delete non-empty dir's.
+   @since Java 8 
+  */</span>
+  <span class="keyword">void</span> rmDirWithStreams(Path dir) <span class="keyword">throws</span> IOException {
+    <span class="comment">//Stream&lt;Path&gt; talks to the file-sys: it needs to be closed, so 
+</span>    <span class="comment">//we use a try-with-resources block
+</span>    <span class="comment">//Files.walk(dir, FileVisitOption.FOLLOW_LINKS) // dangerous!
+</span>    <span class="keyword">if</span> (shouldDelete(dir)){
+      <span class="keyword">try</span>(Stream&lt;Path&gt; paths = Files.walk(dir)){
+        paths
+          .map(Path::toFile) <span class="comment">// change to a Stream&lt;File&gt; 
+</span>          .sorted(Comparator.reverseOrder()) <span class="comment">//put dir's last 
+</span>          .forEach(File::delete) <span class="comment">// delete it
+</span>        ;
+      }
+    }
+  }
+  
+  <span class="comment">/** 
+   This style allows for more variations, because the file-walk 
+   mechanism is more fine-grained.
+   
+   If you want to follow symbolic links (more dangerous), use this method: 
+   Files.walkFileTree(
+     Path start, Set&lt;FileVisitOption&gt; opts, int depth, FileVisitor visitor
+   );
+   along with:
+   EnumSet&lt;FileVisitOption&gt; opts = EnumSet.of(FOLLOW_LINKS);
+
+   Ref: https://docs.oracle.com/javase/tutorial/essential/io/walk.html
+   @since Java 7 
+  */</span>
+  <span class="keyword">void</span> rmDirWithFileVisitor(Path dir) <span class="keyword">throws</span> IOException {
+    <span class="keyword">if</span> (shouldDelete(dir)){
+      Files.walkFileTree(dir, <span class="keyword">new</span> SimpleFileVisitor&lt;Path&gt;() {
+        <span class="comment">/** Delete the files in a dir (but not the dir itself). */</span> 
+        <span class="keyword">@Override</span> <span class="keyword">public</span> FileVisitResult visitFile(
+            Path file, BasicFileAttributes attrs
+         ) <span class="keyword">throws</span> IOException {
+            Files.delete(file);
+            <span class="keyword">return</span> FileVisitResult.CONTINUE;
+        }
+        <span class="comment">/** 
+         After all the files in the dir are gone, then delete the dir itself. 
+        */</span>
+        <span class="keyword">@Override</span> <span class="keyword">public</span> FileVisitResult postVisitDirectory(
+          Path dir, IOException exc
+        ) <span class="keyword">throws</span> IOException {
+            Files.delete(dir);
+            <span class="keyword">return</span> FileVisitResult.CONTINUE;
+        }
+      });
+    }
+  }
+  
+  <span class="comment">/** Simple test harness. */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args) <span class="keyword">throws</span> IOException {
+    RemoveDirTree test = <span class="keyword">new</span> RemoveDirTree();
+    String dirToDelete = <span class="literal">"C:\\temp\\testme\\"</span>; <span class="comment">//Careful!
+</span>    <span class="comment">//test.rmDirWithStreams(Paths.get(root));
+</span>    test.rmDirWithFileVisitor(Paths.get(dirToDelete));
+    log(<span class="literal">"Done"</span>);
+  }
+  
+ <span class="keyword">private</span> <span class="keyword">boolean</span> shouldDelete(Path dir){
+    <span class="keyword">return</span> dir.toFile().exists() &amp;&amp; dir.toFile().isDirectory();
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(Object thing) {
+    System.out.println(Objects.toString(thing));
+  }
+} 
+</pre>
+
+
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicActionedb0.html?Id=272">Copy a directory tree</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=271 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:34 GMT -->
+</html>

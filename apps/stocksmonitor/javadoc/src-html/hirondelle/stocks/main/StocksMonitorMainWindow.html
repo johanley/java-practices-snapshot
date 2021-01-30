@@ -1,0 +1,446 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/main/StocksMonitorMainWindow.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:38 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+StocksMonitorMainWindow.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.stocks.main;<a name=line.1></a>
+<a name=line.2></a>
+<span class='keyword'>import</span> hirondelle.stocks.portfolio.CurrentPortfolio;<a name=line.3></a>
+<span class='keyword'>import</span> hirondelle.stocks.portfolio.EditSaver;<a name=line.4></a>
+<span class='keyword'>import</span> hirondelle.stocks.portfolio.PortfolioDAO;<a name=line.5></a>
+<span class='keyword'>import</span> hirondelle.stocks.preferences.GeneralLookPreferencesEditor;<a name=line.6></a>
+<span class='keyword'>import</span> hirondelle.stocks.preferences.LoggingPreferencesEditor;<a name=line.7></a>
+<span class='keyword'>import</span> hirondelle.stocks.preferences.OptionPaneExceptionHandler;<a name=line.8></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Consts;<a name=line.9></a>
+<a name=line.10></a>
+<span class='keyword'>import</span> hirondelle.stocks.file.FileDeleteAction;<a name=line.11></a>
+<span class='keyword'>import</span> hirondelle.stocks.file.FileSaveAction;<a name=line.12></a>
+<span class='keyword'>import</span> hirondelle.stocks.file.FileSaveAsAction;<a name=line.13></a>
+<span class='keyword'>import</span> hirondelle.stocks.file.FileNewAction;<a name=line.14></a>
+<span class='keyword'>import</span> hirondelle.stocks.file.FileCloseAction;<a name=line.15></a>
+<span class='keyword'>import</span> hirondelle.stocks.file.FileOpenAction;<a name=line.16></a>
+<span class='keyword'>import</span> hirondelle.stocks.file.FileExitAction;<a name=line.17></a>
+<span class='keyword'>import</span> hirondelle.stocks.export.ImportAction;<a name=line.18></a>
+<span class='keyword'>import</span> hirondelle.stocks.export.ExportAction;<a name=line.19></a>
+<span class='keyword'>import</span> hirondelle.stocks.quotes.FetchQuotesAction;<a name=line.20></a>
+<span class='keyword'>import</span> hirondelle.stocks.help.HelpAction;<a name=line.21></a>
+<span class='keyword'>import</span> hirondelle.stocks.help.AboutAction;<a name=line.22></a>
+<span class='keyword'>import</span> hirondelle.stocks.portfolio.EditPortfolioAction;<a name=line.23></a>
+<span class='keyword'>import</span> hirondelle.stocks.preferences.EditUserPreferencesAction;<a name=line.24></a>
+<a name=line.25></a>
+<span class='keyword'>import</span> hirondelle.stocks.table.QuoteTable;<a name=line.26></a>
+<span class='keyword'>import</span> hirondelle.stocks.preferences.QuoteTablePreferencesEditor;<a name=line.27></a>
+<span class='keyword'>import</span> hirondelle.stocks.quotes.SummaryView;<a name=line.28></a>
+<span class='keyword'>import</span> hirondelle.stocks.table.QuoteFilterFactory;<a name=line.29></a>
+<a name=line.30></a>
+<span class='keyword'>import</span> java.awt.BorderLayout;<a name=line.31></a>
+<span class='keyword'>import</span> java.awt.Dimension;<a name=line.32></a>
+<span class='keyword'>import</span> java.awt.event.KeyEvent;<a name=line.33></a>
+<span class='keyword'>import</span> java.awt.event.WindowAdapter;<a name=line.34></a>
+<span class='keyword'>import</span> java.awt.event.WindowEvent;<a name=line.35></a>
+<span class='keyword'>import</span> java.util.ArrayList;<a name=line.36></a>
+<span class='keyword'>import</span> java.util.Observable;<a name=line.37></a>
+<span class='keyword'>import</span> java.util.Observer;<a name=line.38></a>
+<span class='keyword'>import</span> java.util.logging.Logger;<a name=line.39></a>
+<a name=line.40></a>
+<span class='keyword'>import</span> javax.swing.Action;<a name=line.41></a>
+<span class='keyword'>import</span> javax.swing.Box;<a name=line.42></a>
+<span class='keyword'>import</span> javax.swing.BoxLayout;<a name=line.43></a>
+<span class='keyword'>import</span> javax.swing.ImageIcon;<a name=line.44></a>
+<span class='keyword'>import</span> javax.swing.JComponent;<a name=line.45></a>
+<span class='keyword'>import</span> javax.swing.JFrame;<a name=line.46></a>
+<span class='keyword'>import</span> javax.swing.JMenu;<a name=line.47></a>
+<span class='keyword'>import</span> javax.swing.JMenuBar;<a name=line.48></a>
+<span class='keyword'>import</span> javax.swing.JPanel;<a name=line.49></a>
+<span class='keyword'>import</span> javax.swing.JSeparator;<a name=line.50></a>
+<span class='keyword'>import</span> javax.swing.JSplitPane;<a name=line.51></a>
+<span class='keyword'>import</span> javax.swing.JToolBar;<a name=line.52></a>
+<span class='keyword'>import</span> javax.swing.SwingUtilities;<a name=line.53></a>
+<span class='keyword'>import</span> javax.swing.UIManager;<a name=line.54></a>
+<span class='keyword'>import</span> javax.swing.UnsupportedLookAndFeelException;<a name=line.55></a>
+<span class='keyword'>import</span> javax.swing.plaf.metal.MetalLookAndFeel;<a name=line.56></a>
+<span class='keyword'>import</span> javax.swing.plaf.metal.MetalTheme;<a name=line.57></a>
+<span class='keyword'>import</span> hirondelle.stocks.preferences.PreferencesEditor;<a name=line.58></a>
+<a name=line.59></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Util;<a name=line.60></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.ui.Theme;<a name=line.61></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.ui.UiConsts;<a name=line.62></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.ui.UiUtil;<a name=line.63></a>
+<a name=line.64></a>
+<span class='comment'>/**<a name=line.65></a>
+ * Main window for this application.<a name=line.66></a>
+ * <a name=line.67></a>
+ * &lt;P&gt;All services of this application are obtained through the GUI presented <a name=line.68></a>
+ * by this class. All other windows are dialogs attached to this class. As such, <a name=line.69></a>
+ * this class uses almost all the other classes in this package, either directly <a name=line.70></a>
+ * or indirectly.<a name=line.71></a>
+ * &lt;P&gt;<a name=line.72></a>
+ * The layout of the window is typical for a simple GUI application :<a name=line.73></a>
+ * &lt;ul&gt;<a name=line.74></a>
+ * &lt;li&gt;menu<a name=line.75></a>
+ * &lt;li&gt;toolbar<a name=line.76></a>
+ * &lt;li&gt;tree on left side (filters the rows of the quotes table)<a name=line.77></a>
+ * &lt;li&gt;table and summary on right side (displays current quote data)<a name=line.78></a>
+ * &lt;/ul&gt;<a name=line.79></a>
+ */</span><a name=line.80></a>
+<span class='keyword'>final</span> <span class='keyword'>class</span> StocksMonitorMainWindow <span class='keyword'>implements</span> Observer {<a name=line.81></a>
+<a name=line.82></a>
+  <span class='comment'>/*<a name=line.83></a>
+   * Implementation Notes: This class uses many other classes in the app, <a name=line.84></a>
+   * and performs a lot of wiring.<a name=line.85></a>
+   *  <a name=line.86></a>
+   * In particular, note how the bulk of the work is delegated to the various <a name=line.87></a>
+   * Action classes. Actions allow the same object to be used in both the <a name=line.88></a>
+   * menu and toolbar. Note that some items are created and used locally, <a name=line.89></a>
+   * while others are stored as fields. The preference is to use a local <a name=line.90></a>
+   * variable if possible, and upgrade to a field only if there's a good reason. <a name=line.91></a>
+   * (This reason is usually being able to reference an item in separate <a name=line.92></a>
+   * methods.) This follows the principle of using the smallest possible scope.<a name=line.93></a>
+   */</span><a name=line.94></a>
+<a name=line.95></a>
+  <span class='comment'>/** Construct this application's main window.  */</span><a name=line.96></a>
+  <span class='keyword'>public</span> StocksMonitorMainWindow() {<a name=line.97></a>
+    <span class='comment'>/*<a name=line.98></a>
+    * Implementation Note: There are strong order dependencies in these method calls. <a name=line.99></a>
+    * For example, Action objects need to be built before they can be used to build <a name=line.100></a>
+    * the menu and toolbar.<a name=line.101></a>
+    */</span><a name=line.102></a>
+    initCurrentPortfolio();<a name=line.103></a>
+    initGuiPieces();<a name=line.104></a>
+    initFrame();<a name=line.105></a>
+    initActions();<a name=line.106></a>
+    initMainGui();<a name=line.107></a>
+    broadcastCurrentPortfolioUpdate();<a name=line.108></a>
+    showMainWindow();<a name=line.109></a>
+    OptionPaneExceptionHandler.attachToRootLogger();<a name=line.110></a>
+  }<a name=line.111></a>
+<a name=line.112></a>
+  <span class='comment'>/**<a name=line.113></a>
+  * Synchronize the state of this window with the state of the {@link CurrentPortfolio},<a name=line.114></a>
+  * or with {@link GeneralLookPreferencesEditor} for the general look-and-feel of the<a name=line.115></a>
+  * application.<a name=line.116></a>
+  * <a name=line.117></a>
+  * &lt;P&gt;The name of the &lt;tt&gt;CurrentPortfolio&lt;/tt&gt; is reflected in the title bar. As<a name=line.118></a>
+  * well, a trailing asterisk will indicate that there are unsaved edits.<a name=line.119></a>
+  */</span><a name=line.120></a>
+  <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> update(Observable aObservable, Object aData) {<a name=line.121></a>
+    fLogger.fine(<span class='literal'>"Notify being broadcast..."</span>);<a name=line.122></a>
+    <span class='keyword'>if</span> (aObservable == fCurrentPortfolio) {<a name=line.123></a>
+      fLogger.fine(<span class='literal'>"Notified by Current Portfolio..."</span>);<a name=line.124></a>
+      synchTitleBarWithCurrentPortfolio();<a name=line.125></a>
+    }<a name=line.126></a>
+    <span class='keyword'>else</span> <span class='keyword'>if</span> (aObservable == fGeneralLookPrefs) {<a name=line.127></a>
+      fLogger.fine(<span class='literal'>"Notified by General Look..."</span>);<a name=line.128></a>
+      synchGuiWithGeneralLookPrefs();<a name=line.129></a>
+    }<a name=line.130></a>
+  }<a name=line.131></a>
+<a name=line.132></a>
+  <span class='comment'>// PRIVATE<a name=line.133></a>
+</span><a name=line.134></a>
+  <span class='comment'>/** Principal window for this application.  */</span><a name=line.135></a>
+  <span class='keyword'>private</span> JFrame fFrame;<a name=line.136></a>
+<a name=line.137></a>
+  <span class='comment'>/**<a name=line.138></a>
+  * Current user selection for the set of {@link hirondelle.stocks.quotes.Stock} objects <a name=line.139></a>
+  * for which quotes are to be displayed.<a name=line.140></a>
+  */</span><a name=line.141></a>
+  <span class='keyword'>private</span> CurrentPortfolio fCurrentPortfolio;<a name=line.142></a>
+<a name=line.143></a>
+  <span class='comment'>/**<a name=line.144></a>
+  * Allows end user to edit preferences for the general look and feel of the <a name=line.145></a>
+  * application, and allows programmatic, read-only access to these preferences as well.<a name=line.146></a>
+  */</span><a name=line.147></a>
+  <span class='keyword'>private</span> GeneralLookPreferencesEditor fGeneralLookPrefs;<a name=line.148></a>
+<a name=line.149></a>
+  <span class='comment'>/** Table to display the latest quote information. */</span><a name=line.150></a>
+  <span class='keyword'>private</span> QuoteTable fQuoteTable;<a name=line.151></a>
+<a name=line.152></a>
+  <span class='comment'>/**<a name=line.153></a>
+  * Allows end user to edit preferences for {@link #fQuoteTable}, and allows <a name=line.154></a>
+  * programmatic read-only access to these preferences as well.<a name=line.155></a>
+  */</span><a name=line.156></a>
+  <span class='keyword'>private</span> QuoteTablePreferencesEditor fQuoteTablePrefsEditor;<a name=line.157></a>
+<a name=line.158></a>
+  <span class='comment'>/**<a name=line.159></a>
+  * Returns implementations of {@link hirondelle.stocks.table.QuoteFilter} used to filter the<a name=line.160></a>
+  * rows of {@link #fQuoteTable}.<a name=line.161></a>
+  */</span><a name=line.162></a>
+  <span class='keyword'>private</span> QuoteFilterFactory fQuoteFilterFactory;<a name=line.163></a>
+<a name=line.164></a>
+  <span class='comment'>/**<a name=line.165></a>
+  * Displays summary financial information for the items presented in {@link #fQuoteTable}.<a name=line.166></a>
+  */</span><a name=line.167></a>
+  <span class='keyword'>private</span> SummaryView fSummaryView;<a name=line.168></a>
+  <a name=line.169></a>
+  <span class='keyword'>private</span> Action fExitAction;<a name=line.170></a>
+  <span class='keyword'>private</span> Action fEditUserPreferencesAction;<a name=line.171></a>
+  <span class='keyword'>private</span> FetchQuotesAction fFetchQuotesAction;<a name=line.172></a>
+  <span class='keyword'>private</span> Action fFileNewAction;<a name=line.173></a>
+  <span class='keyword'>private</span> Action fFileOpenAction;<a name=line.174></a>
+  <span class='keyword'>private</span> Action fFileCloseAction;<a name=line.175></a>
+  <span class='keyword'>private</span> Action fFileSaveAction;<a name=line.176></a>
+  <span class='keyword'>private</span> Action fFileSaveAsAction;<a name=line.177></a>
+  <span class='keyword'>private</span> Action fFileDeleteAction;<a name=line.178></a>
+  <span class='keyword'>private</span> JToolBar fToolbar;<a name=line.179></a>
+<a name=line.180></a>
+  <span class='comment'>/**<a name=line.181></a>
+  * The preferred size of the panel which contains both fQuoteTable and fSummaryView.<a name=line.182></a>
+  * Determines the overall size of the main window. If this was not provided, then the main<a name=line.183></a>
+  * window would appear a bit too large, and on Windows the bottom of the window would<a name=line.184></a>
+  * be cut off by the task bar.<a name=line.185></a>
+  */</span><a name=line.186></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> Dimension MAIN_PANEL_SIZE = <span class='keyword'>new</span> Dimension(<span class='literal'>400</span>, <span class='literal'>300</span>);<a name=line.187></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String ICON = <span class='literal'>"favicon.gif"</span>;<a name=line.188></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> Logger fLogger = Util.getLogger(StocksMonitorMainWindow.<span class='keyword'>class</span>);<a name=line.189></a>
+<a name=line.190></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> initCurrentPortfolio() {<a name=line.191></a>
+    fLogger.info(<span class='literal'>"Initializing the current portfolio"</span>);<a name=line.192></a>
+    PortfolioDAO dao = <span class='keyword'>new</span> PortfolioDAO();<a name=line.193></a>
+    fCurrentPortfolio = <span class='keyword'>new</span> CurrentPortfolio(dao.fetchDefaultPortfolio(),<a name=line.194></a>
+    CurrentPortfolio.NeedsSave.FALSE);<a name=line.195></a>
+    fCurrentPortfolio.addObserver(<span class='keyword'>this</span>);<a name=line.196></a>
+  }<a name=line.197></a>
+<a name=line.198></a>
+  <span class='comment'>/** Init important pieces of the GUI, from which the main window will be built.*/</span><a name=line.199></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> initGuiPieces() {<a name=line.200></a>
+    fLogger.info(<span class='literal'>"Initializing main pieces of the GUI."</span>);<a name=line.201></a>
+    fQuoteFilterFactory = <span class='keyword'>new</span> QuoteFilterFactory(fCurrentPortfolio);<a name=line.202></a>
+    fSummaryView = <span class='keyword'>new</span> SummaryView(fCurrentPortfolio, fQuoteFilterFactory);<a name=line.203></a>
+    fQuoteTablePrefsEditor = <span class='keyword'>new</span> QuoteTablePreferencesEditor();<a name=line.204></a>
+    fQuoteTable = <span class='keyword'>new</span> QuoteTable(fQuoteTablePrefsEditor, fQuoteFilterFactory);<a name=line.205></a>
+    fGeneralLookPrefs = <span class='keyword'>new</span> GeneralLookPreferencesEditor();<a name=line.206></a>
+    fGeneralLookPrefs.addObserver(<span class='keyword'>this</span>);<a name=line.207></a>
+  }<a name=line.208></a>
+<a name=line.209></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> initFrame() {<a name=line.210></a>
+    fFrame = <span class='keyword'>new</span> JFrame();<a name=line.211></a>
+    <span class='comment'>// Note that this is *not* set ; see use of fExitAction below<a name=line.212></a>
+</span>    <span class='comment'>// fFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);<a name=line.213></a>
+</span>    ImageIcon imageIcon = UiUtil.getImageIcon(ICON, <span class='keyword'>this</span>.getClass());<a name=line.214></a>
+    fFrame.setIconImage(imageIcon.getImage());<a name=line.215></a>
+    <span class='comment'>// use the default BorderLayout<a name=line.216></a>
+</span>  }<a name=line.217></a>
+<a name=line.218></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> initActions() {<a name=line.219></a>
+    fLogger.info(<span class='literal'>"Initializing Actions."</span>);<a name=line.220></a>
+    fFileDeleteAction = <span class='keyword'>new</span> FileDeleteAction(fCurrentPortfolio, fFrame);<a name=line.221></a>
+    fFileSaveAction = <span class='keyword'>new</span> FileSaveAction(fCurrentPortfolio);<a name=line.222></a>
+    fFileSaveAsAction = <span class='keyword'>new</span> FileSaveAsAction(fCurrentPortfolio, fFrame);<a name=line.223></a>
+    EditSaver editSaver = <span class='keyword'>new</span> EditSaver(fFileSaveAction, fFileSaveAsAction, fFrame);<a name=line.224></a>
+    fFileNewAction = <span class='keyword'>new</span> FileNewAction(fCurrentPortfolio, fFrame, editSaver);<a name=line.225></a>
+    fFileOpenAction = <span class='keyword'>new</span> FileOpenAction(fCurrentPortfolio, fFrame, editSaver);<a name=line.226></a>
+    fFileCloseAction = <span class='keyword'>new</span> FileCloseAction(fCurrentPortfolio, editSaver);<a name=line.227></a>
+<a name=line.228></a>
+    java.util.List&lt;PreferencesEditor&gt; prefEditors = <span class='keyword'>new</span> ArrayList&lt;&gt;();<a name=line.229></a>
+    prefEditors.add(fGeneralLookPrefs);<a name=line.230></a>
+    prefEditors.add(<span class='keyword'>new</span> LoggingPreferencesEditor());<a name=line.231></a>
+    prefEditors.add(fQuoteTablePrefsEditor);<a name=line.232></a>
+    fEditUserPreferencesAction = <span class='keyword'>new</span> EditUserPreferencesAction(fFrame, prefEditors);<a name=line.233></a>
+<a name=line.234></a>
+    fExitAction = <span class='keyword'>new</span> FileExitAction(fCurrentPortfolio, editSaver);<a name=line.235></a>
+<a name=line.236></a>
+    fFetchQuotesAction = <span class='keyword'>new</span> FetchQuotesAction(<a name=line.237></a>
+      fCurrentPortfolio, fQuoteTablePrefsEditor, fQuoteTable, fSummaryView<a name=line.238></a>
+    );<a name=line.239></a>
+    fFetchQuotesAction.startTimer();<a name=line.240></a>
+  }<a name=line.241></a>
+<a name=line.242></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> initMainGui() {<a name=line.243></a>
+    <span class='comment'>/*<a name=line.244></a>
+    * Implementation Note:<a name=line.245></a>
+    * Default tab order simply reflects the order in which items are<a name=line.246></a>
+    * added to the container.<a name=line.247></a>
+    */</span><a name=line.248></a>
+    fLogger.info(<span class='literal'>"Initializing larges pieces of the GUI."</span>);<a name=line.249></a>
+    JSplitPane splitPane = <span class='keyword'>new</span> JSplitPane(<a name=line.250></a>
+      JSplitPane.HORIZONTAL_SPLIT, fQuoteFilterFactory, getStocksTableAndSummary()<a name=line.251></a>
+    );<a name=line.252></a>
+    splitPane.setOneTouchExpandable(<span class='keyword'>true</span>);<a name=line.253></a>
+    fFrame.setJMenuBar(getMenuBar());<a name=line.254></a>
+    fToolbar = getToolBar();<a name=line.255></a>
+    fFrame.getContentPane().add(fToolbar, BorderLayout.NORTH);<a name=line.256></a>
+    fFrame.getContentPane().add(splitPane, BorderLayout.CENTER);<a name=line.257></a>
+    fFrame.addWindowListener(<span class='keyword'>new</span> WindowAdapter() {<a name=line.258></a>
+      <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> windowClosing(WindowEvent e) {<a name=line.259></a>
+        fExitAction.actionPerformed(<span class='keyword'>null</span>);<a name=line.260></a>
+      }<a name=line.261></a>
+    });<a name=line.262></a>
+  }<a name=line.263></a>
+<a name=line.264></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> broadcastCurrentPortfolioUpdate() {<a name=line.265></a>
+    fCurrentPortfolio.notifyObservers();<a name=line.266></a>
+  }<a name=line.267></a>
+<a name=line.268></a>
+  <span class='keyword'>private</span> JMenuBar getMenuBar() {<a name=line.269></a>
+    JMenuBar menubar = <span class='keyword'>new</span> JMenuBar();<a name=line.270></a>
+<a name=line.271></a>
+    JMenu fileMenu = <span class='keyword'>new</span> JMenu(<span class='literal'>"File"</span>);<a name=line.272></a>
+    fileMenu.setMnemonic(KeyEvent.VK_F);<a name=line.273></a>
+    fileMenu.add(fFileNewAction);<a name=line.274></a>
+    fileMenu.add(fFileOpenAction);<a name=line.275></a>
+    fileMenu.add(fFileCloseAction);<a name=line.276></a>
+    fileMenu.addSeparator();<a name=line.277></a>
+    fileMenu.add(fFileSaveAction);<a name=line.278></a>
+    fileMenu.add(fFileSaveAsAction);<a name=line.279></a>
+    fileMenu.add(fFileDeleteAction);<a name=line.280></a>
+    fileMenu.addSeparator();<a name=line.281></a>
+    fileMenu.add(fEditUserPreferencesAction);<a name=line.282></a>
+    fileMenu.addSeparator();<a name=line.283></a>
+    fileMenu.add(<span class='keyword'>new</span> ImportAction(fFrame));<a name=line.284></a>
+    fileMenu.add(<span class='keyword'>new</span> ExportAction(fFrame));<a name=line.285></a>
+    fileMenu.addSeparator();<a name=line.286></a>
+    fileMenu.add(fExitAction);<a name=line.287></a>
+    menubar.add(fileMenu);<a name=line.288></a>
+<a name=line.289></a>
+    JMenu editMenu = <span class='keyword'>new</span> JMenu(<span class='literal'>"Edit"</span>);<a name=line.290></a>
+    editMenu.setMnemonic(KeyEvent.VK_E);<a name=line.291></a>
+    editMenu.add(<span class='keyword'>new</span> EditPortfolioAction(fCurrentPortfolio, fFrame));<a name=line.292></a>
+    editMenu.add(fFetchQuotesAction);<a name=line.293></a>
+    menubar.add(editMenu);<a name=line.294></a>
+<a name=line.295></a>
+    JMenu helpMenu = <span class='keyword'>new</span> JMenu(<span class='literal'>"Help"</span>);<a name=line.296></a>
+    helpMenu.setMnemonic(KeyEvent.VK_H);<a name=line.297></a>
+    helpMenu.add(<span class='keyword'>new</span> HelpAction(<a name=line.298></a>
+      fFrame, <span class='literal'>"Contents"</span>, KeyEvent.VK_C, <span class='keyword'>null</span>, HelpAction.View.CONTENTS)<a name=line.299></a>
+    );<a name=line.300></a>
+    helpMenu.add(<span class='keyword'>new</span> HelpAction(<a name=line.301></a>
+      fFrame, <span class='literal'>"Index"</span>, KeyEvent.VK_I, <span class='keyword'>null</span>, HelpAction.View.INDEX)<a name=line.302></a>
+    );<a name=line.303></a>
+    helpMenu.add(<a name=line.304></a>
+      <span class='keyword'>new</span> HelpAction(fFrame, <span class='literal'>"Search..."</span>, KeyEvent.VK_S, <span class='keyword'>null</span>, HelpAction.View.SEARCH)<a name=line.305></a>
+    );<a name=line.306></a>
+    helpMenu.add(<span class='keyword'>new</span> JSeparator());<a name=line.307></a>
+    helpMenu.add(<span class='keyword'>new</span> AboutAction(fFrame));<a name=line.308></a>
+<a name=line.309></a>
+    menubar.add(helpMenu);<a name=line.310></a>
+    <span class='keyword'>return</span> menubar;<a name=line.311></a>
+  }<a name=line.312></a>
+<a name=line.313></a>
+  <span class='keyword'>private</span> JToolBar getToolBar() {<a name=line.314></a>
+    JToolBar toolbar = <span class='keyword'>new</span> JToolBar();<a name=line.315></a>
+    <span class='comment'>// toolbar.setFloatable(false);<a name=line.316></a>
+</span>    toolbar.setRollover(<span class='keyword'>true</span>);<a name=line.317></a>
+<a name=line.318></a>
+    toolbar.add(fFileNewAction);<a name=line.319></a>
+    toolbar.add(fFileOpenAction);<a name=line.320></a>
+    toolbar.add(fFileSaveAction);<a name=line.321></a>
+    toolbar.add(fFileSaveAsAction);<a name=line.322></a>
+    toolbar.add(fFileDeleteAction);<a name=line.323></a>
+<a name=line.324></a>
+    toolbar.addSeparator();<a name=line.325></a>
+    toolbar.add(fFetchQuotesAction);<a name=line.326></a>
+<a name=line.327></a>
+    <span class='comment'>// SWING BUG?: this toolbar button does not perform the same action<a name=line.328></a>
+</span>    <span class='comment'>// as the corresponding menu item (it fails with the cryptic message<a name=line.329></a>
+</span>    <span class='comment'>// "trouble in HelpActionListener").<a name=line.330></a>
+</span>    <span class='comment'>// toolbar.addSeparator();<a name=line.331></a>
+</span>    <span class='comment'>// toolbar.add( fHelpContentsAction );<a name=line.332></a>
+</span>    <span class='keyword'>return</span> toolbar;<a name=line.333></a>
+  }<a name=line.334></a>
+<a name=line.335></a>
+  <span class='keyword'>private</span> JComponent getStocksTableAndSummary() {<a name=line.336></a>
+    JPanel panel = <span class='keyword'>new</span> JPanel();<a name=line.337></a>
+    panel.setLayout(<span class='keyword'>new</span> BoxLayout(panel, BoxLayout.Y_AXIS));<a name=line.338></a>
+    panel.add(fQuoteTable);<a name=line.339></a>
+    panel.add(Box.createVerticalStrut(UiConsts.ONE_SPACE));<a name=line.340></a>
+    panel.add(fSummaryView);<a name=line.341></a>
+    panel.setPreferredSize(MAIN_PANEL_SIZE);<a name=line.342></a>
+    <span class='keyword'>return</span> panel;<a name=line.343></a>
+  }<a name=line.344></a>
+<a name=line.345></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> showMainWindow() {<a name=line.346></a>
+    fLogger.info(<span class='literal'>"Showing the main window."</span>);<a name=line.347></a>
+    <span class='comment'>// For Themes with large fonts, the quote table column headers are not<a name=line.348></a>
+</span>    <span class='comment'>// being rendered properly upon startup: the color and font size are no different<a name=line.349></a>
+</span>    <span class='comment'>// from the defaults. This *may* be a Swing bug since all other items are<a name=line.350></a>
+</span>    <span class='comment'>// rendered correctly. In the case of Themes with large fonts, a repaint<a name=line.351></a>
+</span>    <span class='comment'>// is used to correct the problem.<a name=line.352></a>
+</span>    <span class='comment'>// (As a further data point, the column headers are correctly rendered<a name=line.353></a>
+</span>    <span class='comment'>// when the user changes Theme through the preferences dialog; thus,<a name=line.354></a>
+</span>    <span class='comment'>// the problem is only seen upon startup.)<a name=line.355></a>
+</span>    <span class='keyword'>if</span> (!Theme.hasLargeFont(fGeneralLookPrefs.getTheme())) {<a name=line.356></a>
+      <span class='comment'>// no repaint occurs here<a name=line.357></a>
+</span>      synchGuiWithGeneralLookPrefs();<a name=line.358></a>
+      UiUtil.centerAndShow(fFrame);<a name=line.359></a>
+    }<a name=line.360></a>
+    <span class='keyword'>else</span> {<a name=line.361></a>
+      <span class='comment'>// forces a repaint to occur<a name=line.362></a>
+</span>      UiUtil.centerAndShow(fFrame);<a name=line.363></a>
+      synchGuiWithGeneralLookPrefs();<a name=line.364></a>
+    }<a name=line.365></a>
+  }<a name=line.366></a>
+<a name=line.367></a>
+  <span class='comment'>/**<a name=line.368></a>
+   * Place text such as "StocksMonitor 1.0 - Portfolio Name: Blah *" in <a name=line.369></a>
+   * the title bar of the window. The trailing star denotes that the current <a name=line.370></a>
+   * portfolio has unsaved edits.<a name=line.371></a>
+   */</span><a name=line.372></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> synchTitleBarWithCurrentPortfolio() {<a name=line.373></a>
+    StringBuilder title = <span class='keyword'>new</span> StringBuilder(Consts.APP_NAME);<a name=line.374></a>
+    title.append(Consts.SPACE);<a name=line.375></a>
+    title.append(Consts.APP_VERSION);<a name=line.376></a>
+    title.append(<span class='literal'>" - Portfolio : "</span>);<a name=line.377></a>
+    <span class='keyword'>if</span> (fCurrentPortfolio.isUntitled()) {<a name=line.378></a>
+      title.append(<span class='literal'>"(Untitled)"</span>);<a name=line.379></a>
+    }<a name=line.380></a>
+    <span class='keyword'>else</span> {<a name=line.381></a>
+      title.append(fCurrentPortfolio.getName());<a name=line.382></a>
+    }<a name=line.383></a>
+    <span class='keyword'>if</span> (fCurrentPortfolio.getNeedsSave()) {<a name=line.384></a>
+      title.append(<span class='literal'>" *"</span>);<a name=line.385></a>
+    }<a name=line.386></a>
+    fFrame.setTitle(title.toString());<a name=line.387></a>
+  }<a name=line.388></a>
+<a name=line.389></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> synchGuiWithGeneralLookPrefs() {<a name=line.390></a>
+    <span class='keyword'>if</span> (fGeneralLookPrefs.hasShowToolBar()) {<a name=line.391></a>
+      fToolbar.setVisible(<span class='keyword'>true</span>);<a name=line.392></a>
+    }<a name=line.393></a>
+    <span class='keyword'>else</span> {<a name=line.394></a>
+      <span class='comment'>/*<a name=line.395></a>
+       * Implementation Note If the toolbar is made invisible while it still has <a name=line.396></a>
+       * the focus, then bad things happen : the user cannot immediately <a name=line.397></a>
+       * access the menu through the keyboard, nor does the TAB key <a name=line.398></a>
+       * change the focus. So, it is important that the toolbar give up <a name=line.399></a>
+       * the focus before it is made invisible. Here, this is done by having<a name=line.400></a>
+       * the tree request focus.<a name=line.401></a>
+       */</span><a name=line.402></a>
+      fQuoteFilterFactory.requestFocusInWindow();<a name=line.403></a>
+      fToolbar.setVisible(<span class='keyword'>false</span>);<a name=line.404></a>
+    }<a name=line.405></a>
+<a name=line.406></a>
+    <span class='comment'>// icon sizing: there is apparently no simple way to<a name=line.407></a>
+</span>    <span class='comment'>// change icon sizes. If the components of the toolbar are obtained, as in<a name=line.408></a>
+</span>    <span class='comment'>// java.util.List toolbarItems = Arrays.asList( fToolbar.getComponents() );<a name=line.409></a>
+</span>    <span class='comment'>// Iterator iter = toolbarItems.iterator();<a name=line.410></a>
+</span>    <span class='comment'>// while ( iter.hasNext() ) {<a name=line.411></a>
+</span>    <span class='comment'>//   AbstractButton button = (AbstractButton)iter.next();<a name=line.412></a>
+</span>    <span class='comment'>// }<a name=line.413></a>
+</span>    <span class='comment'>// then there is no "handle" for the image URL or file name.<a name=line.414></a>
+</span>    <span class='comment'>// Icon does not have it.<a name=line.415></a>
+</span>    <span class='comment'>// ImageIcon keeps URL and filename as fields, but there is<a name=line.416></a>
+</span>    <span class='comment'>// no corresponding get/set.<a name=line.417></a>
+</span><a name=line.418></a>
+    MetalTheme preferredTheme = fGeneralLookPrefs.getTheme();<a name=line.419></a>
+    MetalLookAndFeel.setCurrentTheme(preferredTheme);<a name=line.420></a>
+    <span class='keyword'>try</span> {<a name=line.421></a>
+      UIManager.setLookAndFeel(<span class='keyword'>new</span> MetalLookAndFeel());<a name=line.422></a>
+    }<a name=line.423></a>
+    <span class='keyword'>catch</span> (UnsupportedLookAndFeelException ex) {<a name=line.424></a>
+      fLogger.severe(<span class='literal'>"Cannot set new Theme for Java Look and Feel."</span>);<a name=line.425></a>
+    }<a name=line.426></a>
+<a name=line.427></a>
+    SwingUtilities.updateComponentTreeUI(fFrame);<a name=line.428></a>
+  }<a name=line.429></a>
+}<a name=line.430></a>
+ <a name=line.431></a>
+</PRE><a name=line.432></a>
+ </BODY><a name=line.433></a>
+<HTML><a name=line.434></a>

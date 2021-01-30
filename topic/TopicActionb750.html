@@ -1,0 +1,377 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=45 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="serializable,serialization,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Implementing Serializable</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Implementing Serializable</div>
+
+<br><span class="highlight">Do not implement 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/io/Serializable.html">Serializable</a></code>
+lightly, since it restricts future flexibility, and publicly exposes
+class implementation details which are usually private.</span> As well, implementing <code>Serializable</code>
+correctly is not trivial.
+
+<p>The <code>serialVersionUID</code> is a universal version identifier for
+a <code><a href="https://docs.oracle.com/javase/10/docs/api/java/io/Serializable.html">Serializable</a></code>
+class. Deserialization uses this number to ensure that a loaded class corresponds
+exactly to a serialized object. If no match is found, then an <code><a href="https://docs.oracle.com/javase/10/docs/api/java/io/InvalidClassException.html">InvalidClassException</a></code>
+is thrown.
+</p><p>Guidelines for <code>serialVersionUID</code>:
+</p><ul>
+<li>
+always include it as a field, for example: 
+<pre>private static final long serialVersionUID = 7526472295622776147L;</pre>
+</li><li>include this field even in the first version of the class, as a reminder of its importance</li>
+<li>don't change the value of this field in future versions, unless you are
+knowingly making changes to the class which will render it incompatible
+with old serialized objects</li>
+<li>
+new versions of <code>Serializable</code> classes may or may not be able to
+read old serialized objects; it depends upon the nature of the change;
+provide a pointer to Oracle's <a href="http://docs.oracle.com/javase/8/docs/platform/serialization/spec/version.html#6678">guidelines</a>
+for what constitutes a compatible change, as a convenience to future maintainers</li>
+</ul>
+
+<p>Modern IDE's can generate a value of <code>serialVersionUID</code> for you. 
+In addition, the JDK includes the <code>serialver</code> tool for generating these values.
+Here are the docs for both 
+<a href="http://docs.oracle.com/javase/8/docs/technotes/tools/windows/serialver.html">Win</a>
+and <a href="http://docs.oracle.com/javase/8/docs/technotes/tools/unix/serialver.html">Unix</a>.
+(The class name you pass to this tool doesn't include the <code>.class</code> extension.)
+
+</p><p><code>readObject</code> and<code> writeObject</code>:
+</p><ul>
+<li>
+<code>readObject</code> implementations always start by calling default methods</li>
+
+<li>
+deserialization must be treated as any constructor: validate the object
+state at the end of deserializing - this implies that <code>readObject</code>
+should almost always be implemented in <code>Serializable</code> classes, such
+that this validation is performed.</li>
+
+<li>
+deserialization must be treated as any constructor: if constructors
+make defensive copies for mutable object fields, so must <code>readObject</code></li>
+
+<li>
+when serializing a <code>Collection</code>, store the number of objects in
+the
+<code>Collection</code> as well, and use this number to read them back
+in upon deserialization; avoid tricks using <code>null</code></li>
+</ul>
+Other points:
+<ul>
+<li>
+use javadoc's <code>@serial</code> tag to denote <code><a href="https://docs.oracle.com/javase/10/docs/api/java/io/Serializable.html">Serializable</a></code>
+fields</li>
+
+<li>
+the <code>.ser</code> extension is conventionally used for files representing
+serialized objects</li>
+
+<li>
+no <code>static</code> or <code>transient</code> fields undergo default serialization</li>
+
+<li>
+extendable classes should not be <code>Serializable</code>, unless necessary</li>
+
+<li>
+inner classes should rarely, if ever, implement <code>Serializable</code></li>
+
+<li>
+container classes should usually follow the style of <code>Hashtable</code>,
+which implements <code>Serializable</code> by storing keys and values, as opposed
+to a large hash table data structure</li>
+</ul>
+<b>Example</b>
+<br><pre>
+<span class="keyword">import</span> java.io.Serializable;
+<span class="keyword">import</span> java.text.StringCharacterIterator;
+<span class="keyword">import</span> java.util.*;
+<span class="keyword">import</span> java.io.*;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> SavingsAccount <span class="keyword">implements</span> Serializable {
+
+   <span class="comment">/**
+   * This constructor requires all fields to be passed as parameters.
+   *
+   * @param firstName contains only letters, spaces, and apostrophes.
+   * @param lastName contains only letters, spaces, and apostrophes.
+   * @param accountNumber is non-negative.
+   * @param dateOpened has a non-negative number of milliseconds.
+   */</span>
+   <span class="keyword">public</span> SavingsAccount(
+     String firstName, String lastName, <span class="keyword">int</span> accountNumber, Date dateOpened
+   ){
+     setFirstName(firstName);
+     setLastName(lastName);
+     setAccountNumber(accountNumber);
+     <span class="comment">//make a defensive copy of the mutable Date passed to the constructor
+</span>     setDateOpened(<span class="keyword">new</span> Date(dateOpened.getTime()));
+     <span class="comment">//there is no need here to call validateState.
+</span>   }
+
+   <span class="keyword">public</span> SavingsAccount(){
+     <span class="keyword">this</span>(<span class="literal">"FirstName"</span>, <span class="literal">"LastName"</span>, <span class="literal">0</span>, <span class="keyword">new</span> Date(System.currentTimeMillis()));
+   }
+
+   <span class="keyword">public</span> String getFirstName(){
+     <span class="keyword">return</span> firstName;
+   }
+
+   <span class="keyword">public</span> String getLastName(){
+     <span class="keyword">return</span> lastName;
+   }
+
+   <span class="keyword">public</span> <span class="keyword">int</span> getAccountNumber(){
+     <span class="keyword">return</span> accountNumber;
+   }
+
+   <span class="comment">/**
+   * Returns a defensive copy of the field.
+   * The caller may change the state of the returned object in any way,
+   * without affecting the internals of this class.
+   */</span>
+   <span class="keyword">public</span> Date getDateOpened() {
+     <span class="keyword">return</span> <span class="keyword">new</span> Date(dateOpened.getTime());
+   }
+
+   <span class="comment">/**
+   * Names must contain only letters, spaces, and apostrophes.
+   * Validate before setting field to new value.
+   *
+   * @throws IllegalArgumentException if the new value is not acceptable.
+   */</span>
+   <span class="keyword">public</span> <span class="keyword">void</span> setFirstName(String aNewFirstName) {
+     validateName(aNewFirstName);
+     firstName = aNewFirstName;
+   }
+
+   <span class="comment">/**
+   * Names must contain only letters, spaces, and apostrophes.
+   * Validate before setting field to new value.
+   *
+   * @throws IllegalArgumentException if the new value is not acceptable.
+   */</span>
+   <span class="keyword">public</span> <span class="keyword">void</span> setLastName (String aNewLastName) {
+     validateName(aNewLastName);
+     lastName = aNewLastName;
+   }
+
+   <span class="comment">/**
+   * Validate before setting field to new value.
+   *
+   * @throws IllegalArgumentException if the new value is not acceptable.
+   */</span>
+   <span class="keyword">public</span> <span class="keyword">void</span> setAccountNumber(<span class="keyword">int</span> aNewAccountNumber){
+     validateAccountNumber(aNewAccountNumber);
+     accountNumber = aNewAccountNumber;
+   }
+
+   <span class="keyword">public</span> <span class="keyword">void</span> setDateOpened(Date aNewDate){
+     <span class="comment">//make a defensive copy of the mutable date object
+</span>     Date newDate = <span class="keyword">new</span> Date(aNewDate.getTime());
+     validateDateOpened(newDate);
+     dateOpened = newDate;
+   }
+
+   <span class="comment">// PRIVATE
+</span>
+   <span class="comment">/**
+   * The client's first name.
+   * @serial
+   */</span>
+   <span class="keyword">private</span> String firstName;
+
+   <span class="comment">/**
+   * The client's last name.
+   * @serial
+   */</span>
+   <span class="keyword">private</span> String lastName;
+
+   <span class="comment">/**
+   * The client's account number.
+   * @serial
+   */</span>
+   <span class="keyword">private</span> <span class="keyword">int</span> accountNumber;
+
+   <span class="comment">/**
+   * The date the account was opened.
+   * 
+   * java.util.Date is immutable. It's used here only because it forms a 
+   * convenient example of how to treat a mutable object. In practice, 
+   * with modern code, one should almost always use the 
+   * java.time package (for example, a LocalDate, which is immutable).
+   * @serial
+   */</span>
+   <span class="keyword">private</span> Date dateOpened;
+
+   <span class="comment">/**
+   * Determines if a de-serialized file is compatible with this class.
+   *
+   * Maintainers must change this value if and only if the new version
+   * of this class is not compatible with old versions. See Sun docs
+   * for &lt;a href=http://java.sun.com/products/jdk/1.1/docs/guide
+   * /serialization/spec/version.doc.html&gt; details. &lt;/a&gt;
+   *
+   * Not necessary to include in first version of the class, but
+   * included here as a reminder of its importance.
+   */</span>
+   <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">long</span> serialVersionUID = <span class="literal">7526471155622776147L</span>;
+
+   <span class="comment">/**
+   * Verify that all fields of this object take permissible values; that is,
+   * this method defines the class invariant.
+   *
+   * In this style of implementation, both the entire state of the object
+   * and its individual fields can be validated without repeating or
+   * duplicating code.
+   * Each condition is defined in one place. Checks on the entire
+   * object are performed at the end of object construction, and at
+   * the end of de-serialization. Checks on individual fields are
+   * performed at the start of the corresponding setXXX method.
+   * As well, this style replaces the if's and throwing
+   * of exceptions at the start of a setXXX, with a simple call to validateXXX.
+   * Validation is separated from the regular path of execution,
+   * which leads to improved legibility.
+   *
+   * @throws IllegalArgumentException if any field takes an unpermitted value.
+   */</span>
+   <span class="keyword">private</span> <span class="keyword">void</span> validateState() {
+     validateAccountNumber(accountNumber);
+     validateName(firstName);
+     validateName(lastName);
+     validateDateOpened(dateOpened);
+   }
+
+   <span class="comment">/**
+   * Ensure names contain only letters, spaces, and apostrophes.
+   *
+   * @throws IllegalArgumentException if field takes an unpermitted value.
+   */</span>
+   <span class="keyword">private</span> <span class="keyword">void</span> validateName(String name){
+     <span class="keyword">boolean</span> nameHasContent = (name != <span class="keyword">null</span>) &amp;&amp; (!name.equals(<span class="literal">""</span>));
+     <span class="keyword">if</span> (!nameHasContent){
+       <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="literal">"Names must be non-null and non-empty."</span>);
+     }
+     StringCharacterIterator iterator = <span class="keyword">new</span> StringCharacterIterator(name);
+     <span class="keyword">char</span> character = iterator.current();
+     <span class="keyword">while</span> (character != StringCharacterIterator.DONE){
+       <span class="keyword">boolean</span> isValidChar =
+         (Character.isLetter(character) ||
+         Character.isSpaceChar(character) ||
+         character ==<span class="literal">'\''</span>
+       );
+       <span class="keyword">if</span> (isValidChar) {
+         <span class="comment">//do nothing
+</span>       }
+       <span class="keyword">else</span> {
+         String message = <span class="literal">"Names can contain only letters, spaces, and apostrophes."</span>;
+         <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(message);
+       }
+       character = iterator.next();
+     }
+  }
+
+  <span class="comment">/**
+  * AccountNumber must be non-negative.
+  * @throws IllegalArgumentException if field takes an unpermitted value.
+  */</span>
+   <span class="keyword">private</span> <span class="keyword">void</span> validateAccountNumber(<span class="keyword">int</span> accountNumber){
+     <span class="keyword">if</span> (accountNumber &lt; <span class="literal">0</span>) {
+       String message = <span class="literal">"Account Number must be greater than or equal to 0."</span>;
+       <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(message);
+     }
+   }
+
+  <span class="comment">/**
+  * DateOpened must be after 1970.
+  * @throws IllegalArgumentException if field takes an unpermitted value.
+  */</span>
+   <span class="keyword">private</span> <span class="keyword">void</span> validateDateOpened(Date dateOpened) {
+     <span class="keyword">if</span>(dateOpened.getTime() &lt; <span class="literal">0</span>) {
+       <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="literal">"Date Opened must be after 1970."</span>);
+     }
+   }
+
+   <span class="comment">/**
+   * Always treat de-serialization as a full-blown constructor, by
+   * validating the final state of the de-serialized object.
+   */</span>
+   <span class="keyword">private</span> <span class="keyword">void</span> readObject(
+     ObjectInputStream inputStream
+   ) <span class="keyword">throws</span> ClassNotFoundException, IOException {
+     <span class="comment">//always perform the default de-serialization first
+</span>     inputStream.defaultReadObject();
+
+     <span class="comment">//make defensive copy of the mutable Date field
+</span>     dateOpened = <span class="keyword">new</span> Date(dateOpened.getTime());
+
+     <span class="comment">//ensure that object state has not been corrupted or tampered with maliciously
+</span>     validateState();
+  }
+
+    <span class="comment">/**
+    * This is the default implementation of writeObject.
+    * Customise if necessary.
+    */</span>
+    <span class="keyword">private</span> <span class="keyword">void</span> writeObject(
+      ObjectOutputStream outputStream
+    ) <span class="keyword">throws</span> IOException {
+      <span class="comment">//perform the default serialization for all non-transient, non-static fields
+</span>      outputStream.defaultWriteObject();
+    }
+} 
+</pre>
+
+<br>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction2161.html?Id=1">Type Safe Enumerations</a> <br>
+  <a href="TopicAction4934.html?Id=46">Singleton</a> <br>
+  <a href="TopicActione102.html?Id=70">Serialization and subclassing</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=45 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:37 GMT -->
+</html>

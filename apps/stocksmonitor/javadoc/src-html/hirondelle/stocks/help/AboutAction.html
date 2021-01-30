@@ -1,0 +1,276 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/help/AboutAction.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:53:04 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+AboutAction.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.stocks.help;<a name=line.1></a>
+<a name=line.2></a>
+<span class='keyword'>import</span> hirondelle.stocks.preferences.LoggingPreferencesEditor;<a name=line.3></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Args;<a name=line.4></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Consts;<a name=line.5></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.FileUtil;<a name=line.6></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Util;<a name=line.7></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.ui.UiConsts;<a name=line.8></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.ui.UiUtil;<a name=line.9></a>
+<a name=line.10></a>
+<span class='keyword'>import</span> java.awt.Dimension;<a name=line.11></a>
+<span class='keyword'>import</span> java.awt.GridBagConstraints;<a name=line.12></a>
+<span class='keyword'>import</span> java.awt.GridBagLayout;<a name=line.13></a>
+<span class='keyword'>import</span> java.awt.Insets;<a name=line.14></a>
+<span class='keyword'>import</span> java.awt.event.ActionEvent;<a name=line.15></a>
+<span class='keyword'>import</span> java.awt.event.ActionListener;<a name=line.16></a>
+<span class='keyword'>import</span> java.awt.event.KeyEvent;<a name=line.17></a>
+<span class='keyword'>import</span> java.util.HashMap;<a name=line.18></a>
+<span class='keyword'>import</span> java.util.Map;<a name=line.19></a>
+<span class='keyword'>import</span> java.util.TreeMap;<a name=line.20></a>
+<span class='keyword'>import</span> java.util.logging.Logger;<a name=line.21></a>
+<a name=line.22></a>
+<span class='keyword'>import</span> javax.swing.AbstractAction;<a name=line.23></a>
+<span class='keyword'>import</span> javax.swing.BoxLayout;<a name=line.24></a>
+<span class='keyword'>import</span> javax.swing.Icon;<a name=line.25></a>
+<span class='keyword'>import</span> javax.swing.JButton;<a name=line.26></a>
+<span class='keyword'>import</span> javax.swing.JComponent;<a name=line.27></a>
+<span class='keyword'>import</span> javax.swing.JFrame;<a name=line.28></a>
+<span class='keyword'>import</span> javax.swing.JLabel;<a name=line.29></a>
+<span class='keyword'>import</span> javax.swing.JOptionPane;<a name=line.30></a>
+<span class='keyword'>import</span> javax.swing.JPanel;<a name=line.31></a>
+<span class='keyword'>import</span> javax.swing.JScrollPane;<a name=line.32></a>
+<span class='keyword'>import</span> javax.swing.JTabbedPane;<a name=line.33></a>
+<span class='keyword'>import</span> javax.swing.JTextArea;<a name=line.34></a>
+<a name=line.35></a>
+<span class='comment'>/**<a name=line.36></a>
+* Display a modal dialog, centered on the main window, which<a name=line.37></a>
+* contains general information about both this application and <a name=line.38></a>
+* the system on which it's running.<a name=line.39></a>
+*<a name=line.40></a>
+*&lt;P&gt; The system information includes a running snapshot of the <a name=line.41></a>
+* object heap size. A button is provided to coax the JVM to <a name=line.42></a>
+* perform garbage collection.<a name=line.43></a>
+*/</span><a name=line.44></a>
+<span class='keyword'>public</span> <span class='keyword'>final</span> <span class='keyword'>class</span> AboutAction <span class='keyword'>extends</span> AbstractAction {<a name=line.45></a>
+<a name=line.46></a>
+  <span class='comment'>/**<a name=line.47></a>
+  * Constructor. <a name=line.48></a>
+  * <a name=line.49></a>
+  * @param aFrame parent window to which this dialog is attached.<a name=line.50></a>
+  */</span><a name=line.51></a>
+  <span class='keyword'>public</span> AboutAction(JFrame aFrame) {<a name=line.52></a>
+    <span class='keyword'>super</span>(<span class='literal'>"About "</span> + Consts.APP_NAME);<a name=line.53></a>
+    Args.checkForNull(aFrame);<a name=line.54></a>
+    fFrame = aFrame;<a name=line.55></a>
+    putValue(SHORT_DESCRIPTION, <span class='literal'>"About this application"</span>);<a name=line.56></a>
+    putValue(LONG_DESCRIPTION, <span class='literal'>"Displays details regarding the StocksMonitor application."</span>);<a name=line.57></a>
+    putValue(MNEMONIC_KEY, <span class='keyword'>new</span> Integer(KeyEvent.VK_A) );    <a name=line.58></a>
+  }<a name=line.59></a>
+<a name=line.60></a>
+  <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> actionPerformed(ActionEvent e) {<a name=line.61></a>
+    fLogger.info(<span class='literal'>"Showing the about box."</span>);    <a name=line.62></a>
+    showAboutBox();<a name=line.63></a>
+  }<a name=line.64></a>
+  <a name=line.65></a>
+  <span class='comment'>// PRIVATE<a name=line.66></a>
+</span>  <span class='keyword'>private</span> JFrame fFrame;<a name=line.67></a>
+  <a name=line.68></a>
+  <span class='comment'>/**<a name=line.69></a>
+  * Displays the size of the object heap.<a name=line.70></a>
+  *<a name=line.71></a>
+  * In a typical GUI application, the breakdown for memory consumption is roughly<a name=line.72></a>
+  * &lt;ul&gt;<a name=line.73></a>
+  * &lt;li&gt; classes - 70%<a name=line.74></a>
+  * &lt;li&gt; objects - 15%<a name=line.75></a>
+  * &lt;li&gt; other  - 15%<a name=line.76></a>
+  *&lt;/ul&gt;<a name=line.77></a>
+  *<a name=line.78></a>
+  * There is no API for displaying total memory use. The memory consumed by objects,<a name=line.79></a>
+  * however, is available, and is displayed by this label; the display is updated <a name=line.80></a>
+  * periodically.<a name=line.81></a>
+  */</span><a name=line.82></a>
+  <span class='keyword'>private</span> JLabel fObjectHeapSize;<a name=line.83></a>
+  <a name=line.84></a>
+  <span class='comment'>/** Periodically updates the display of &lt;tt&gt;fObjectHeapSize&lt;/tt&gt;.  */</span><a name=line.85></a>
+  <span class='keyword'>private</span> javax.swing.Timer fTimer;<a name=line.86></a>
+  <span class='keyword'>private</span> ActionListener fHeapSizeUpdater;<a name=line.87></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> <span class='keyword'>int</span> UPDATE_FREQ = <span class='literal'>2</span> * Consts.MILLISECONDS_PER_SECOND;<a name=line.88></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> <span class='keyword'>long</span> SLEEP_INTERVAL = <span class='literal'>100</span>;<a name=line.89></a>
+  <a name=line.90></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String ABOUT_TEXT_FILE = <span class='literal'>"About.txt"</span>;<a name=line.91></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> Dimension ABOUT_TEXT_SIZE = <span class='keyword'>new</span> Dimension(<span class='literal'>100</span>,<span class='literal'>250</span>);<a name=line.92></a>
+  <a name=line.93></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> Logger fLogger = Util.getLogger(AboutAction.<span class='keyword'>class</span>);<a name=line.94></a>
+<a name=line.95></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> showAboutBox(){<a name=line.96></a>
+    JTabbedPane aboutPane = <span class='keyword'>new</span> JTabbedPane();<a name=line.97></a>
+    aboutPane.addTab( <span class='literal'>"About"</span> , getAboutPanel() );<a name=line.98></a>
+    aboutPane.setMnemonicAt(<span class='literal'>0</span>, KeyEvent.VK_A);<a name=line.99></a>
+    aboutPane.addTab( <span class='literal'>"System Info"</span> , getSystemInfoPanel() );<a name=line.100></a>
+    aboutPane.setMnemonicAt(<span class='literal'>1</span>, KeyEvent.VK_S);<a name=line.101></a>
+    <a name=line.102></a>
+    startHeapSizeTimer();<a name=line.103></a>
+    Icon image =  UiUtil.getImageIcon(<span class='literal'>"xray-small.jpg"</span>, <span class='keyword'>this</span>.getClass()) ;<a name=line.104></a>
+    String title = UiUtil.getDialogTitle(<span class='literal'>"About"</span>);<a name=line.105></a>
+    JOptionPane.showMessageDialog(fFrame, aboutPane, title, JOptionPane.OK_OPTION, image);<a name=line.106></a>
+    stopHeapSizeTimer();<a name=line.107></a>
+  }<a name=line.108></a>
+  <a name=line.109></a>
+  <span class='keyword'>private</span> JComponent getAboutPanel(){<a name=line.110></a>
+    JPanel aboutPanel = <span class='keyword'>new</span> JPanel();<a name=line.111></a>
+    aboutPanel.setLayout( <span class='keyword'>new</span> BoxLayout(aboutPanel, BoxLayout.Y_AXIS) );<a name=line.112></a>
+    <a name=line.113></a>
+    String appNameAndVersion = Consts.APP_NAME + Consts.SPACE + Consts.APP_VERSION;<a name=line.114></a>
+    String text = appNameAndVersion + Consts.NEW_LINE + getAboutFileContents();<a name=line.115></a>
+    JTextArea aboutText = UiUtil.getStandardTextAreaHardNewLines( text );<a name=line.116></a>
+    JScrollPane scrollPane = <span class='keyword'>new</span> JScrollPane(aboutText);<a name=line.117></a>
+    scrollPane.setPreferredSize(ABOUT_TEXT_SIZE);<a name=line.118></a>
+    <a name=line.119></a>
+    aboutPanel.add(scrollPane);<a name=line.120></a>
+    <span class='keyword'>return</span> aboutPanel;<a name=line.121></a>
+  }<a name=line.122></a>
+  <a name=line.123></a>
+  <span class='keyword'>private</span> String getAboutFileContents(){<a name=line.124></a>
+    <span class='keyword'>return</span> FileUtil.asString(ABOUT_TEXT_FILE, <span class='keyword'>this</span>.getClass());<a name=line.125></a>
+  }<a name=line.126></a>
+  <a name=line.127></a>
+  <span class='keyword'>private</span> JComponent getSystemInfoPanel(){<a name=line.128></a>
+    JPanel infoPanel = getStandardPanel();<a name=line.129></a>
+<a name=line.130></a>
+    Map&lt;String, String&gt; info = <span class='keyword'>new</span> HashMap&lt;String, String&gt;();<a name=line.131></a>
+    addSysProperty(info, <span class='literal'>"Java Version"</span>,<span class='literal'>"java.version"</span>);<a name=line.132></a>
+    addSysProperty(info, <span class='literal'>"Java VM"</span>, <span class='literal'>"java.vm.info"</span>);<a name=line.133></a>
+    addSysProperty(info, <span class='literal'>"Java Home"</span>, <span class='literal'>"java.home"</span>);<a name=line.134></a>
+    addSysProperty(info, <span class='literal'>"Java Vendor"</span>, <span class='literal'>"java.vendor"</span>);<a name=line.135></a>
+    addSysProperty(info, <span class='literal'>"User Current Directory"</span>, <span class='literal'>"user.dir"</span> );<a name=line.136></a>
+    addSysProperty(info, <span class='literal'>"User Home Directory"</span>, <span class='literal'>"user.home"</span> );<a name=line.137></a>
+    <a name=line.138></a>
+    StringBuilder osInfo = <span class='keyword'>new</span> StringBuilder();<a name=line.139></a>
+    osInfo.append( getProperty(<span class='literal'>"os.arch"</span>) );<a name=line.140></a>
+    osInfo.append( Consts.SPACE);<a name=line.141></a>
+    osInfo.append( getProperty(<span class='literal'>"os.name"</span>) );<a name=line.142></a>
+    osInfo.append( Consts.SPACE);<a name=line.143></a>
+    osInfo.append( getProperty(<span class='literal'>"os.version"</span>) );<a name=line.144></a>
+    info.put(<span class='literal'>"Operating System"</span>, osInfo.toString());<a name=line.145></a>
+    <a name=line.146></a>
+    LoggingPreferencesEditor loggingPrefs = <span class='keyword'>new</span> LoggingPreferencesEditor();<a name=line.147></a>
+    info.put(<span class='literal'>"Logging Config File"</span>, loggingPrefs.getLogConfigFile().toString() );<a name=line.148></a>
+<a name=line.149></a>
+    <span class='comment'>//Note that a HashMap is used to populate the tree (bit faster), but a TreeMap is the <a name=line.150></a>
+</span>    <span class='comment'>//final version presented to the user (bit slower, but has desired iteration order)<a name=line.151></a>
+</span>    UiUtil.addSimpleDisplayFields( infoPanel, <span class='keyword'>new</span> TreeMap&lt;String, String&gt;(info) );    <a name=line.152></a>
+    <a name=line.153></a>
+    fObjectHeapSize = UiUtil.addSimpleDisplayField(<a name=line.154></a>
+      infoPanel, <a name=line.155></a>
+      <span class='literal'>"Object Heap Size"</span>, <a name=line.156></a>
+      getHeapSize(), <a name=line.157></a>
+      UiUtil.getConstraints(<span class='literal'>8</span>,<span class='literal'>0</span>),<a name=line.158></a>
+      <span class='keyword'>true</span><a name=line.159></a>
+    );<a name=line.160></a>
+    fObjectHeapSize.setToolTipText(<span class='literal'>"Total memory consumption is much larger"</span>);<a name=line.161></a>
+    <a name=line.162></a>
+    addGarbageCollectionButton(infoPanel);<a name=line.163></a>
+    <span class='keyword'>return</span> infoPanel;<a name=line.164></a>
+  }<a name=line.165></a>
+  <a name=line.166></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> addGarbageCollectionButton(JPanel aInfoPanel){<a name=line.167></a>
+    JButton collectGarbage = <span class='keyword'>new</span> JButton(<span class='literal'>"Collect Garbage"</span>);   <a name=line.168></a>
+    collectGarbage.setToolTipText(<span class='literal'>"Request garbage collection by JVM"</span>);<a name=line.169></a>
+    collectGarbage.setMnemonic(KeyEvent.VK_C);<a name=line.170></a>
+    collectGarbage.addActionListener( <span class='keyword'>new</span> ActionListener() {<a name=line.171></a>
+      <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> actionPerformed(ActionEvent event) {<a name=line.172></a>
+        putOutTheGarbage(); <span class='comment'>//slight pause while this happens<a name=line.173></a>
+</span>        updateHeapSizeDisplay();<a name=line.174></a>
+      }<a name=line.175></a>
+    });<a name=line.176></a>
+    GridBagConstraints constraints = UiUtil.getConstraints(<span class='literal'>9</span>,<span class='literal'>1</span>);<a name=line.177></a>
+    constraints.insets = <span class='keyword'>new</span> Insets(UiConsts.ONE_SPACE, <span class='literal'>0</span>,<span class='literal'>0</span>,<span class='literal'>0</span>);<a name=line.178></a>
+    aInfoPanel.add(collectGarbage, constraints );<a name=line.179></a>
+  }<a name=line.180></a>
+  <a name=line.181></a>
+  <span class='comment'>/**<a name=line.182></a>
+  * Return a &lt;tt&gt;JPanel&lt;/tt&gt; which has a &lt;tt&gt;GridBagLayout&lt;/tt&gt;, and<a name=line.183></a>
+  * a border as specified in {@link UiUtil#getStandardBorder}.<a name=line.184></a>
+  */</span><a name=line.185></a>
+  <span class='keyword'>private</span> JPanel getStandardPanel(){<a name=line.186></a>
+    JPanel result  = <span class='keyword'>new</span> JPanel();<a name=line.187></a>
+    result.setLayout(<span class='keyword'>new</span> GridBagLayout());<a name=line.188></a>
+    result.setBorder(UiUtil.getStandardBorder());<a name=line.189></a>
+    <span class='keyword'>return</span> result;<a name=line.190></a>
+  }<a name=line.191></a>
+  <a name=line.192></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> updateHeapSizeDisplay(){<a name=line.193></a>
+    fLogger.fine(<span class='literal'>"Updating heap size..."</span>);<a name=line.194></a>
+    fObjectHeapSize.setText(getHeapSize());<a name=line.195></a>
+  }<a name=line.196></a>
+<a name=line.197></a>
+  <span class='comment'>/** Return a measure of the current heap size in kilobytes.  */</span><a name=line.198></a>
+  <span class='keyword'>private</span> String getHeapSize(){<a name=line.199></a>
+    <span class='keyword'>long</span> totalMemory = Runtime.getRuntime().totalMemory();<a name=line.200></a>
+    <span class='keyword'>long</span> freeMemory = Runtime.getRuntime().freeMemory();<a name=line.201></a>
+    Long memoryUseKB = <span class='keyword'>new</span> Long( (totalMemory - freeMemory)/Consts.ONE_KILOBYTE );<a name=line.202></a>
+    <a name=line.203></a>
+    StringBuilder result = <span class='keyword'>new</span> StringBuilder();<a name=line.204></a>
+    result.append(UiUtil.getLocalizedInteger(memoryUseKB));<a name=line.205></a>
+    result.append(<span class='literal'>" KB"</span>);<a name=line.206></a>
+    <span class='keyword'>return</span> result.toString();<a name=line.207></a>
+  }<a name=line.208></a>
+<a name=line.209></a>
+  <span class='comment'>/** Periodically update the display of object heap size.  */</span><a name=line.210></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> startHeapSizeTimer(){<a name=line.211></a>
+    <span class='comment'>//SwingWorker isn't used here, since the action happens more than once,<a name=line.212></a>
+</span>    <span class='comment'>//and the task doesn't take very long<a name=line.213></a>
+</span>    fHeapSizeUpdater = <span class='keyword'>new</span> ActionListener() {<a name=line.214></a>
+      <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> actionPerformed(ActionEvent evt) {<a name=line.215></a>
+        <span class='comment'>//this returns quickly; it won't lock up the GUI<a name=line.216></a>
+</span>        updateHeapSizeDisplay();<a name=line.217></a>
+      }<a name=line.218></a>
+    };    <a name=line.219></a>
+    fTimer = <span class='keyword'>new</span> javax.swing.Timer(UPDATE_FREQ, fHeapSizeUpdater);<a name=line.220></a>
+    fTimer.start();    <a name=line.221></a>
+    fLogger.fine(<span class='literal'>"Starting timer..."</span>);<a name=line.222></a>
+  }<a name=line.223></a>
+<a name=line.224></a>
+  <span class='comment'>/**<a name=line.225></a>
+  * Must be called when the About Box is closed - otherwise the timer will continue <a name=line.226></a>
+  * to operate.<a name=line.227></a>
+  */</span><a name=line.228></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> stopHeapSizeTimer(){<a name=line.229></a>
+    fLogger.fine(<span class='literal'>"Stopping timer..."</span>);<a name=line.230></a>
+    fTimer.stop(); <span class='comment'>//stops notifying registered listeners<a name=line.231></a>
+</span>    fTimer.removeActionListener(fHeapSizeUpdater); <span class='comment'>//removes the one registered listener<a name=line.232></a>
+</span>    fHeapSizeUpdater = <span class='keyword'>null</span>;<a name=line.233></a>
+    fTimer = <span class='keyword'>null</span>;<a name=line.234></a>
+  }<a name=line.235></a>
+  <a name=line.236></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>void</span> putOutTheGarbage() {<a name=line.237></a>
+    collectGarbage();<a name=line.238></a>
+    collectGarbage();<a name=line.239></a>
+  }<a name=line.240></a>
+<a name=line.241></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>void</span> collectGarbage() {<a name=line.242></a>
+    <span class='keyword'>try</span> {<a name=line.243></a>
+      System.gc();<a name=line.244></a>
+      Thread.currentThread().sleep(SLEEP_INTERVAL);<a name=line.245></a>
+      System.runFinalization();<a name=line.246></a>
+      Thread.currentThread().sleep(SLEEP_INTERVAL);<a name=line.247></a>
+    }<a name=line.248></a>
+    <span class='keyword'>catch</span> (InterruptedException ex){<a name=line.249></a>
+      ex.printStackTrace();<a name=line.250></a>
+    }<a name=line.251></a>
+  }<a name=line.252></a>
+  <a name=line.253></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> addSysProperty(Map&lt;String, String&gt; aMap, String aKey, String aPropertyName){<a name=line.254></a>
+    aMap.put(aKey, getProperty(aPropertyName));<a name=line.255></a>
+  }<a name=line.256></a>
+  <a name=line.257></a>
+  <span class='keyword'>private</span> String getProperty(String aName){<a name=line.258></a>
+    <span class='keyword'>return</span> System.getProperty(aName);<a name=line.259></a>
+  }<a name=line.260></a>
+} <a name=line.261></a>
+</PRE><a name=line.262></a>
+ </BODY><a name=line.263></a>
+<HTML><a name=line.264></a>

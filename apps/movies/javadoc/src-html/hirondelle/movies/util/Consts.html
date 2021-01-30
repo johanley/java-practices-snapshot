@@ -1,0 +1,44 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/movies/javadoc/src-html/hirondelle/movies/util/Consts.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:30 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+Consts.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.movies.util;<a name=line.1></a>
+<a name=line.2></a>
+<span class='comment'>/**<a name=line.3></a>
+ Collected constants of very general utility.<a name=line.4></a>
+<a name=line.5></a>
+&lt;P&gt; All constants are immutable.<a name=line.6></a>
+*/</span><a name=line.7></a>
+<span class='keyword'>public</span> <span class='keyword'>final</span> <span class='keyword'>class</span> Consts  { <a name=line.8></a>
+<a name=line.9></a>
+  <span class='comment'>/**<a name=line.10></a>
+   Newline separator. This constant is especially useful. <a name=line.11></a>
+   Less experienced programmers will create new lines using '&#092;r' and '&#092;n' - but that  <a name=line.12></a>
+   is faulty, since it's not portable between operating systems.<a name=line.13></a>
+  */</span><a name=line.14></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String NEW_LINE = System.getProperty(<span class='literal'>"line.separator"</span>);<a name=line.15></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String FILE_SEPARATOR = System.getProperty(<span class='literal'>"file.separator"</span>);<a name=line.16></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String PATH_SEPARATOR = System.getProperty(<span class='literal'>"path.separator"</span>);<a name=line.17></a>
+<a name=line.18></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String EMPTY_STRING = <span class='literal'>""</span>;<a name=line.19></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String SPACE = <span class='literal'>" "</span>;<a name=line.20></a>
+  <span class='keyword'>public</span> <span class='keyword'>static</span> <span class='keyword'>final</span> String TAB = <span class='literal'>"&#092;t"</span>;<a name=line.21></a>
+  <a name=line.22></a>
+  <span class='comment'>// PRIVATE <a name=line.23></a>
+</span>  <a name=line.24></a>
+  <span class='comment'>/** Prevent object construction.  */</span><a name=line.25></a>
+  <span class='keyword'>private</span> Consts(){<a name=line.26></a>
+    <span class='keyword'>throw</span> <span class='keyword'>new</span> AssertionError();<a name=line.27></a>
+  }<a name=line.28></a>
+} <a name=line.29></a>
+</PRE><a name=line.30></a>
+ </BODY><a name=line.31></a>
+<HTML><a name=line.32></a>

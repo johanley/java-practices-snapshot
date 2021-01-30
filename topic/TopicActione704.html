@@ -1,0 +1,273 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=83 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="size,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Get size of object in memory</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Get size of object in memory</div>
+
+<br>
+Occasionally, you may be interested in measuring (or estimating) the size of an object in memory.
+Here's a utility which can help with that task, if the object's class has a no-argument constructor. 
+It follows the style used by <i>Java Platform Performance</i>, by Wilson and Kesselman. 
+Given a class name, it will build a number of objects using the no-argument constructor, and measure the 
+effect on JVM memory use. 
+<em>Thus, it measures the size of 'empty' objects containing no data.</em> 
+
+<p>To measure the size of a particular object containing data, a similar technique can easily be used: 
+measure JVM memory use before and after building the object.
+
+</p><p>
+In addition, JDK 1.5 has added an 
+<code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/instrument/Instrumentation.html">Instrumentation</a></code>
+interface, which 
+includes a method named <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/instrument/Instrumentation.html#getObjectSize(java.lang.Object)">getObjectSize</a></code> method. 
+However, this method seems to be intended for tool makers.
+<br></p><pre>
+<span class="comment">/**
+* Measures the approximate size of an object in memory, given a Class which
+* has a no-argument constructor.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> ObjectSizer {
+
+  <span class="comment">/**
+  * First and only argument is the package-qualified name of a class
+  * which has a no-argument constructor.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String... args){
+    Class&lt;?&gt; theClass = <span class="keyword">null</span>;
+    <span class="keyword">try</span> {
+      theClass = Class.forName(args[<span class="literal">0</span>]);
+    }
+    <span class="keyword">catch</span> (Exception ex) {
+      log(<span class="literal">"Cannot build a Class object: "</span> + args[<span class="literal">0</span>]);
+      log(<span class="literal">"Use a package-qualified name, and check classpath."</span>);
+    }
+    ObjectSizer sizer = <span class="keyword">new</span> ObjectSizer();
+    <span class="keyword">long</span> size = sizer.getObjectSize(theClass);
+    log(<span class="literal">"Approximate size of "</span> + theClass + <span class="literal">" objects :"</span> + size);
+  }
+
+  <span class="comment">/**
+  * Return the approximate size in bytes, and return zero if the class
+  * has no default constructor.
+  *
+  * @param aClass refers to a class which has a no-argument constructor.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">long</span> getObjectSize(Class&lt;?&gt; aClass){
+    <span class="keyword">long</span> result = <span class="literal">0</span>;
+
+    <span class="comment">//if the class does not have a no-argument constructor, then
+</span>    <span class="comment">//inform the user and return 0.
+</span>    <span class="keyword">try</span> {
+      aClass.getConstructor(<span class="keyword">new</span> Class[]{});
+    }
+    <span class="keyword">catch</span> (NoSuchMethodException ex) {
+      log(aClass + <span class="literal">" does not have a no-argument constructor."</span>);
+      <span class="keyword">return</span> result;
+    }
+
+    <span class="comment">//this array will simply hold a bunch of references, such that
+</span>    <span class="comment">//the objects cannot be garbage-collected
+</span>    Object[] objects = <span class="keyword">new</span> Object[SAMPLE_SIZE];
+
+    <span class="comment">//build a bunch of identical objects
+</span>    <span class="keyword">try</span> {
+      Object throwAway = aClass.getDeclaredConstructor().newInstance();
+
+      <span class="keyword">long</span> startMemoryUse = getMemoryUse();
+      <span class="keyword">for</span> (<span class="keyword">int</span> idx=<span class="literal">0</span>; idx &lt; objects.length ; ++idx) {
+        objects[idx] = aClass.getDeclaredConstructor().newInstance();
+      }
+      <span class="keyword">long</span> endMemoryUse = getMemoryUse();
+
+      <span class="keyword">float</span> approximateSize = (endMemoryUse - startMemoryUse)/<span class="literal">100f</span>;
+      result = Math.round(approximateSize);
+    }
+    <span class="keyword">catch</span> (Exception ex) {
+      log(<span class="literal">"Cannot create object using "</span> + aClass);
+    }
+    <span class="keyword">return</span> result;
+  }
+
+  <span class="comment">// PRIVATE
+</span>  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> SAMPLE_SIZE = <span class="literal">100</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">long</span> SLEEP_INTERVAL = <span class="literal">100</span>;
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> log(String message){  
+    System.out.println(message);  
+  }
+  
+  <span class="keyword">private</span> <span class="keyword">long</span> getMemoryUse(){
+    putOutTheGarbage();
+    <span class="keyword">long</span> totalMemory = Runtime.getRuntime().totalMemory();
+    putOutTheGarbage();
+    <span class="keyword">long</span> freeMemory = Runtime.getRuntime().freeMemory();
+    <span class="keyword">return</span> (totalMemory - freeMemory);
+  }
+
+  <span class="keyword">private</span> <span class="keyword">void</span> putOutTheGarbage() {
+    collectGarbage();
+    collectGarbage();
+  }
+
+  <span class="keyword">private</span> <span class="keyword">void</span> collectGarbage() {
+    <span class="keyword">try</span> {
+      System.gc();
+      Thread.currentThread().sleep(SLEEP_INTERVAL);
+      System.runFinalization();
+      Thread.currentThread().sleep(SLEEP_INTERVAL);
+    }
+    <span class="keyword">catch</span> (InterruptedException ex){
+      ex.printStackTrace();
+    }
+  }
+} 
+</pre>
+
+<p></p><p><code>ObjectSizer</code> can be easily placed in an interactive console
+application.
+</p><p>An example run gives:
+</p><p><code>&gt;java -cp . Console ObjectSizeInterpreter</code>
+<br><code>Please enter a class name&gt;java.blah</code>
+<br><code>Invalid. Example:"java.lang.String"&gt;java.util.ArrayList</code>
+<br><code>Approximate size of class java.util.ArrayList objects in bytes:
+80</code>
+<br><code>Please enter a class name&gt;java.util.Vector</code>
+<br><code>Approximate size of class java.util.Vector objects in bytes: 80</code>
+<br><code>Please enter a class name&gt;java.util.HashMap</code>
+<br><code>Approximate size of class java.util.HashMap objects in bytes: 104</code>
+<br><code>Please enter a class name&gt;java.lang.Long</code>
+<br><code>class java.lang.Long does not have a no-argument constructor.</code>
+<br><code>Please enter a class name&gt;exit</code>
+</p><p><code>Bye.</code>
+</p><p>Here is the <code>Interpreter</code> class:
+<br></p><pre>
+<span class="keyword">import</span> java.util.*;
+<span class="keyword">import</span> java.text.MessageFormat;
+
+<span class="comment">/**
+* Given a package-qualified class name, return the approximate size of
+* the object in bytes.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> ObjectSizeInterpreter <span class="keyword">implements</span> Interpreter {
+
+  <span class="comment">/**
+  * @param line is a non-null, package-qualified name of a class.
+  * @param result is a non-null, empty List which acts as an "out"
+  * parameter; when returned, result must contain a non-null, non-empty
+  * List containing a description of the size of the object.
+  *
+  * @return true only if the user has requested to quit the Interpreter.
+  * @exception IllegalArgumentException if a param does not comply.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">boolean</span> parseInput(String line, <span class="keyword">final</span> List&lt;Object&gt; result) {
+    Objects.requireNonNull(line);
+    Objects.requireNonNull(result);
+    <span class="keyword">if</span> (!result.isEmpty()){
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="literal">"Result param must be empty."</span>);
+    }
+
+    <span class="keyword">boolean</span> hasRequestedQuit = 
+      line.trim().equalsIgnoreCase(QUIT) ||
+      line.trim().equalsIgnoreCase(EXIT)
+    ;
+
+    <span class="keyword">if</span> (hasRequestedQuit) {
+      <span class="comment">//display only a blank line
+</span>      result.add(NEW_LINE);
+    }
+    <span class="keyword">else</span> {
+      <span class="keyword">try</span> {
+        Class&lt;?&gt; theClass = Class.forName(line);
+        ObjectSizer sizer = <span class="keyword">new</span> ObjectSizer();
+        <span class="keyword">long</span> size = sizer.getObjectSize(theClass);
+        <span class="keyword">if</span> (size &gt; <span class="literal">0</span>){
+          Object[] insertedData = {theClass, Long.valueOf(size)};
+          MessageFormat sizeMessage = <span class="keyword">new</span> MessageFormat(PATTERN);
+          String message = sizeMessage.format(insertedData);
+          result.add(message);
+          result.add(NEW_LINE);
+        }
+        result.add(DEFAULT_PROMPT);
+      }
+      <span class="keyword">catch</span> (ClassNotFoundException ex){
+        <span class="comment">//recover by asking the user for corrected input
+</span>        result.clear();
+        result.add(ERROR_PROMPT);
+      }
+    }
+
+    <span class="keyword">if</span> (result.isEmpty()) {
+      <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="literal">"Result must be non-empty."</span>);
+    }
+    <span class="keyword">return</span> hasRequestedQuit;
+  }
+
+  <span class="comment">/**
+  * Return the text to be displayed upon start-up of the Interpreter.
+  */</span>
+  <span class="keyword">public</span> String getHelloPrompt() {
+    <span class="keyword">return</span> HELLO_PROMPT;
+  }
+
+  <span class="comment">// PRIVATE
+</span>  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String HELLO_PROMPT = <span class="literal">"Please enter a class name&gt;"</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String DEFAULT_PROMPT = <span class="literal">"Please enter a class name&gt;"</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String ERROR_PROMPT = <span class="literal">"Invalid.  Example:\"java.lang.String\"&gt;"</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String PATTERN = <span class="literal">"Approximate size of {0} objects in bytes: {1}"</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String QUIT = <span class="literal">"quit"</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String EXIT = <span class="literal">"exit"</span>;
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String NEW_LINE = System.getProperty(<span class="literal">"line.separator"</span>);
+} 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction8240.html?Id=36">Measure application performance</a> <br>
+  <a href="TopicAction83bb.html?Id=79">Console input</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=83 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>

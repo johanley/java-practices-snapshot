@@ -1,0 +1,216 @@
+<HTML>
+ 
+<!-- Mirrored from www.javapractices.com/apps/stocksmonitor/javadoc/src-html/hirondelle/stocks/quotes/SummaryView.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:56:38 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<HEAD>
+  <TITLE>
+SummaryView.java
+  </TITLE>
+  <LINK REL ='stylesheet' TYPE='text/css' HREF='../../../../highlight.css' TITLE='Style'>
+ </HEAD>
+ <BODY>
+<PRE>
+<span class='keyword'>package</span> hirondelle.stocks.quotes;<a name=line.1></a>
+<a name=line.2></a>
+<span class='keyword'>import</span> java.util.*;<a name=line.3></a>
+<span class='keyword'>import</span> java.util.logging.*;<a name=line.4></a>
+<span class='keyword'>import</span> javax.swing.*;<a name=line.5></a>
+<span class='keyword'>import</span> java.awt.*;<a name=line.6></a>
+<span class='keyword'>import</span> java.beans.*;<a name=line.7></a>
+<span class='keyword'>import</span> java.math.BigDecimal;<a name=line.8></a>
+<a name=line.9></a>
+<span class='keyword'>import</span> hirondelle.stocks.table.QuoteFilter;<a name=line.10></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Args;<a name=line.11></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.ui.UiConsts;<a name=line.12></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.ui.UiUtil;<a name=line.13></a>
+<span class='keyword'>import</span> hirondelle.stocks.table.QuoteFilterFactory;<a name=line.14></a>
+<span class='keyword'>import</span> hirondelle.stocks.portfolio.CurrentPortfolio;<a name=line.15></a>
+<span class='keyword'>import</span> hirondelle.stocks.util.Util;<a name=line.16></a>
+<a name=line.17></a>
+<span class='comment'>/**<a name=line.18></a>
+ * Component placed on the main screen to present summary information<a name=line.19></a>
+ * regarding the {@link CurrentPortfolio} to the user.<a name=line.20></a>
+ * <a name=line.21></a>
+ * &lt;P&gt; Monetary values are presented with zero decimal places, and percentages <a name=line.22></a>
+ * are presented with 2 decimal places.<a name=line.23></a>
+ */</span><a name=line.24></a>
+<span class='keyword'>public</span> <span class='keyword'>final</span> <span class='keyword'>class</span> SummaryView <span class='keyword'>extends</span> JPanel <span class='keyword'>implements</span> PropertyChangeListener {<a name=line.25></a>
+<a name=line.26></a>
+  <span class='comment'>/**<a name=line.27></a>
+   * Constructor. <a name=line.28></a>
+   * <a name=line.29></a>
+   * @param aCurrentPortfolio summarized by this class<a name=line.30></a>
+   * @param aQuoteFilterFactory source of a {@link QuoteFilter} used to<a name=line.31></a>
+   * limit this summary to only certain items.<a name=line.32></a>
+   */</span><a name=line.33></a>
+  <span class='keyword'>public</span> SummaryView(<a name=line.34></a>
+    CurrentPortfolio aCurrentPortfolio, QuoteFilterFactory aQuoteFilterFactory<a name=line.35></a>
+  ) {<a name=line.36></a>
+    Args.checkForNull(aCurrentPortfolio);<a name=line.37></a>
+    fCurrentPortfolio = aCurrentPortfolio;<a name=line.38></a>
+    fQuoteFilterFactory = aQuoteFilterFactory;<a name=line.39></a>
+    fQuoteFilterFactory.addPropertyChangeListener(<span class='keyword'>this</span>);<a name=line.40></a>
+    LayoutManager layout = <span class='keyword'>new</span> BoxLayout(<span class='keyword'>this</span>, BoxLayout.Y_AXIS);<a name=line.41></a>
+    setLayout(layout);<a name=line.42></a>
+    add(getSummaryFields());<a name=line.43></a>
+    add(Box.createVerticalStrut(UiConsts.ONE_SPACE));<a name=line.44></a>
+    add(getTimeLastUpdateField());<a name=line.45></a>
+    add(Box.createVerticalGlue());<a name=line.46></a>
+    add(getStatusField());<a name=line.47></a>
+  }<a name=line.48></a>
+<a name=line.49></a>
+  <span class='comment'>/**<a name=line.50></a>
+   * Update this &lt;tt&gt;SummaryView&lt;/tt&gt; in response to selection by user of a new<a name=line.51></a>
+   * criterion for filtering items.<a name=line.52></a>
+   * <a name=line.53></a>
+   * &lt;P&gt; Listens to the {@link QuoteFilterFactory} passed to the constructor.<a name=line.54></a>
+   * @param event processed only if its &lt;tt&gt;getPropertyName&lt;/tt&gt; is equal to<a name=line.55></a>
+   * &lt;tt&gt;QuoteFilterFactory.SELECTED_FILTER&lt;/tt&gt;.<a name=line.56></a>
+   */</span><a name=line.57></a>
+  <span class='keyword'>@Override</span> <span class='keyword'>public</span> <span class='keyword'>void</span> propertyChange(PropertyChangeEvent event) {<a name=line.58></a>
+    <span class='keyword'>boolean</span> isUndesiredEvent = !event.getPropertyName().equals(<a name=line.59></a>
+      QuoteFilterFactory.SELECTED_FILTER<a name=line.60></a>
+    );<a name=line.61></a>
+    <span class='keyword'>if</span> (isUndesiredEvent) {<a name=line.62></a>
+      fLogger.finer(<span class='literal'>"SummaryView DISCARDING event..."</span>);<a name=line.63></a>
+    }<a name=line.64></a>
+    <span class='keyword'>else</span> {<a name=line.65></a>
+      fLogger.finer(<span class='literal'>"SummaryView processing event..."</span>);<a name=line.66></a>
+      updateView();<a name=line.67></a>
+    }<a name=line.68></a>
+  }<a name=line.69></a>
+<a name=line.70></a>
+  <span class='comment'>/**<a name=line.71></a>
+   * Display summary information for the {@link CurrentPortfolio}, adding any filtering<a name=line.72></a>
+   * according to the {@link QuoteFilterFactory} passed to the constructor.<a name=line.73></a>
+   * <a name=line.74></a>
+   * &lt;P&gt;Use a {@link ColorTip} to draw the user's attention to the fresh <a name=line.75></a>
+   * quote information, by highlighting the time of last update for a few seconds.<a name=line.76></a>
+   * @param aQuotes contains a {@link Quote} for every<a name=line.77></a>
+   * {@link Stock} in the {@link CurrentPortfolio}.<a name=line.78></a>
+   */</span><a name=line.79></a>
+  <span class='keyword'>void</span> setQuotes(Collection&lt;Quote&gt; aQuotes) {<a name=line.80></a>
+    fQuotes = aQuotes;<a name=line.81></a>
+    ColorTip colorTip = <span class='keyword'>new</span> ColorTip(<span class='literal'>0</span>, <span class='literal'>2</span>, fTimeLastUpdate, Color.yellow);<a name=line.82></a>
+    colorTip.start();<a name=line.83></a>
+    updateView();<a name=line.84></a>
+  }<a name=line.85></a>
+<a name=line.86></a>
+  <span class='comment'>/**<a name=line.87></a>
+   * Present short text to the user indicating success or failure of the most recent<a name=line.88></a>
+   * {@link FetchQuotesAction}.<a name=line.89></a>
+   * <a name=line.90></a>
+   * &lt;P&gt;In the case of failure, &lt;tt&gt;aMessage&lt;/tt&gt; should indicate remedial measures.<a name=line.91></a>
+   * @param aMessage has visible content<a name=line.92></a>
+   */</span><a name=line.93></a>
+  <span class='keyword'>void</span> showStatusMessage(String aMessage) {<a name=line.94></a>
+    Args.checkForContent(aMessage);<a name=line.95></a>
+    fStatusMessage.setText(aMessage);<a name=line.96></a>
+  }<a name=line.97></a>
+<a name=line.98></a>
+  <span class='comment'>// PRIVATE<a name=line.99></a>
+</span>  <span class='keyword'>private</span> CurrentPortfolio fCurrentPortfolio;<a name=line.100></a>
+  <span class='keyword'>private</span> QuoteFilterFactory fQuoteFilterFactory;<a name=line.101></a>
+  <span class='keyword'>private</span> Collection&lt;Quote&gt; fQuotes;<a name=line.102></a>
+<a name=line.103></a>
+  <span class='keyword'>private</span> JLabel fBookValue;<a name=line.104></a>
+  <span class='keyword'>private</span> JLabel fCurrentValue;<a name=line.105></a>
+  <span class='keyword'>private</span> JLabel fProfit;<a name=line.106></a>
+  <span class='keyword'>private</span> JLabel fPercentageProfit;<a name=line.107></a>
+  <span class='keyword'>private</span> JLabel fTimeLastUpdate;<a name=line.108></a>
+  <span class='keyword'>private</span> JLabel fStatusMessage;<a name=line.109></a>
+<a name=line.110></a>
+  <span class='keyword'>private</span> <span class='keyword'>static</span> <span class='keyword'>final</span> Logger fLogger = Util.getLogger(SummaryView.<span class='keyword'>class</span>);<a name=line.111></a>
+<a name=line.112></a>
+  <span class='keyword'>private</span> JComponent getSummaryFields() {<a name=line.113></a>
+    JPanel content = <span class='keyword'>new</span> JPanel();<a name=line.114></a>
+    LayoutManager layout = <span class='keyword'>new</span> BoxLayout(content, BoxLayout.X_AXIS);<a name=line.115></a>
+    content.setLayout(layout);<a name=line.116></a>
+    content.add(getValueFields());<a name=line.117></a>
+    content.add(Box.createHorizontalGlue());<a name=line.118></a>
+    content.add(getProfitFields());<a name=line.119></a>
+    <span class='keyword'>return</span> content;<a name=line.120></a>
+  }<a name=line.121></a>
+<a name=line.122></a>
+  <span class='keyword'>private</span> JComponent getValueFields() {<a name=line.123></a>
+    JPanel content = <span class='keyword'>new</span> JPanel();<a name=line.124></a>
+    content.setLayout(<span class='keyword'>new</span> GridBagLayout());<a name=line.125></a>
+    fBookValue = UiUtil.addSimpleDisplayField(<a name=line.126></a>
+      content, <span class='literal'>"Book Value"</span>, <span class='keyword'>null</span>, UiUtil.getConstraints(<span class='literal'>0</span>,<span class='literal'>0</span>), <span class='keyword'>false</span><a name=line.127></a>
+    );<a name=line.128></a>
+    fBookValue.setToolTipText(<span class='literal'>"Acquisition cost of the portfolio"</span>);<a name=line.129></a>
+    fCurrentValue = UiUtil.addSimpleDisplayField(<a name=line.130></a>
+      content, <span class='literal'>"Current Value"</span>, <span class='keyword'>null</span>, UiUtil.getConstraints(<span class='literal'>1</span>, <span class='literal'>0</span>), <span class='keyword'>false</span><a name=line.131></a>
+    );<a name=line.132></a>
+    fCurrentValue.setToolTipText(<span class='literal'>"Current value of the portfolio"</span>);<a name=line.133></a>
+    <span class='keyword'>return</span> content;<a name=line.134></a>
+  }<a name=line.135></a>
+<a name=line.136></a>
+  <span class='keyword'>private</span> JComponent getProfitFields() {<a name=line.137></a>
+    JPanel content = <span class='keyword'>new</span> JPanel();<a name=line.138></a>
+    content.setLayout(<span class='keyword'>new</span> GridBagLayout());<a name=line.139></a>
+    fProfit = UiUtil.addSimpleDisplayField(<a name=line.140></a>
+      content, <span class='literal'>"Profit"</span>, <span class='keyword'>null</span>, UiUtil.getConstraints(<span class='literal'>0</span>, <span class='literal'>0</span>), <span class='keyword'>false</span><a name=line.141></a>
+    );<a name=line.142></a>
+    fProfit.setToolTipText(<span class='literal'>"Current value minus book value"</span>);<a name=line.143></a>
+    fPercentageProfit = UiUtil.addSimpleDisplayField(<a name=line.144></a>
+      content, <span class='literal'>"% Profit"</span>, <span class='keyword'>null</span>, UiUtil.getConstraints(<span class='literal'>1</span>, <span class='literal'>0</span>), <span class='keyword'>false</span><a name=line.145></a>
+    );<a name=line.146></a>
+    fPercentageProfit.setToolTipText(<span class='literal'>"Profit divided by book value, as percent"</span>);<a name=line.147></a>
+    <span class='keyword'>return</span> content;<a name=line.148></a>
+  }<a name=line.149></a>
+<a name=line.150></a>
+  <span class='keyword'>private</span> JComponent getTimeLastUpdateField() {<a name=line.151></a>
+    JPanel content = <span class='keyword'>new</span> JPanel();<a name=line.152></a>
+    content.setLayout(<span class='keyword'>new</span> GridBagLayout());<a name=line.153></a>
+    fTimeLastUpdate = UiUtil.addSimpleDisplayField(<a name=line.154></a>
+      content, <span class='literal'>"Last Update"</span>, <span class='keyword'>null</span>, UiUtil.getConstraints(<span class='literal'>0</span>, <span class='literal'>0</span>), <span class='keyword'>false</span><a name=line.155></a>
+    );<a name=line.156></a>
+    <span class='keyword'>return</span> content;<a name=line.157></a>
+  }<a name=line.158></a>
+<a name=line.159></a>
+  <span class='keyword'>private</span> JComponent getStatusField() {<a name=line.160></a>
+    JPanel content = <span class='keyword'>new</span> JPanel();<a name=line.161></a>
+    content.setLayout(<span class='keyword'>new</span> BoxLayout(content, BoxLayout.X_AXIS));<a name=line.162></a>
+    fStatusMessage = UiUtil.addSimpleDisplayField(<a name=line.163></a>
+      content, <span class='literal'>"Status"</span>, <span class='keyword'>null</span>, UiUtil.getConstraints(<span class='literal'>0</span>,<span class='literal'>0</span>), <span class='keyword'>false</span><a name=line.164></a>
+    );<a name=line.165></a>
+    content.add(Box.createHorizontalGlue());<a name=line.166></a>
+    <span class='keyword'>return</span> content;<a name=line.167></a>
+  }<a name=line.168></a>
+<a name=line.169></a>
+  <span class='keyword'>private</span> <span class='keyword'>void</span> updateView() {<a name=line.170></a>
+    QuoteFilter filter = fQuoteFilterFactory.getSelectedFilter();<a name=line.171></a>
+    Collection&lt;Quote&gt; filteredQuotes = filter.sift(fQuotes);<a name=line.172></a>
+<a name=line.173></a>
+    fBookValue.setText(getBookValue(filteredQuotes));<a name=line.174></a>
+    fCurrentValue.setText(getCurrentValue(filteredQuotes));<a name=line.175></a>
+    fProfit.setText(getProfit(filteredQuotes));<a name=line.176></a>
+    fPercentageProfit.setText(getPercentageProfit(filteredQuotes));<a name=line.177></a>
+    fTimeLastUpdate.setText(UiUtil.getLocalizedTime(<span class='keyword'>new</span> Date()));<a name=line.178></a>
+  }<a name=line.179></a>
+<a name=line.180></a>
+  <span class='keyword'>private</span> String getBookValue(Collection&lt;Quote&gt; aQuotes) {<a name=line.181></a>
+    Number value = fCurrentPortfolio.getPortfolio().getBookValue(aQuotes);<a name=line.182></a>
+    <span class='keyword'>return</span> UiUtil.getLocalizedInteger(value);<a name=line.183></a>
+  }<a name=line.184></a>
+<a name=line.185></a>
+  <span class='keyword'>private</span> String getCurrentValue(Collection&lt;Quote&gt; aQuotes) {<a name=line.186></a>
+    Number value = fCurrentPortfolio.getPortfolio().getCurrentValue(aQuotes);<a name=line.187></a>
+    <span class='keyword'>return</span> UiUtil.getLocalizedInteger(value);<a name=line.188></a>
+  }<a name=line.189></a>
+<a name=line.190></a>
+  <span class='keyword'>private</span> String getProfit(Collection&lt;Quote&gt; aQuotes) {<a name=line.191></a>
+    Number value = fCurrentPortfolio.getPortfolio().getProfit(aQuotes);<a name=line.192></a>
+    <span class='keyword'>return</span> UiUtil.getLocalizedInteger(value);<a name=line.193></a>
+  }<a name=line.194></a>
+<a name=line.195></a>
+  <span class='keyword'>private</span> String getPercentageProfit(Collection&lt;Quote&gt; aQuotes) {<a name=line.196></a>
+    BigDecimal value = fCurrentPortfolio.getPortfolio().getPercentageProfit(aQuotes);<a name=line.197></a>
+    <span class='keyword'>return</span> UiUtil.getLocalizedPercent(value);<a name=line.198></a>
+  }<a name=line.199></a>
+}<a name=line.200></a>
+ <a name=line.201></a>
+</PRE><a name=line.202></a>
+ </BODY><a name=line.203></a>
+<HTML><a name=line.204></a>

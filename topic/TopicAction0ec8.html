@@ -1,0 +1,503 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=209 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:35 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Validation belongs in a Model Object</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Validation belongs in a Model Object</div>
+
+<br>
+An application should perform data validation in a Model Object, where it can validate both 
+user input, and the data being fetched from a database.  This validation should be performed in a 
+<em>class</em>, and not in an .xml configuration file or some similar tool.
+
+<p>The role of a Model Object is to implement business logic, and validation is the 
+single most common (and arguably the most important) kind of business logic. <span class="highlight">The fundamental 
+reason for creating any class is often stated as bringing together data and closely related operations
+on that data. This is often the <b>very first idea</b> taught in courses on object programming.</span> 
+
+</p><p>Surprisingly, there are many application frameworks that do <em>not</em> follow this 
+simple guiding principle of lasting value. Instead, they encourage the 
+application programmer to <em>separate</em> data and logic, by doing validation either in 
+a separate class, Java Server Pages, configuration files, and so on. 
+Such styles of validation should usually be avoided, if possible.
+
+</p><p>If you're using a framework that expects validation to be implemented in a distasteful way,
+you may find it possible to define your core data-validation in your own way,  
+and then simply <em>call-forward</em> from framework classes to your own classes. 
+
+</p><p>Implementing validation in Model Objects is simple and natural. As usual, any common 
+validations can be factored out into utility classes. In addition, writing test cases is simple, and 
+can be executed stand-alone, without needing any special setup or environment.
+
+</p><p><b>Example 1</b>
+</p><p>In the Java programming language, the most natural way of doing data validation seems to be the following:
+</p><ul> 
+ <li>try to build an object 
+ </li><li>if no problem is found, then just use the object 
+ </li><li>if one or more problems are found, then ensure the caller has enough information to tell the user about the issues 
+</li></ul>
+
+<p>This is implemented in the example below.
+Validation is done in the constructor.
+The policy for communicating problems to the caller uses a <em>checked exception</em> that carries all of the details in 
+its <em>suppressed</em> exceptions (which are part of <code>Throwable</code>).
+(Checked exceptions are used when a condition is <em>outside the direct control of your program</em>; user input is such a case.)
+<br></p><pre>
+<span class="keyword">import</span> <span class="keyword">static</span> java.util.Comparator.comparing;
+<span class="keyword">import</span> <span class="keyword">static</span> java.util.Comparator.naturalOrder;
+<span class="keyword">import</span> <span class="keyword">static</span> java.util.Comparator.nullsLast;
+
+<span class="keyword">import</span> java.math.BigDecimal;
+<span class="keyword">import</span> java.time.LocalDate;
+<span class="keyword">import</span> java.util.ArrayList;
+<span class="keyword">import</span> java.util.Comparator;
+<span class="keyword">import</span> java.util.List;
+<span class="keyword">import</span> java.util.Objects;
+<span class="keyword">import</span> java.util.Optional;
+
+<span class="comment">/**
+ An example of a fairly robust implementation of a Model object.
+ 
+ @since Java 8  
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Telescope <span class="keyword">implements</span> Comparable&lt;Telescope&gt;{
+  
+  <span class="comment">/** Design of a telescope's optics */</span>
+  <span class="keyword">enum</span> Design {
+    NEWTONIAN, REFRACTOR, SCHMIDT_CASSEGRAIN
+  }
+  
+  <span class="comment">/**
+   Constructor that validates all data.
+   
+   If one or more problems are found, then a checked Exception is thrown. 
+   Furthermore, the details of each problem found will be available 
+   via Throwable.getSuppressed(). This lets the caller show all 
+   details to the end user. 
+   
+   &lt;P&gt;WARNING: some frameworks force you into putting such 
+   validation-code outside the Model Object. That's distasteful. 
+   The fundamental idea of object programming is to UNITE data 
+   and the code that acts closely upon it, not to separate them. 
+
+   @param id database identifier. Can be empty, but never null. 
+    A new item that has not yet been saved to the database will 
+    have an empty id.
+   @param name brand name of the scope; must have visible content 
+   @param cost in dollars, greater than or equal to 0; nullable
+   @param datePurchased, in range 1900-01-01..2099-12-31
+   @param aperture in millimeters, in range 0..10000
+   @param design optical design of the scope
+  */</span>
+  <span class="keyword">public</span> Telescope(
+    String id, String name, BigDecimal cost, LocalDate datePurchased, 
+    Double aperture, Design design
+  ) <span class="keyword">throws</span> Exception {
+    <span class="keyword">this</span>.id = id; 
+    <span class="keyword">this</span>.name = name;
+    <span class="keyword">this</span>.cost = cost; 
+    <span class="keyword">this</span>.datePurchased = datePurchased;
+    <span class="keyword">this</span>.aperture = aperture;
+    <span class="keyword">this</span>.design = design;
+    validate();
+  }
+  
+  <span class="comment">/** 
+   In the case of new objects which don't yet have an id, this method 
+   will return an empty String. 
+  */</span>
+  <span class="keyword">public</span> String getId() {
+    <span class="keyword">return</span> id;
+  }
+  
+  <span class="keyword">public</span> String getName() { 
+    <span class="keyword">return</span> name; 
+  }
+  
+  <span class="comment">/** Returns an Optional because the field may be null. */</span>
+  <span class="keyword">public</span> Optional&lt;BigDecimal&gt; getCost() { 
+    <span class="keyword">return</span> Optional.ofNullable(cost); 
+  }
+  
+  <span class="keyword">public</span> LocalDate getDatePurchased() { 
+    <span class="keyword">return</span> datePurchased; 
+  }
+  
+  <span class="keyword">public</span> Double getAperture() { 
+    <span class="keyword">return</span> aperture; 
+  }
+  
+  <span class="keyword">public</span> Design getDesign() { 
+    <span class="keyword">return</span> design; 
+  }
+
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">boolean</span> equals(Object aThat) {
+    <span class="comment">//unusual: multiple return statements
+</span>    <span class="keyword">if</span> (<span class="keyword">this</span> == aThat) <span class="keyword">return</span> <span class="keyword">true</span>;
+    <span class="keyword">if</span> (!(aThat <span class="keyword">instanceof</span> Telescope)) <span class="keyword">return</span> <span class="keyword">false</span>;
+    Telescope that = (Telescope)aThat;
+    <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="literal">0</span>; i &lt; <span class="keyword">this</span>.getSigFields().length; ++i){
+      <span class="keyword">if</span> (!Objects.equals(<span class="keyword">this</span>.getSigFields()[i], that.getSigFields()[i])){
+        <span class="keyword">return</span> <span class="keyword">false</span>; 
+      }
+    }
+    <span class="keyword">return</span> <span class="keyword">true</span>;
+  }  
+  
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">int</span> hashCode() {
+    <span class="keyword">return</span> Objects.hash(getSigFields());
+  }
+
+  <span class="comment">/** Intended for debugging only. */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> String toString() {
+    <span class="keyword">return</span> toStringUtil(<span class="keyword">this</span>, getSigFields());
+  }
+  
+  <span class="comment">/** 
+   Implementing compareTo is only needed if you need to sort collections
+   of these objects. 
+  */</span>
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">int</span> compareTo(Telescope that) {
+    <span class="keyword">int</span> result = COMPARATOR.compare(<span class="keyword">this</span>, that);
+    <span class="comment">//optional: you may want to include this assertion (at least during development)
+</span>    <span class="comment">//note that assertions are disabled by default
+</span>    <span class="keyword">if</span> (result == <span class="literal">0</span>) {
+      assert <span class="keyword">this</span>.equals(that) : 
+        <span class="keyword">this</span>.getClass().getSimpleName() + <span class="literal">": compareTo inconsistent with equals."</span>
+      ;
+    }
+    <span class="keyword">return</span> result;
+  }
+  
+  <span class="comment">// PRIVATE 
+</span>
+  <span class="comment">/** 
+   Database identifier (not a business identifier).
+   New items, that don't yet have an id assigned, have 
+   this field as an empty String (not null).
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">final</span> String id;
+  
+  <span class="keyword">private</span> <span class="keyword">final</span> String name;
+  
+  <span class="comment">/**
+   This is the only nullable field in this class. 
+   Nullable data is very common!
+   Not a floating point type, since it's money. 
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">final</span> BigDecimal cost; 
+  
+  <span class="comment">/** java.util.Date is obsolete and of low quality; avoid it in new code. */</span>
+  <span class="keyword">private</span> <span class="keyword">final</span> LocalDate datePurchased; 
+  
+  <span class="keyword">private</span> <span class="keyword">final</span> Double aperture;
+  
+  <span class="keyword">private</span> <span class="keyword">final</span> Design design;
+  
+  <span class="comment">/** 
+   The id is left out! The id is analogous to an object's identity, and is 
+   treated here as NOT forming part of the object's core state (its data).
+   IMPORTANT: equals and hashCode both call this method; they need to 
+   talk to the same fields. In addition, compareTo uses the same fields
+   too (without calling this method, however).
+  */</span>
+  <span class="keyword">private</span> Object[] getSigFields() {
+    <span class="comment">//optimize: start with items that are most likely to differ
+</span>    <span class="keyword">return</span> <span class="keyword">new</span> Object[] {
+      name, cost, datePurchased, aperture, design
+    };
+  }
+
+  <span class="comment">/** Static: avoid creating this object every time a comparison is made.*/</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> Comparator&lt;Telescope&gt; COMPARATOR = getComparator();
+  
+  <span class="comment">/**
+   Note the 'thenComparing' chain: when comparing, the implementation goes 
+   to the next level of comparison ONLY IF the previous level has 
+   returned '0' (equal).
+   
+   &lt;P&gt;Note that Telescope::getCost can't be used below, since it returns 
+   an Optional, and the Comparator methods don't play well with Optional.
+   Choice: either use a lambda expression to reference the data directly, 
+   or define a private method (getPlainCost()) to return the nullable object.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> Comparator&lt;Telescope&gt; getComparator(){
+    <span class="comment">//use the same fields used by the equals method, if at all possible!
+</span>    Comparator&lt;Telescope&gt; result = 
+      comparing(Telescope::getName)
+      .thenComparing(Telescope::getPlainCost, nullsLast(naturalOrder()))
+      <span class="comment">/*.thenComparing(t -&gt; t.cost, nullsLast(naturalOrder()))*/</span> <span class="comment">//alternative form
+</span>      .thenComparing(Telescope::getDatePurchased)
+      .thenComparing(Telescope::getAperture)
+      .thenComparing(Telescope::getDesign)
+    ;
+    <span class="keyword">return</span> result;
+  }
+  
+  <span class="comment">/** 
+   Created only so that a method reference expression (instead a lambda expression) 
+   can be used in the getComparator() method above. 
+   Not needed if you want to use a lambda expression!
+  */</span>
+  <span class="keyword">private</span> BigDecimal getPlainCost() { 
+    <span class="keyword">return</span> cost; 
+  }
+ 
+  <span class="comment">/**
+   Validate all of the data passed to the constructor.
+   Throws an Exception if one or more problems are found.
+   (You may want to define a new Exception type  
+   to represent this very specific kind of error.)
+   
+   All of the constraints are defined by the constructor's javadoc (above).
+   You shouldn't repeat those constraints here.
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">void</span> validate() <span class="keyword">throws</span> Exception {
+    List&lt;String&gt; errors = <span class="keyword">new</span> ArrayList&lt;&gt;();
+    ensureNotNull(id, <span class="literal">"Id is null"</span>, errors);
+    
+    <span class="keyword">if</span> (!hasContent(name)) {
+      errors.add(<span class="literal">"Name has no content."</span>);
+    }
+    
+    <span class="keyword">if</span> (cost != <span class="keyword">null</span>) { 
+      <span class="keyword">if</span> (cost.compareTo(BigDecimal.ZERO) &lt; <span class="literal">0</span>) {
+        errors.add(<span class="literal">"Cost cannot be negative."</span>);
+      }
+    }
+    
+    <span class="keyword">boolean</span> passes = ensureNotNull(datePurchased, <span class="literal">"Date purchased is null."</span>, errors);
+    <span class="keyword">if</span> (passes) {
+      LocalDate START = LocalDate.of(<span class="literal">1900</span>, <span class="literal">1</span>, <span class="literal">1</span>);
+      LocalDate END = LocalDate.of(<span class="literal">2099</span>, <span class="literal">12</span>, <span class="literal">31</span>);
+      <span class="keyword">if</span> (datePurchased.isBefore(START) || datePurchased.isAfter(END)) {
+        errors.add(<span class="literal">"Date purchased is outside the normal range: "</span> + START + <span class="literal">".."</span> + END);
+      }
+    }
+    
+    passes = ensureNotNull(aperture, <span class="literal">"Aperture is null"</span>, errors);
+    <span class="keyword">if</span> (passes) {
+      Double START = <span class="literal">0.0</span>;
+      Double END = <span class="literal">10000.0</span>;
+      <span class="keyword">if</span> (aperture.compareTo(START) &lt; <span class="literal">0</span> || aperture.compareTo(END) &gt; <span class="literal">0</span>) {
+        errors.add(<span class="literal">"Aperture is outside the normal range: "</span> + START + <span class="literal">".."</span> + END) ;
+      }
+    }
+    
+    ensureNotNull(design, <span class="literal">"Design is null"</span>, errors);
+    
+    <span class="keyword">if</span> (!errors.isEmpty()) {
+      Exception ex = <span class="keyword">new</span> Exception();
+      <span class="keyword">for</span>(String error: errors) {
+        ex.addSuppressed(<span class="keyword">new</span> Exception(error));
+      }
+      <span class="keyword">throw</span> ex;
+    }
+  }
+  
+  <span class="comment">/** Returns true only if the field passes the test, and is NOT null. */</span>
+  <span class="keyword">private</span> <span class="keyword">boolean</span> ensureNotNull(Object field, String errorMsg, List&lt;String&gt; errors) {
+    <span class="keyword">boolean</span> result = <span class="keyword">true</span>;
+    <span class="keyword">if</span> (field == <span class="keyword">null</span>) {
+      errors.add(errorMsg);
+      result = <span class="keyword">false</span>;
+    }
+    <span class="keyword">return</span> result;
+  }
+  
+  <span class="comment">/** 
+   WARNING: This method is extremely common, and should be in a utility class.
+   (It really should be in the JDK, as a static method of the String class.)
+  */</span>
+  <span class="keyword">private</span> <span class="keyword">boolean</span> hasContent(String string) {
+    <span class="keyword">return</span> (string != <span class="keyword">null</span> &amp;&amp; string.trim().length() &gt; <span class="literal">0</span>);
+  }
+ 
+  <span class="comment">/** 
+   There's a lot of variation in how you might want to implement toString().
+   Since the output is almost always intended only for debugging, it's 
+   usually a matter of taste.
+   
+   &lt;P&gt;This implementation has the defect that the names of fields aren't included 
+   in the output.
+   
+   &lt;P&gt;Example output for this class:&lt;br&gt;
+   &lt;pre&gt;Telescope: [Meade 100.00 2018-09-01 200.0 REFRACTOR]&lt;/pre&gt; 
+   
+   @param fields the fields to be included in the output 
+   @param thing the object itself (which provides the class name)
+   @return text describing the object, suitable only for logging and debugging
+  */</span>
+  <span class="keyword">private</span> String toStringUtil(Object thing, Object[] fields) {
+    String result = <span class="literal">""</span>;
+    <span class="keyword">for</span>(Object field : fields) {
+      result = result + <span class="literal">" "</span> + Objects.toString(field); <span class="comment">//null-friendly
+</span>    }
+    <span class="keyword">return</span> thing.getClass().getSimpleName() + <span class="literal">": ["</span>+ result.trim() + <span class="literal">"]"</span>;
+  }
+} 
+</pre>
+
+
+<p><b>Example 2</b>
+
+</p><p>To assist the application programmer with common validations, the <a href="TopicAction5f31.html?Id=188">WEB4J</a> tool 
+defines a 
+<code><a href="../apps/web4j/javadoc/hirondelle/web4j/model/Validator.html">Validator</a></code> interface, 
+and a 
+<code><a href="../apps/web4j/javadoc/hirondelle/web4j/model/Check.html">Check</a></code> class 
+which returns some common implementations of that interface. Validation is implemented entirely in code, and never 
+with JSPs or configuration files. Here, a <code>Resto</code> Model Object uses <code>Check</code> to perform 
+all required validation in its constructor, by calling <code>validateState</code>:
+<br></p><pre>
+<span class="keyword">package</span> hirondelle.fish.main.resto;
+
+<span class="keyword">import</span> hirondelle.web4j.model.ModelCtorException;
+<span class="keyword">import</span> hirondelle.web4j.model.ModelUtil;
+<span class="keyword">import</span> hirondelle.web4j.model.Id;
+<span class="keyword">import</span> hirondelle.web4j.security.SafeText;
+<span class="keyword">import</span> hirondelle.web4j.model.Decimal;
+<span class="keyword">import</span> <span class="keyword">static</span> hirondelle.web4j.model.Decimal.ZERO;
+<span class="keyword">import</span> hirondelle.web4j.model.Check;
+<span class="keyword">import</span> hirondelle.web4j.model.Validator;
+<span class="keyword">import</span> <span class="keyword">static</span> hirondelle.web4j.util.Consts.FAILS;
+
+<span class="comment">/** Model Object for a Restaurant. */</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> Resto {
+
+  <span class="comment">/**
+   Full constructor.
+    
+   @param aId underlying database internal identifier (optional) 1..50 characters
+   @param aName of the restaurant (required), 2..50 characters
+   @param aLocation street address of the restaurant (optional), 2..50 characters
+   @param aPrice of the fish and chips meal (optional) $0.00..$100.00
+   @param aComment on the restaurant in general (optional) 2..50 characters
+  */</span>
+  <span class="keyword">public</span> Resto(
+    Id aId, SafeText aName, SafeText aLocation, Decimal aPrice, SafeText aComment
+  ) <span class="keyword">throws</span> ModelCtorException {
+    fId = aId;
+    fName = aName;
+    fLocation = aLocation;
+    fPrice = aPrice;
+    fComment = aComment;
+    validateState();
+  }
+  
+  <span class="keyword">public</span> Id getId() { <span class="keyword">return</span> fId; }
+  <span class="keyword">public</span> SafeText getName() {  <span class="keyword">return</span> fName; }
+  <span class="keyword">public</span> SafeText getLocation() {  <span class="keyword">return</span> fLocation;  }
+  <span class="keyword">public</span> Decimal getPrice() { <span class="keyword">return</span> fPrice; }
+  <span class="keyword">public</span> SafeText getComment() {  <span class="keyword">return</span> fComment; }
+
+  <span class="keyword">@Override</span> <span class="keyword">public</span> String toString(){
+    <span class="keyword">return</span> ModelUtil.toStringFor(<span class="keyword">this</span>);
+  }
+  
+  <span class="keyword">@Override</span> <span class="keyword">public</span>  <span class="keyword">boolean</span> equals(Object aThat){
+    Boolean result = ModelUtil.quickEquals(<span class="keyword">this</span>, aThat);
+    <span class="keyword">if</span> (result ==  <span class="keyword">null</span>) {
+      Resto that = (Resto) aThat;
+      result = ModelUtil.equalsFor(
+        <span class="keyword">this</span>.getSignificantFields(), that.getSignificantFields()
+      );
+    }
+    <span class="keyword">return</span> result;
+  }
+  
+  <span class="keyword">@Override</span> <span class="keyword">public</span> <span class="keyword">int</span> hashCode(){
+    <span class="keyword">if</span> (fHashCode == <span class="literal">0</span>){
+      fHashCode = ModelUtil.hashCodeFor(getSignificantFields());
+    }
+    <span class="keyword">return</span> fHashCode;
+  }
+  
+  <span class="comment">// PRIVATE 
+</span>  <span class="keyword">private</span> <span class="keyword">final</span> Id fId;
+  <span class="keyword">private</span> <span class="keyword">final</span> SafeText fName;
+  <span class="keyword">private</span> <span class="keyword">final</span> SafeText fLocation;
+  <span class="keyword">private</span> <span class="keyword">final</span> Decimal fPrice;
+  <span class="keyword">private</span> <span class="keyword">final</span> SafeText fComment;
+  <span class="keyword">private</span> <span class="keyword">int</span> fHashCode;
+  
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Decimal HUNDRED = Decimal.from(<span class="literal">"100"</span>);
+
+  <span class="keyword">private</span> <span class="keyword">void</span> validateState() <span class="keyword">throws</span> ModelCtorException {
+    ModelCtorException ex = <span class="keyword">new</span> ModelCtorException();
+    <span class="keyword">if</span> (FAILS == Check.optional(fId, Check.range(<span class="literal">1</span>,<span class="literal">50</span>))) {
+      ex.add(<span class="literal">"Id is optional, 1..50 chars."</span>);
+    }
+    <span class="keyword">if</span> (FAILS == Check.required(fName, Check.range(<span class="literal">2</span>,<span class="literal">50</span>))) {
+      ex.add(<span class="literal">"Restaurant Name is required, 2..50 chars."</span>);
+    }
+    <span class="keyword">if</span> (FAILS == Check.optional(fLocation, Check.range(<span class="literal">2</span>,<span class="literal">50</span>))) {
+      ex.add(<span class="literal">"Location is optional, 2..50 chars."</span>);
+    }
+    Validator[] priceChecks = {Check.range(ZERO, HUNDRED), Check.numDecimalsAlways(<span class="literal">2</span>)};
+    <span class="keyword">if</span> (FAILS == Check.optional(fPrice, priceChecks)) {
+      ex.add(<span class="literal">"Price is optional, 0.00 to 100.00."</span>);
+    }
+    <span class="keyword">if</span> (FAILS == Check.optional(fComment, Check.range(<span class="literal">2</span>,<span class="literal">50</span>))) {
+      ex.add(<span class="literal">"Comment is optional, 2..50 chars."</span>);
+    }
+    <span class="keyword">if</span> ( ! ex.isEmpty() ) <span class="keyword">throw</span> ex;
+  }
+  
+  <span class="keyword">private</span> Object[] getSignificantFields(){
+    <span class="keyword">return</span> <span class="keyword">new</span> Object[] {fName, fLocation, fPrice, fComment};
+  }
+}
+ 
+</pre>
+
+<br>
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction42fc.html?Id=112">JSPs should contain only presentation logic</a> <br>
+  <a href="TopicActiond08d.html?Id=187">Model Objects</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=209 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:35 GMT -->
+</html>

@@ -1,0 +1,127 @@
+<!doctype html><html lang="en">
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=59 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+ <meta charset="UTF-8">
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2633428-1"></script>
+ <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-2633428-1');
+ </script>
+ <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples.">
+ <meta name="keywords" content="array,null,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+ <title>Java Practices-&gt;Prefer empty items to null ones</title>
+ <link id="stylesheet" rel="stylesheet" type="text/css" href="../stylesheet9fdb0.css?3.011" media="all">
+ <link rel="icon" type="image/png" href="../images/favicon.png"> 
+</head>
+<body>
+<nav class="menu-bar" id="menu-bar">
+  <a href="../home/HomeAction.html" title="Table of Contents" style="float:left;">Home</a> &nbsp;&nbsp; 
+  <form method="GET" action="https://www.google.com/search" class="search-form" style="float:right;">
+   <input type="text" name="q" size="15" maxlength="255" value="" placeholder="Google">
+   <input type="submit" name="btnG" value="Search">
+   <input type="hidden" name="sitesearch" value="www.javapractices.com">
+  </form>
+</nav>
+<div class="page-title">Prefer empty items to null ones</div>
+
+<br>There are many cases in which an "empty" object can be used instead of a null object reference.
+This is usually preferable, since it helps eliminate one of the most common problems encountered during 
+development: the <code><a href="https://docs.oracle.com/javase/10/docs/api/java/lang/NullPointerException.html">NullPointerException</a></code>.
+
+<p>The following qualify as "empty" objects:
+</p><ul>
+ <li>the empty String
+ </li><li>zero-length arrays
+ </li><li>collections containing 0 items
+ </li><li>maps containing 0 items
+</li></ul>
+
+<p>Example declarations of empty items:
+</p><pre>
+<code>String item = "";</code>
+<code>BigDecimal[] items = new BigDecimal[0];</code>
+<code>List&lt;Integer&gt; items = new ArrayList&lt;&gt;();</code>
+<code>Map&lt;String, Integer&gt; items = new LinkedHashMap&lt;&gt;();</code>
+</pre>
+
+
+<p>The <code><a href="https://docs.oracle.com/javase/10/docs/api/java/util/Collections.html">Collections</a></code>
+class contains several type safe methods which return empty items (which are also immutable and <code>Serializable</code>) :
+</p><ul>
+<li><code>Collections.<a href="https://docs.oracle.com/javase/10/docs/api/java/util/Collections.html#emptyList()">emptyList()</a></code></li>
+<li><code>Collections.<a href="https://docs.oracle.com/javase/10/docs/api/java/util/Collections.html#emptySet()">emptySet()</a></code></li>
+<li><code>Collections.<a href="https://docs.oracle.com/javase/10/docs/api/java/util/Collections.html#emptyMap()">emptyMap()</a></code></li>
+</ul>
+The above methods are occasionally useful.
+
+
+<p><b>Example</b>
+</p><p>Here's an example of using an empty, zero-length array instead of a null reference.
+This simplifies the caller, since they never have to check for <code>null</code> values. 
+(An even better alternative is to use replace the array with a possibly-empty collection.)
+
+<br></p><pre>
+<span class="keyword">import</span> java.util.*;
+
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> StockPortfolio {
+
+  <span class="comment">//..elided
+</span>
+  <span class="comment">/**
+   A field is implemented internally as a List,
+   but offered to the user of this class as an Array.
+   This array is never null, even if the underlying Collection is
+   empty.
+  */</span>
+  <span class="keyword">public</span> String[] getStocks() {
+    <span class="comment">/*
+    NO_STOCKS plays a double role here. If there are elements in stocks, then
+    toArray will allocate a new array, using NO_STOCKS simply as an indicator
+    of the proper type to use. If stocks has no elements at all, then toArray
+    will simply return the NO_STOCKS array itself.
+    */</span>
+    <span class="keyword">return</span> stocks.toArray(NO_STOCKS);
+  }
+
+  <span class="comment">// PRIVATE
+</span>
+  <span class="comment">/** The underlying collection. */</span>
+  <span class="keyword">private</span> List&lt;String&gt; stocks;
+
+  <span class="comment">/** A constant, empty array, to be used instead of a null array. */</span>
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String[] NO_STOCKS = <span class="keyword">new</span> String[<span class="literal">0</span>];
+} 
+</pre>
+
+
+<p></p>
+<p></p><div class="topic-section" id="see-also-title">See Also :</div>
+<div id="see-also" class="main-body">
+  <a href="TopicAction55c9.html?Id=39">Prefer Collections over older classes</a> <br>
+  <a href="TopicAction772f.html?Id=134">Avoid null if possible</a> <br>
+  <a href="TopicAction8db7.html?Id=279">Return Optional not null</a> <br>
+</div>
+
+<footer id="footer" class="legalese">
+<span id="app_name">Java Practices</span> <span id="app_version_number">3.011</span><br>
+© <span id="copyright">2018 Hirondelle Systems</span><br>
+<a href="../source/SourceAction.html">Source Code</a> |
+<a href="mailto:webmaster@javapractices.com" rel="author">Contact</a> |
+<a href="https://creativecommons.org/licenses/by-nc-sa/1.0/" rel="license">License</a> |
+<a href="../apps/cjp.rss" rel="alternate" type="application/rss+xml">RSS</a>
+<!-- ukey="2AC36CD2" -->
+<!-- ckey="16DF3D87" -->
+<br>
+ Individual code snippets have a <a href="../LICENSE.txt" rel="license">BSD license</a><br>
+ Over 1,000,000 unique IPs last year<br>
+ Last updated <time id="last_updated_on" datetime="2018-09-15">2018-09-15</time><br> 
+ - In Memoriam : Bill Dirani -
+</footer>
+</body>
+<!-- Mirrored from www.javapractices.com/topic/TopicAction.do?Id=59 by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 30 Jan 2021 15:52:36 GMT -->
+</html>
