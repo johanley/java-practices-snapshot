@@ -1,6 +1,7 @@
 # javapractices.com
 
 A browsable snapshot of the content of javapractices.com.
+(I'm the creator of javapractices.com.)
 
 This snapshot doesn't require a server.
 It contains static HTML/CSS files only.
